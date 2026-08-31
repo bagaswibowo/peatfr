@@ -267,7 +267,9 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
           <MapContainer
             center={pos}
             zoom={10}
-            scrollWheelZoom={false}
+            scrollWheelZoom={true}
+            doubleClickZoom={true}
+            touchZoom={true}
             className="h-full w-full cursor-crosshair"
           >
             <MapFlyTo lat={location.lat} lon={location.lon} />
