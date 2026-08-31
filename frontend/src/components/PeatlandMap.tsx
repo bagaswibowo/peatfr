@@ -62,7 +62,7 @@ const createCustomIcon = (color: string) => {
 const createPeatlandFireIcon = () => {
   return L.divIcon({
     className: 'gfw-peatland-fire-marker',
-    html: `<div style="background-color: #ef4444; width: 14px; height: 14px; border-radius: 50%; border: 2px solid #fee2e2; box-shadow: 0 0 14px #ef4444; animation: pulse 1.5s infinite; cursor: pointer;"></div>`,
+    html: `<div style="background-color: var(--danger); width: 14px; height: 14px; border-radius: 50%; border: 2px solid #fee2e2; box-shadow: 0 0 14px var(--danger); animation: pulse 1.5s infinite; cursor: pointer;"></div>`,
     iconSize: [14, 14],
     iconAnchor: [7, 7]
   });
@@ -71,7 +71,7 @@ const createPeatlandFireIcon = () => {
 const createFirmsHotspotIcon = () => {
   return L.divIcon({
     className: 'firms-hotspot-marker',
-    html: `<div style="background-color: #f97316; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #ffedd5; box-shadow: 0 0 10px #f97316; cursor: pointer;"></div>`,
+    html: `<div style="background-color: var(--accent); width: 12px; height: 12px; border-radius: 50%; border: 2px solid #ffedd5; box-shadow: 0 0 10px var(--accent); cursor: pointer;"></div>`,
     iconSize: [12, 12],
     iconAnchor: [6, 6]
   });
@@ -80,7 +80,7 @@ const createFirmsHotspotIcon = () => {
 const createTargetIcon = () => {
   return L.divIcon({
     className: 'clicked-target-marker',
-    html: `<div style="background-color: #0284c7; width: 16px; height: 16px; border-radius: 50%; border: 2.5px solid white; box-shadow: 0 0 14px #0284c7; cursor: pointer;"></div>`,
+    html: `<div style="background-color: var(--ok); width: 16px; height: 16px; border-radius: 50%; border: 2.5px solid white; box-shadow: 0 0 14px var(--ok); cursor: pointer;"></div>`,
     iconSize: [16, 16],
     iconAnchor: [8, 8]
   });
@@ -195,31 +195,26 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
   };
 
   const getMarkerColor = (pfvi: number) => {
-    if (pfvi >= 225) return '#ef4444'; // Red
-    if (pfvi >= 150) return '#f97316'; // Orange
-    if (pfvi >= 75) return '#f59e0b';  // Amber
-    return '#10b981'; // Green
+    if (pfvi >= 225) return 'var(--danger)'; // Red
+    if (pfvi >= 150) return 'var(--high)';   // Orange
+    if (pfvi >= 75) return 'var(--warn)';    // Amber
+    return 'var(--ok)'; // Green
   };
 
   const color = getMarkerColor(currentPfvi);
 
   return (
-    <div className="telemetry-panel rounded-lg p-5 bg-slate-900/90 border border-slate-800 shadow-md mb-5">
-      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 mb-4 border-b border-slate-800/80 pb-3">
-        <div className="flex items-center gap-2.5">
-          <Satellite className="w-5 h-5 text-emerald-400 shrink-0" />
-          <div>
-            <h3 className="text-xs font-mono font-bold tracking-wide text-white flex items-center gap-2 flex-wrap">
-              REAL LIVE SATELLITE FIRE MAP (NASA FIRMS & VIIRS OVERPASS)
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-mono bg-emerald-950/80 text-emerald-300 border border-emerald-800 rounded font-semibold">
-                <Radio className="w-3 h-3 text-emerald-400 animate-pulse" />
-                NASA FIRMS MAP_KEY ACTIVE
-              </span>
-            </h3>
-            <p className="text-[11px] font-mono text-slate-400 font-medium">
-              Peta Satelit Live NASA FIRMS, VIIRS 375m & GFW Gambut. Klik titik peta untuk langsung memperbarui prediksi.
-            </p>
-          </div>
+    <section>
+      {/* Section Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-baseline justify-between gap-3 mb-3">
+        <div>
+          <h2 className="text-[15px] font-semibold tracking-tight text-[var(--text)] flex items-center gap-2">
+            <Satellite className="w-4 h-4 text-[var(--accent)]" />
+            <span>Peta Titik Panas &amp; Kerawanan Lahan Gambut</span>
+          </h2>
+          <p className="text-xs text-[var(--text-dim)] mt-0.5">
+            Telemetri live NASA FIRMS (VIIRS 375m) &amp; GFW Gambut. Klik titik mana saja untuk inspeksi lokasi.
+          </p>
         </div>
 
         {/* Live Satellite Layer Toggles */}
@@ -227,10 +222,10 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
           <button
             type="button"
             onClick={() => setShowFirmsWms(!showFirmsWms)}
-            className={`px-3 py-1.5 rounded border transition-colors flex items-center gap-1.5 font-bold cursor-pointer ${
+            className={`px-3 py-1.5 rounded-[var(--r-sm)] border transition-colors flex items-center gap-1.5 font-semibold cursor-pointer ${
               showFirmsWms
-                ? 'bg-rose-900/80 text-rose-200 border-rose-700 shadow-xs'
-                : 'bg-slate-950 text-slate-400 border-slate-800'
+                ? 'bg-[var(--accent-soft)] text-[var(--accent)] border-[var(--accent-line)]'
+                : 'bg-[var(--surface-2)] text-[var(--text-mute)] border-[var(--line)]'
             }`}
           >
             <Flame className="w-3.5 h-3.5" />
@@ -240,10 +235,10 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
           <button
             type="button"
             onClick={() => setShowFirmsVector(!showFirmsVector)}
-            className={`px-3 py-1.5 rounded border transition-colors flex items-center gap-1.5 font-bold cursor-pointer ${
+            className={`px-3 py-1.5 rounded-[var(--r-sm)] border transition-colors flex items-center gap-1.5 font-semibold cursor-pointer ${
               showFirmsVector
-                ? 'bg-amber-900/80 text-amber-200 border-amber-700 shadow-xs'
-                : 'bg-slate-950 text-slate-400 border-slate-800'
+                ? 'bg-[var(--accent-soft)] text-[var(--accent)] border-[var(--accent-line)]'
+                : 'bg-[var(--surface-2)] text-[var(--text-mute)] border-[var(--line)]'
             }`}
           >
             <Radio className="w-3.5 h-3.5" />
@@ -253,127 +248,62 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
           <button
             type="button"
             onClick={() => setShowGfwPeatland(!showGfwPeatland)}
-            className={`px-3 py-1.5 rounded border transition-colors flex items-center gap-1.5 font-bold cursor-pointer ${
+            className={`px-3 py-1.5 rounded-[var(--r-sm)] border transition-colors flex items-center gap-1.5 font-semibold cursor-pointer ${
               showGfwPeatland
-                ? 'bg-red-900/80 text-red-200 border-red-700 shadow-xs'
-                : 'bg-slate-950 text-slate-400 border-slate-800'
+                ? 'bg-[var(--accent-soft)] text-[var(--accent)] border-[var(--accent-line)]'
+                : 'bg-[var(--surface-2)] text-[var(--text-mute)] border-[var(--line)]'
             }`}
           >
             <ShieldAlert className="w-3.5 h-3.5" />
             <span>GFW Vector Gambut</span>
           </button>
-
-          <button
-            type="button"
-            onClick={() => setShowGibsViirsDay(!showGibsViirsDay)}
-            className={`px-3 py-1.5 rounded border transition-colors flex items-center gap-1.5 font-bold cursor-pointer ${
-              showGibsViirsDay
-                ? 'bg-cyan-900/80 text-cyan-200 border-cyan-700 shadow-xs'
-                : 'bg-slate-950 text-slate-400 border-slate-800'
-            }`}
-          >
-            <Satellite className="w-3.5 h-3.5" />
-            <span>NASA GIBS 375m</span>
-          </button>
         </div>
       </div>
 
-      {/* Severe Fire Alerts Ticker */}
-      {severeAlerts.length > 0 && (
-        <div className="mb-4 bg-rose-950/40 border border-rose-900/80 rounded p-3 text-xs font-mono shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <span className="font-bold text-rose-300 flex items-center gap-1.5 uppercase tracking-wide">
-              <Flame className="w-4 h-4 text-rose-500 animate-pulse" />
-              PERINGATAN KEBAKARAN PARAH (SEVERE FIRE ALERTS)
-            </span>
-            <span className="text-[10px] text-rose-300 bg-rose-900/80 border border-rose-700 px-2 py-0.5 rounded font-bold">
-              {severeAlerts.length} Area Terdampak Terdeteksi
-            </span>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
-            {severeAlerts.map((alert) => (
-              <button
-                key={alert.id}
-                type="button"
-                onClick={() => {
-                  setSelectedEntity({
-                    type: 'gfw',
-                    title: alert.title,
-                    lat: alert.lat,
-                    lon: alert.lon,
-                    details: {
-                      'Lokasi Kebakaran': alert.location,
-                      'Estimasi Luas Terbakar': `${alert.estimated_burned_km2} km² (${alert.estimated_burned_ha} Ha)`,
-                      'Intensitas FRP Maks': `${alert.frp_max_mw} MW`,
-                      'Satelit Sensor': alert.satellite_sensor,
-                      'Tingkat Bahaya': alert.severity,
-                      'Status Waktu': alert.updated_ago
-                    }
-                  });
-                  if (onSelectCustomLocation) {
-                    onSelectCustomLocation(alert.lat, alert.lon, alert.location);
-                  }
-                }}
-                className="text-left bg-slate-950 hover:bg-rose-950/50 p-2.5 rounded border border-rose-900/60 hover:border-rose-600 transition-all group shadow-xs cursor-pointer"
-              >
-                <div className="font-bold text-rose-400 truncate flex items-center justify-between">
-                  <span className="group-hover:text-rose-200 transition-colors">{alert.title}</span>
-                  <span className="text-[10px] px-1.5 py-0.2 bg-rose-900/80 text-rose-200 rounded font-bold">{alert.estimated_burned_km2} km²</span>
-                </div>
-                <div className="text-[11px] text-slate-300 truncate mt-1 font-medium">{alert.location}</div>
-                <div className="text-[10px] text-slate-500 mt-1.5 flex items-center justify-between pt-1 border-t border-slate-900">
-                  <span>{alert.updated_ago}</span>
-                  <span className="text-emerald-400 font-bold group-hover:underline">Fokus Peta / Prediksi →</span>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Dedicated Real Live Satellite Map Display */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-        <div className="lg:col-span-3 h-[480px] w-full rounded overflow-hidden relative border border-slate-800 shadow-sm">
+      {/* Map Row Container */}
+      <div className="border border-[var(--line)] rounded-[var(--r-md)] bg-[var(--surface)] overflow-hidden grid grid-cols-1 lg:grid-cols-4">
+        {/* Left Map (3 Cols) */}
+        <div className="lg:col-span-3 h-[440px] w-full relative">
           <MapContainer
             center={pos}
             zoom={10}
-            scrollWheelZoom={true}
+            scrollWheelZoom={false}
             className="h-full w-full cursor-crosshair"
           >
             <MapFlyTo lat={location.lat} lon={location.lon} />
             <MapClickHandler onMapClick={handleMapClick} />
 
-            {/* High-Resolution Satellite Base Layer (Esri World Imagery) */}
+            {/* Satellite Base Layer */}
             <TileLayer
               attribution='&copy; <a href="https://www.esri.com/">Esri World Imagery</a>'
               url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
             />
 
-            {/* Transparent Administrative Place Names & Boundaries Label Overlay */}
+            {/* Place Names & Labels Overlay */}
             <TileLayer
               attribution='&copy; <a href="https://carto.com/">CARTO Voyager Labels</a>'
               url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png"
             />
 
-            {/* NASA FIRMS Dedicated Authorized WMS Thermal Layer (MAP_KEY Authorized) */}
+            {/* NASA FIRMS Dedicated WMS Thermal Layer */}
             {showFirmsWms && (
               <WMSTileLayer
                 url={`https://firms.modaps.eosdis.nasa.gov/mapserver/wms/fires/${FIRMS_MAP_KEY}/`}
                 layers="fires_viirs_24,fires_modis_24"
                 format="image/png"
                 transparent={true}
-                attribution="NASA FIRMS Dedicated WMS (MAP_KEY Active)"
+                attribution="NASA FIRMS WMS"
               />
             )}
 
-            {/* NASA GIBS VIIRS 375m Thermal Anomalies Web Mercator (EPSG3857) WMS Layer */}
+            {/* NASA GIBS VIIRS 375m Layer */}
             {showGibsViirsDay && (
               <WMSTileLayer
                 url="https://gibs.earthdata.nasa.gov/wms/epsg3857/best/wms.cgi"
                 layers="VIIRS_SNPP_Thermal_Anomalies_375m_Day,VIIRS_SNPP_Thermal_Anomalies_375m_Night"
                 format="image/png"
                 transparent={true}
-                attribution="NASA GIBS VIIRS 375m Thermal"
+                attribution="NASA GIBS VIIRS"
               />
             )}
 
@@ -414,13 +344,9 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
                       <Flame className="w-3.5 h-3.5 inline" /> NASA FIRMS Hotspot (VIIRS)
                     </div>
                     <div>Tgl / Jam: {hotspot.acq_date} {hotspot.acq_time} UTC</div>
-                    <div>Kecerahan (T_i4): {hotspot.bright_ti4} K</div>
+                    <div>Kecerahan: {hotspot.bright_ti4} K</div>
                     <div>Daya FRP: {hotspot.frp > 0 ? `${hotspot.frp} MW` : 'N/A'}</div>
-                    <div>Satelit: {hotspot.satellite} ({hotspot.instrument})</div>
-                    <div className="mt-1.5 text-[10px] text-emerald-700 font-bold flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                      <span>Prediksi Aktif Terpasang</span>
-                    </div>
+                    <div className="mt-1 text-[10px] text-emerald-700 font-bold">✓ Authorized NASA FIRMS Key</div>
                   </div>
                 </Popup>
               </Marker>
@@ -464,12 +390,7 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
                     </div>
                     <div>Tgl Alert: {fire.alert__date}</div>
                     <div>Lokasi: {fire.adm2 || 'Kab'}, {fire.adm1 || 'Prov'}</div>
-                    <div>Kecerahan: {fire.bright_ti4__K || '-'} K</div>
-                    <div>Daya FRP: {fire.frp__MW ? `${fire.frp__MW} MW` : '-'}</div>
-                    <div className="mt-1 text-[10px] text-emerald-700 font-bold flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                      <span>Prediksi Aktif Terpasang</span>
-                    </div>
+                    <div className="mt-1 text-[10px] text-emerald-700 font-bold">✓ Verified GFW Peatland Layer</div>
                   </div>
                 </Popup>
               </Marker>
@@ -480,47 +401,22 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
               <Marker position={[clickedTarget.lat, clickedTarget.lon]} icon={createTargetIcon()}>
                 <Popup className="custom-popup">
                   <div className="p-2 font-mono text-xs text-slate-900">
-                    <div className="font-bold text-sky-600 mb-1 flex items-center gap-1">
+                    <div className="font-bold text-emerald-600 mb-1 flex items-center gap-1">
                       <Crosshair className="w-3.5 h-3.5 inline" /> Titik Peta Satelit Terpilih
                     </div>
                     <div>Lat: {clickedTarget.lat.toFixed(5)}</div>
                     <div>Lon: {clickedTarget.lon.toFixed(5)}</div>
-                    <div className="mt-1 text-[10px] text-sky-700 font-bold flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3 text-sky-600" />
-                      <span>Telemetri & Prediksi AI Terhubung</span>
-                    </div>
                   </div>
                 </Popup>
               </Marker>
             )}
 
             {/* Telemetry Station Marker */}
-            <Marker
-              position={pos}
-              icon={createCustomIcon(color)}
-              eventHandlers={{
-                click: (e) => {
-                  e.originalEvent.stopPropagation();
-                  setSelectedEntity({
-                    type: 'station',
-                    title: `Stasiun Telemetri Utama`,
-                    lat: location.lat,
-                    lon: location.lon,
-                    details: {
-                      'Nama Lokasi': location.name,
-                      'PFVI Score': `${currentPfvi.toFixed(1)} / 300.0`,
-                      'Status Risiko': status,
-                      'Koordinat': `${location.lat}, ${location.lon}`
-                    }
-                  });
-                }
-              }}
-            >
+            <Marker position={pos} icon={createCustomIcon(color)}>
               <Popup className="custom-popup">
                 <div className="p-2 text-slate-900">
                   <h4 className="font-bold text-slate-900 text-sm mb-1">{location.name}</h4>
-                  <p className="text-xs text-slate-600">Stasiun Telemetri & Multi-Satelit Overpass</p>
-                  <div className="mt-2 text-xs font-mono font-semibold text-slate-900">
+                  <div className="text-xs font-mono font-semibold text-slate-900">
                     PFVI Score: {currentPfvi.toFixed(1)} / 300.0 ({status})
                   </div>
                 </div>
@@ -530,106 +426,80 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
             <Circle
               center={pos}
               radius={currentPfvi >= 225 ? 15000 : 8000}
-              pathOptions={{
-                color: color,
-                fillColor: color,
-                fillOpacity: 0.15,
-                weight: 1.5
-              }}
+              pathOptions={{ color: color, fillColor: color, fillOpacity: 0.15, weight: 1.5 }}
             />
           </MapContainer>
-
-          {/* Legend Overlay */}
-          <div className="absolute bottom-3 left-3 z-[1000] bg-slate-950/90 backdrop-blur-xs p-3 rounded border border-slate-800 text-xs shadow-md space-y-2 max-w-[90%] text-slate-200">
-            <div className="flex items-center gap-3 font-mono flex-wrap font-semibold text-[11px]">
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />
-                <span>Low (&lt;75)</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block" />
-                <span>Moderate</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-orange-500 inline-block" />
-                <span>High</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-rose-600 inline-block" />
-                <span>Extreme (&gt;225)</span>
-              </div>
-              <div className="flex items-center gap-1.5 border-l border-slate-800 pl-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-orange-500 inline-block" />
-                <span className="text-orange-400 font-bold">FIRMS Hotspot</span>
-              </div>
-              <div className="flex items-center gap-1.5 pl-1">
-                <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping inline-block" />
-                <span className="text-rose-400 font-bold">GFW Gambut</span>
-              </div>
-            </div>
-          </div>
         </div>
 
-        {/* Dynamic Satellite & Entity Inspector Panel */}
-        <div className="bg-slate-950 border border-slate-800 rounded p-4 flex flex-col justify-between shadow-xs">
+        {/* Right Inspector & Legend (1 Col) */}
+        <div className="border-t lg:border-t-0 lg:border-l border-[var(--line)] bg-[var(--surface)] flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-3">
-              <h4 className="text-xs font-bold tracking-wider text-emerald-400 uppercase font-mono flex items-center gap-1.5">
-                <Navigation className="w-3.5 h-3.5 text-emerald-400" />
-                SATELLITE HOTSPOT INSPECTOR
-              </h4>
-              <span className="text-[10px] font-mono px-2 py-0.5 bg-slate-900 rounded text-slate-300 border border-slate-800 font-bold">
-                {selectedEntity ? selectedEntity.type.toUpperCase() : 'TELEMETRI'}
-              </span>
+            <div className="p-4 border-b border-[var(--line)]">
+              <h3 className="text-[12.5px] font-semibold text-[var(--text)] flex items-center justify-between">
+                <span>Inspektor Titik Panas</span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[var(--surface-2)] text-[var(--text-mute)]">
+                  {selectedEntity ? selectedEntity.type.toUpperCase() : 'SELECT POINT'}
+                </span>
+              </h3>
+              <p className="text-[11px] text-[var(--text-dim)] mt-0.5">Pilih titik pada peta satelit</p>
             </div>
 
-            {selectedEntity ? (
-              <div className="space-y-3 font-mono text-xs">
-                <div className="text-white font-bold flex items-center gap-1.5">
-                  {selectedEntity.type === 'hotspot' && <Flame className="w-4 h-4 text-orange-400 shrink-0" />}
-                  {selectedEntity.type === 'gfw' && <ShieldAlert className="w-4 h-4 text-rose-500 shrink-0" />}
-                  {selectedEntity.type === 'point' && <Crosshair className="w-4 h-4 text-sky-400 shrink-0" />}
-                  {selectedEntity.type === 'station' && <MapPin className="w-4 h-4 text-emerald-400 shrink-0" />}
-                  <span>{selectedEntity.title}</span>
-                </div>
+            <div className="p-4">
+              {selectedEntity ? (
+                <div className="space-y-3 font-mono text-xs">
+                  <div className="text-[var(--text)] font-semibold text-[13px]">
+                    {selectedEntity.title}
+                  </div>
+                  <div className="space-y-2 border-t border-[var(--line-soft)] pt-2">
+                    {Object.entries(selectedEntity.details).map(([k, v]) => (
+                      <div key={k} className="flex justify-between items-center text-[12px] py-1 border-b border-[var(--line-soft)]">
+                        <span className="text-[var(--text-mute)]">{k}:</span>
+                        <span className="font-semibold text-[var(--text)]">{String(v)}</span>
+                      </div>
+                    ))}
+                  </div>
 
-                <div className="bg-slate-900/90 p-3 rounded border border-slate-800 space-y-2 text-slate-200 shadow-xs">
-                  {Object.entries(selectedEntity.details).map(([k, v]) => (
-                    <div key={k} className="flex justify-between items-center text-[11px]">
-                      <span className="text-slate-500 font-medium">{k}:</span>
-                      <span className="font-bold text-slate-200">{String(v)}</span>
-                    </div>
-                  ))}
+                  {onSelectCustomLocation && (
+                    <button
+                      type="button"
+                      onClick={() => onSelectCustomLocation(selectedEntity.lat, selectedEntity.lon, selectedEntity.title)}
+                      className="w-full mt-2 py-2 px-3 bg-[var(--accent)] text-[#0a0c0a] font-bold rounded-[var(--r-sm)] text-xs transition-opacity hover:opacity-90 flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <Zap className="w-3.5 h-3.5" />
+                      <span>Fokuskan Telemetri ke Titik Ini</span>
+                    </button>
+                  )}
                 </div>
-
-                {onSelectCustomLocation && (
-                  <button
-                    type="button"
-                    onClick={() => onSelectCustomLocation(selectedEntity.lat, selectedEntity.lon, selectedEntity.title)}
-                    className="w-full mt-2 py-2 px-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded text-xs transition-all flex items-center justify-center gap-2 shadow-xs cursor-pointer active:scale-95"
-                  >
-                    <Zap className="w-3.5 h-3.5" />
-                    <span>Fokuskan Telemetri ke Titik Ini</span>
-                  </button>
-                )}
-              </div>
-            ) : (
-              <div className="py-8 text-center text-slate-500 font-mono text-xs space-y-3">
-                <Crosshair className="w-8 h-8 text-slate-600 mx-auto animate-pulse" />
-                <p>Klik titik mana saja di peta satelit atau marker hotspot kebakaran untuk inspeksi detail telemetri.</p>
-                <div className="text-[10px] text-emerald-400 bg-emerald-950/60 p-2 rounded border border-emerald-900 font-semibold">
-                  ✓ High-Res Live Satellite Map & NASA FIRMS Key Active
+              ) : (
+                <div className="py-8 text-center text-[var(--text-dim)] flex flex-col items-center justify-center gap-2 font-mono text-xs">
+                  <Crosshair className="w-6 h-6 text-[var(--text-dim)]" />
+                  <p className="max-w-[20ch] leading-snug">Klik salah satu titik di peta untuk melihat telemetri lokal</p>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
-          <div className="mt-4 pt-3 border-t border-slate-800 text-[10px] text-slate-400 font-mono flex items-center justify-between font-medium">
-            <span>Koordinat Active Target:</span>
-            <span className="text-white font-bold">{location.lat.toFixed(3)}, {location.lon.toFixed(3)}</span>
+          {/* Map Legend Footer */}
+          <div className="p-3.5 border-t border-[var(--line)] flex flex-col gap-1.5 text-[11px] font-mono">
+            <div className="flex items-center gap-2 text-[var(--text-mute)]">
+              <span className="w-2 h-2 rounded-full bg-[var(--ok)] shrink-0" />
+              <span>Rendah &lt; 75</span>
+            </div>
+            <div className="flex items-center gap-2 text-[var(--text-mute)]">
+              <span className="w-2 h-2 rounded-full bg-[var(--warn)] shrink-0" />
+              <span>Sedang 75 / 150</span>
+            </div>
+            <div className="flex items-center gap-2 text-[var(--text-mute)]">
+              <span className="w-2 h-2 rounded-full bg-[var(--high)] shrink-0" />
+              <span>Tinggi 150 / 225</span>
+            </div>
+            <div className="flex items-center gap-2 text-[var(--text-mute)]">
+              <span className="w-2 h-2 rounded-full bg-[var(--danger)] shrink-0" />
+              <span>Ekstrem &gt; 225</span>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 };

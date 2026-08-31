@@ -2,28 +2,88 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  body {
-    background-color: #f1f5f9;
-    color: #0f172a;
-    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-  }
+:root {
+  --bg: #0a0c0a;
+  --surface: #141712;
+  --surface-2: #1a1e19;
+  --line: #262b24;
+  --line-soft: #1d221c;
+  --text: #eceee7;
+  --text-mute: #9aa196;
+  --text-dim: #5f665a;
+  --accent: #ff6a33;
+  --accent-soft: #ff6a331f;
+  --accent-line: #ff6a334d;
+  --ok: #3fc98a;
+  --warn: #f0b23e;
+  --high: #ff8a3d;
+  --danger: #ff4d4d;
+  --r-sm: 3px;
+  --r-md: 6px;
+  --font-d: 'Space Grotesk', system-ui, sans-serif;
+  --font-m: 'JetBrains Mono', ui-monospace, monospace;
+  --bg-radial: radial-gradient(1100px 500px at 82% -10%, #1a2117 0%, transparent 60%);
 }
 
-/* Crisp Clean Light Theme Panels */
-.telemetry-panel {
-  background-color: #ffffff;
-  border: 1px solid #cbd5e1;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+html[data-theme="light"] {
+  --bg: #f3f1ea;
+  --surface: #ffffff;
+  --surface-2: #ece9df;
+  --line: #ddd8c9;
+  --line-soft: #e8e4d8;
+  --text: #211f19;
+  --text-mute: #635f52;
+  --text-dim: #948e7c;
+  --accent: #e0551f;
+  --accent-soft: #e0551f14;
+  --accent-line: #e0551f4d;
+  --ok: #1f9c62;
+  --warn: #b8790f;
+  --high: #d6621e;
+  --danger: #d43b3b;
+  --bg-radial: radial-gradient(1100px 500px at 82% -10%, #ece6d1 0%, transparent 60%);
 }
 
-.telemetry-card {
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
+html {
+  background-color: var(--bg);
 }
 
-/* Leaflet Container Styling */
+body {
+  background: var(--bg-radial), var(--bg);
+  color: var(--text);
+  font-family: var(--font-d);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.25s ease, color 0.25s ease;
+}
+
+.mono {
+  font-family: var(--font-m);
+}
+
+.num {
+  font-family: var(--font-m);
+  font-variant-numeric: tabular-nums;
+}
+
 .leaflet-container {
-  background: #e2e8f0 !important;
-  border-radius: 0.5rem;
+  font-family: var(--font-d) !important;
+  border-radius: var(--r-md);
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: var(--r-sm);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-line);
 }
