@@ -1,7 +1,12 @@
 import React from 'react';
-import { Settings, Play, Database, Cpu, Calendar } from 'lucide-react';
+import { Settings, Play, Database, Cpu, Calendar, MapPin } from 'lucide-react';
+import { Province, Regency } from './Header';
 
 interface PipelineControlsProps {
+  provinces: Province[];
+  selectedProvince: Province | null;
+  selectedRegency: Regency | null;
+  onSelectRegion: (prov: Province, reg: Regency) => void;
   imputation: string;
   setImputation: (val: string) => void;
   model: string;
@@ -12,10 +17,13 @@ interface PipelineControlsProps {
   setEpochs: (val: number) => void;
   onRunPipeline: () => void;
   isRunning: boolean;
-  selectedRegency?: { name: string; lat: number; lon: number } | null;
 }
 
 export const PipelineControls: React.FC<PipelineControlsProps> = ({
+  provinces,
+  selectedProvince,
+  selectedRegency,
+  onSelectRegion,
   imputation,
   setImputation,
   model,
@@ -25,29 +33,75 @@ export const PipelineControls: React.FC<PipelineControlsProps> = ({
   epochs,
   setEpochs,
   onRunPipeline,
-  isRunning,
-  selectedRegency
+  isRunning
 }) => {
   return (
     <div className="telemetry-panel bg-white border border-slate-200 rounded-xl p-5 mb-6 shadow-sm">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 border-b border-slate-200 pb-3">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-4 border-b border-slate-200 pb-3">
         <div className="flex items-center gap-2">
-          <Settings className="w-4 h-4 text-emerald-600" />
-          <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
-            KONFIGURASI ALGORITMA & MODEL PIPELINE
-          </h3>
+          <Settings className="w-5 h-5 text-emerald-600" />
+          <div>
+            <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+              KONFIGURASI ALGORITMA & MODEL PIPELINE
+            </h3>
+            <p className="text-[11px] text-slate-500 font-medium">
+              Pengaturan lokasi prediksi, metode imputasi data missing, model time-series AI, dan horizon proyeksi
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-2 text-xs">
-          <span className="bg-emerald-50 text-emerald-800 border border-emerald-200/80 px-2.5 py-1 rounded-md font-medium flex items-center gap-1">
+          <span className="bg-emerald-50 text-emerald-800 border border-emerald-200/80 px-2.5 py-1 rounded-md font-medium flex items-center gap-1 shadow-xs">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span>Prediksi Lokasi: <strong>{selectedRegency ? selectedRegency.name : 'Kab. Siak'}</strong> ({selectedRegency ? `${selectedRegency.lat.toFixed(3)}°, ${selectedRegency.lon.toFixed(3)}°` : '0.820°, 102.050°'})</span>
+            <span>Target Aktif: <strong>{selectedRegency ? selectedRegency.name : 'Kab. Siak'}</strong> ({selectedRegency ? `${selectedRegency.lat.toFixed(3)}°, ${selectedRegency.lon.toFixed(3)}°` : '0.820°, 102.050°'})</span>
           </span>
-          <span className="text-slate-500 font-mono font-semibold hidden md:inline">FastAPI Engine</span>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
-        {/* Imputation Method Selection */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+        {/* 1. Location Target Dropdown (Province + Regency Selector) */}
+        <div className="sm:col-span-2 lg:col-span-1 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+          <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center gap-1.5">
+            <MapPin className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Target Lokasi Prediksi:</span>
+          </label>
+          <div className="space-y-1.5">
+            <select
+              value={selectedProvince?.id || ''}
+              onChange={(e) => {
+                const foundProv = provinces.find((p) => p.id === e.target.value);
+                if (foundProv && foundProv.regencies.length > 0) {
+                  onSelectRegion(foundProv, foundProv.regencies[0]);
+                }
+              }}
+              className="w-full bg-white border border-slate-300 rounded-md px-2.5 py-1.5 text-xs font-mono text-slate-800 focus:outline-none focus:border-emerald-600 cursor-pointer font-medium"
+            >
+              {provinces.map((prov) => (
+                <option key={prov.id} value={prov.id}>
+                  {prov.name}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={selectedRegency?.id || ''}
+              onChange={(e) => {
+                if (selectedProvince) {
+                  const foundReg = selectedProvince.regencies.find((r) => r.id === e.target.value);
+                  if (foundReg) onSelectRegion(selectedProvince, foundReg);
+                }
+              }}
+              className="w-full bg-white border border-slate-300 rounded-md px-2.5 py-1.5 text-xs font-mono text-slate-800 focus:outline-none focus:border-emerald-600 cursor-pointer font-medium"
+            >
+              {selectedProvince?.regencies.map((reg) => (
+                <option key={reg.id} value={reg.id}>
+                  {reg.name} {reg.peat ? '(Gambut)' : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* 2. Imputation Method Selection */}
         <div>
           <label className="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
             <Database className="w-3.5 h-3.5 text-cyan-600" />
@@ -65,11 +119,11 @@ export const PipelineControls: React.FC<PipelineControlsProps> = ({
           </select>
         </div>
 
-        {/* Model Selection */}
+        {/* 3. Model Selection */}
         <div>
           <label className="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
             <Cpu className="w-3.5 h-3.5 text-blue-600" />
-            <span>Model Time Series Forecasting:</span>
+            <span>Model Time Series AI:</span>
           </label>
           <select
             value={model}
@@ -82,7 +136,7 @@ export const PipelineControls: React.FC<PipelineControlsProps> = ({
           </select>
         </div>
 
-        {/* Forecast Horizon */}
+        {/* 4. Forecast Horizon */}
         <div>
           <label className="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
             <Calendar className="w-3.5 h-3.5 text-indigo-600" />
@@ -99,15 +153,15 @@ export const PipelineControls: React.FC<PipelineControlsProps> = ({
           </select>
         </div>
 
-        {/* Execute Button */}
+        {/* 5. Execute Button */}
         <div>
           <button
             onClick={onRunPipeline}
             disabled={isRunning}
-            className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 text-xs rounded-lg transition-colors disabled:opacity-50 cursor-pointer shadow-sm"
+            className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2.5 text-xs rounded-lg transition-colors disabled:opacity-50 cursor-pointer shadow-sm"
           >
-            <Play className={`w-3.5 h-3.5 ${isRunning ? 'animate-spin' : ''}`} />
-            <span>{isRunning ? 'Menjalankan Exec Engine...' : 'Jalankan Pipeline Auto'}</span>
+            <Play className="w-4 h-4 fill-white" />
+            <span>{isRunning ? 'Memproses...' : 'Jalankan Pipeline Autonomus'}</span>
           </button>
         </div>
       </div>

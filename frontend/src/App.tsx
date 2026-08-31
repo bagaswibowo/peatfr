@@ -11,6 +11,7 @@ import { TheoreticalSpecsModal } from './components/TheoreticalSpecsModal';
 const API_BASE = '/api/v1';
 
 export function App() {
+  const [provinces, setProvinces] = useState<Province[]>([]);
   const [selectedProvince, setSelectedProvince] = useState<Province | null>(null);
   const [selectedRegency, setSelectedRegency] = useState<Regency | null>(null);
   const [loadingRealtime, setLoadingRealtime] = useState(false);
@@ -99,6 +100,7 @@ export function App() {
     axios.get(`${API_BASE}/indonesia/regions`)
       .then((res) => {
         if (res.data && res.data.provinces && res.data.provinces.length > 0) {
+          setProvinces(res.data.provinces);
           const defaultProv = res.data.provinces[0]; // Riau
           const defaultReg = defaultProv.regencies[0]; // Kab. Siak
           setSelectedProvince(defaultProv);
@@ -178,6 +180,10 @@ export function App() {
 
         {/* Pipeline Controls Panel */}
         <PipelineControls
+          provinces={provinces}
+          selectedProvince={selectedProvince}
+          selectedRegency={selectedRegency}
+          onSelectRegion={handleSelectRegion}
           imputation={imputation}
           setImputation={setImputation}
           model={model}
@@ -188,7 +194,6 @@ export function App() {
           setEpochs={setEpochs}
           onRunPipeline={() => executePipeline()}
           isRunning={isRunningPipeline}
-          selectedRegency={selectedRegency}
         />
 
         {/* Time Series Charts */}
