@@ -26,6 +26,15 @@ interface HeaderProps {
   onOpenPaperModal: () => void;
 }
 
+export function getRegionNameFromCoords(lat: number, lon: number): string {
+  if (lon >= 95 && lon < 109) return 'Sumatra';
+  if (lon >= 108 && lon < 119) return 'Kalimantan';
+  if (lon >= 118 && lon < 125) return 'Sulawesi';
+  if (lon >= 125 && lon < 142) return 'Papua';
+  if (lon >= 105 && lon < 116 && lat < -5) return 'Jawa';
+  return 'Indonesia';
+}
+
 export const Header: React.FC<HeaderProps> = ({
   selectedProvince,
   selectedRegency,
@@ -35,9 +44,17 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenPaperModal
 }) => {
   const modelName = model === 'arima' ? 'ARIMA + Box-Cox' : model === 'lstm' ? 'LSTM PyTorch' : 'GRU PyTorch';
-  const locationName = selectedRegency
-    ? `${selectedRegency.name}, ${selectedProvince?.name || 'Indonesia'}`
-    : 'Kab. Siak, Riau';
+  
+  let locationName = 'Kab. Siak, Riau';
+  if (selectedRegency) {
+    if (selectedRegency.id.startsWith('CUSTOM-')) {
+      const region = getRegionNameFromCoords(selectedRegency.lat, selectedRegency.lon);
+      locationName = `${selectedRegency.name}, ${region}`;
+    } else {
+      locationName = `${selectedRegency.name}, ${selectedProvince?.name || 'Indonesia'}`;
+    }
+  }
+
   const coords = selectedRegency
     ? `${selectedRegency.lat.toFixed(3)}, ${selectedRegency.lon.toFixed(3)}`
     : '0.820, 102.050';
@@ -56,7 +73,7 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Topbar Mid Stats (Hidden on small mobile) */}
+        {/* Topbar Mid Stats */}
         <div className="hidden md:flex items-center gap-6 text-xs">
           <div className="flex flex-col gap-0.5">
             <span className="text-[10px] uppercase tracking-wider text-[var(--text-dim)] font-mono">Wilayah</span>

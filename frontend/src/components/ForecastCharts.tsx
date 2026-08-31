@@ -122,7 +122,7 @@ export const ForecastCharts: React.FC<ForecastChartsProps> = ({ fullSeries, fore
             </div>
             <div className="flex items-baseline justify-between gap-2 mt-1">
               <span className="text-2xl font-bold tracking-tight text-[var(--text)]">
-                {latestRF.toFixed(1)}<span className="text-xs text-[var(--text-dim)] font-normal ml-1">mm/hr</span>
+                {latestRF.toFixed(1)}<span className="text-xs text-[var(--text-dim)] font-normal ml-1">mm/hari</span>
               </span>
               <div className="w-20 h-8">
                 <ResponsiveContainer width="100%" height="100%">
@@ -163,7 +163,7 @@ export const ForecastCharts: React.FC<ForecastChartsProps> = ({ fullSeries, fore
       <section>
         <div className="mb-3">
           <h2 className="text-[15px] font-semibold tracking-tight text-[var(--text)]">Peringatan aktif</h2>
-          <p className="text-xs text-[var(--text-dim)] mt-0.5">Area terdampak terdeteksi dalam 24 jam terakhir</p>
+          <p className="text-xs text-[var(--text-dim)] mt-0.5">Area terdampak terdeteksi dalam 24 jam terakhir (Sumatra &amp; Kalimantan)</p>
         </div>
 
         <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin">

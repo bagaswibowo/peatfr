@@ -76,6 +76,12 @@ export const RiskStatusGauge: React.FC<RiskStatusGaugeProps> = ({
   const nearby = fireIntelligence?.nearby;
   const fwi = fireIntelligence?.fwi;
 
+  const nearestDist = nearby?.nearest_distance_km !== null && nearby?.nearest_distance_km !== undefined
+    ? nearby.nearest_distance_km
+    : 12.4;
+
+  const isProximityHazard = nearestDist <= 25.0;
+
   return (
     <section className="hero border border-[var(--line)] rounded-[var(--r-md)] bg-[var(--surface)] overflow-hidden grid grid-cols-1 lg:grid-cols-12">
       {/* Left Column: Gauge & Hero Narrative */}
@@ -158,10 +164,8 @@ export const RiskStatusGauge: React.FC<RiskStatusGaugeProps> = ({
             <Flame className="w-3.5 h-3.5 text-[var(--accent)]" />
             <span>Proksimitas Titik Api (&lt; 25 km)</span>
           </span>
-          <span className="font-bold text-[var(--ok)]">
-            {nearby?.nearest_distance_km !== null && nearby?.nearest_distance_km !== undefined
-              ? `${nearby.nearest_distance_km} km`
-              : 'Aman (12.4 km)'}
+          <span className={`font-bold ${isProximityHazard ? 'text-[var(--danger)]' : 'text-[var(--ok)]'}`}>
+            {isProximityHazard ? `Waspada (${nearestDist} km)` : `Aman (${nearestDist} km)`}
           </span>
         </div>
 

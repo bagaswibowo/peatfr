@@ -1,11 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sliders, AlertTriangle } from 'lucide-react';
 
-export const ScenarioSimulator: React.FC = () => {
+interface ScenarioSimulatorProps {
+  currentPfvi?: number;
+}
+
+export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({ currentPfvi = 180.0 }) => {
   const [tempDelta, setTempDelta] = useState<number>(2.0);
   const [dryDays, setDryDays] = useState<number>(10);
   const [wtDepth, setWtDepth] = useState<number>(1.1); // meters below surface
-  const [initialPfvi, setInitialPfvi] = useState<number>(180.0);
+  const [initialPfvi, setInitialPfvi] = useState<number>(currentPfvi);
+
+  useEffect(() => {
+    if (currentPfvi) {
+      setInitialPfvi(currentPfvi);
+    }
+  }, [currentPfvi]);
 
   // Simulates hypothetical scenario
   const simulateScenario = () => {
@@ -107,8 +117,8 @@ export const ScenarioSimulator: React.FC = () => {
             </div>
             <input
               type="range"
-              min="80"
-              max="260"
+              min="20"
+              max="280"
               step="1"
               value={initialPfvi}
               onChange={(e) => setInitialPfvi(parseFloat(e.target.value))}

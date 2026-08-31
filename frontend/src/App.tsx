@@ -127,8 +127,10 @@ export function App() {
 
   const pfviList = pipelineResult ? pipelineResult.full_series.PFVI : [185.0];
   const currentPfvi = pfviList[pfviList.length - 1];
-  const minPfvi = Math.min(...pfviList);
-  const maxPfvi = Math.max(...pfviList);
+
+  const forecastPfviList = pfviList.slice(-h);
+  const minForecastPfvi = Math.min(...forecastPfviList);
+  const maxForecastPfvi = Math.max(...forecastPfviList);
 
   const currentStatus = pipelineResult ? pipelineResult.forecast.Current_Status : 'High';
 
@@ -175,13 +177,13 @@ export function App() {
           rainfall={currentRf}
           temp={currentTemp}
           forecastDays={h}
-          minPfvi={minPfvi}
-          maxPfvi={maxPfvi}
+          minPfvi={minForecastPfvi}
+          maxPfvi={maxForecastPfvi}
           fireIntelligence={sampleData?.fire_intelligence}
           optimizedParams={pipelineResult?.optimization}
         />
 
-        {/* 2. REAL LIVE SATELLITE GIS MAP (DIPINDAHKAN KE ATAS SESUAI PERMINTAAN USER) */}
+        {/* 2. REAL LIVE SATELLITE GIS MAP (POSISI DIPINDAHKAN KE ATAS!) */}
         <PeatlandMap
           currentPfvi={currentPfvi}
           status={currentStatus}
@@ -218,7 +220,7 @@ export function App() {
         )}
 
         {/* 5. WHAT-IF SCENARIO SIMULATOR */}
-        <ScenarioSimulator />
+        <ScenarioSimulator currentPfvi={currentPfvi} />
 
         {/* FOOTER */}
         <footer className="border-t border-[var(--line)] pt-5 mt-4 font-sans text-xs">
