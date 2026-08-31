@@ -1,0 +1,36 @@
+services:
+  peatfr-api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: peatfr-api
+    restart: unless-stopped
+    ports:
+      - "8097:8097"
+    volumes:
+      - ./docs/screenshots:/app/screenshots
+    environment:
+      - PYTHONUNBUFFERED=1
+      - FIRMS_MAP_KEY=${FIRMS_MAP_KEY:-aa16407e5eb11df46b09cafc085fe020}
+
+  peatfr-web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: peatfr-web
+    restart: unless-stopped
+    ports:
+      - "8098:8098"
+    volumes:
+      - ./frontend/dist:/usr/share/nginx/html
+    depends_on:
+      - peatfr-api
+
+  cftunnel-peatfr:
+    image: cloudflare/cloudflared:latest
+    container_name: cftunnel-peatfr
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
+    command: tunnel --no-autoupdate run

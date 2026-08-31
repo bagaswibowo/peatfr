@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #f1f5f9;
+    color: #0f172a;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  }
+}
+
+/* Crisp Clean Light Theme Panels */
+.telemetry-panel {
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+}
+
+.telemetry-card {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+/* Leaflet Container Styling */
+.leaflet-container {
+  background: #e2e8f0 !important;
+  border-radius: 0.5rem;
+}

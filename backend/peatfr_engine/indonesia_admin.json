@@ -1,0 +1,346 @@
+[
+  {
+    "id": "ID-RI",
+    "name": "Riau",
+    "lat": 0.507,
+    "lon": 101.447,
+    "regencies": [
+      {
+        "id": "ID-RI-SIAK",
+        "name": "Kab. Siak",
+        "lat": 0.82,
+        "lon": 102.05,
+        "peat": true
+      },
+      {
+        "id": "ID-RI-BKK",
+        "name": "Kab. Bengkalis",
+        "lat": 1.48,
+        "lon": 102.13,
+        "peat": true
+      },
+      {
+        "id": "ID-RI-PEL",
+        "name": "Kab. Pelalawan",
+        "lat": 0.38,
+        "lon": 102.12,
+        "peat": true
+      },
+      {
+        "id": "ID-RI-RHI",
+        "name": "Kab. Rokan Hilir",
+        "lat": 2.15,
+        "lon": 100.82,
+        "peat": true
+      },
+      {
+        "id": "ID-RI-INH",
+        "name": "Kab. Indragiri Hilir",
+        "lat": -0.33,
+        "lon": 103.15,
+        "peat": true
+      },
+      {
+        "id": "ID-RI-MER",
+        "name": "Kab. Kepulauan Meranti",
+        "lat": 0.98,
+        "lon": 102.7,
+        "peat": true
+      },
+      {
+        "id": "ID-RI-DUM",
+        "name": "Kota Dumai",
+        "lat": 1.67,
+        "lon": 101.45,
+        "peat": true
+      },
+      {
+        "id": "ID-RI-PKU",
+        "name": "Kota Pekanbaru",
+        "lat": 0.533,
+        "lon": 101.45,
+        "peat": false
+      }
+    ]
+  },
+  {
+    "id": "ID-KT",
+    "name": "Kalimantan Tengah",
+    "lat": -1.681,
+    "lon": 113.382,
+    "regencies": [
+      {
+        "id": "ID-KT-SAB",
+        "name": "Kab. Pulang Pisau (Sabangau)",
+        "lat": -2.321,
+        "lon": 113.901,
+        "peat": true
+      },
+      {
+        "id": "ID-KT-PLK",
+        "name": "Kota Palangka Raya",
+        "lat": -2.209,
+        "lon": 113.916,
+        "peat": true
+      },
+      {
+        "id": "ID-KT-KAP",
+        "name": "Kab. Kapuas",
+        "lat": -2.76,
+        "lon": 114.38,
+        "peat": true
+      },
+      {
+        "id": "ID-KT-KTI",
+        "name": "Kab. Kotawaringin Timur (Sampit)",
+        "lat": -2.53,
+        "lon": 112.95,
+        "peat": true
+      },
+      {
+        "id": "ID-KT-KBA",
+        "name": "Kab. Kotawaringin Barat (Pangkalan Bun)",
+        "lat": -2.68,
+        "lon": 111.62,
+        "peat": true
+      },
+      {
+        "id": "ID-KT-KAS",
+        "name": "Kab. Katingan",
+        "lat": -1.95,
+        "lon": 113.4,
+        "peat": true
+      },
+      {
+        "id": "ID-KT-BAR",
+        "name": "Kab. Barito Selatan",
+        "lat": -1.72,
+        "lon": 114.83,
+        "peat": true
+      }
+    ]
+  },
+  {
+    "id": "ID-KB",
+    "name": "Kalimantan Barat",
+    "lat": -0.086,
+    "lon": 109.342,
+    "regencies": [
+      {
+        "id": "ID-KB-KUB",
+        "name": "Kab. Kubu Raya",
+        "lat": -0.45,
+        "lon": 109.33,
+        "peat": true
+      },
+      {
+        "id": "ID-KB-MMP",
+        "name": "Kab. Mempawah",
+        "lat": 0.36,
+        "lon": 108.96,
+        "peat": true
+      },
+      {
+        "id": "ID-KB-KET",
+        "name": "Kab. Ketapang",
+        "lat": -1.84,
+        "lon": 109.97,
+        "peat": true
+      },
+      {
+        "id": "ID-KB-SAM",
+        "name": "Kab. Sambas",
+        "lat": 1.36,
+        "lon": 109.3,
+        "peat": true
+      },
+      {
+        "id": "ID-KB-PTK",
+        "name": "Kota Pontianak",
+        "lat": -0.02,
+        "lon": 109.34,
+        "peat": true
+      }
+    ]
+  },
+  {
+    "id": "ID-JA",
+    "name": "Jambi",
+    "lat": -1.61,
+    "lon": 103.615,
+    "regencies": [
+      {
+        "id": "ID-JA-TAN",
+        "name": "Kab. Tanjung Jabung Timur",
+        "lat": -1.15,
+        "lon": 103.62,
+        "peat": true
+      },
+      {
+        "id": "ID-JA-TAB",
+        "name": "Kab. Tanjung Jabung Barat",
+        "lat": -1.05,
+        "lon": 103.12,
+        "peat": true
+      },
+      {
+        "id": "ID-JA-MUJ",
+        "name": "Kab. Muaro Jambi",
+        "lat": -1.55,
+        "lon": 103.82,
+        "peat": true
+      },
+      {
+        "id": "ID-JA-JMB",
+        "name": "Kota Jambi",
+        "lat": -1.6,
+        "lon": 103.61,
+        "peat": false
+      }
+    ]
+  },
+  {
+    "id": "ID-SS",
+    "name": "Sumatera Selatan",
+    "lat": -3.173,
+    "lon": 104.714,
+    "regencies": [
+      {
+        "id": "ID-SS-OKI",
+        "name": "Kab. Ogan Komering Ilir (OKI)",
+        "lat": -3.35,
+        "lon": 104.82,
+        "peat": true
+      },
+      {
+        "id": "ID-SS-MUB",
+        "name": "Kab. Musi Banyuasin",
+        "lat": -2.88,
+        "lon": 103.81,
+        "peat": true
+      },
+      {
+        "id": "ID-SS-BNS",
+        "name": "Kab. Banyuasin",
+        "lat": -2.88,
+        "lon": 104.38,
+        "peat": true
+      },
+      {
+        "id": "ID-SS-PLB",
+        "name": "Kota Palembang",
+        "lat": -2.99,
+        "lon": 104.75,
+        "peat": false
+      }
+    ]
+  },
+  {
+    "id": "ID-PA",
+    "name": "Papua & Papua Selatan",
+    "lat": -4.269,
+    "lon": 138.08,
+    "regencies": [
+      {
+        "id": "ID-PA-MER",
+        "name": "Kab. Merauke",
+        "lat": -8.1,
+        "lon": 139.7,
+        "peat": true
+      },
+      {
+        "id": "ID-PA-MAP",
+        "name": "Kab. Mappi",
+        "lat": -6.5,
+        "lon": 139.3,
+        "peat": true
+      },
+      {
+        "id": "ID-PA-ASMAT",
+        "name": "Kab. Asmat",
+        "lat": -5.4,
+        "lon": 138.4,
+        "peat": true
+      },
+      {
+        "id": "ID-PA-JAY",
+        "name": "Kota Jayapura",
+        "lat": -2.53,
+        "lon": 140.7,
+        "peat": false
+      }
+    ]
+  },
+  {
+    "id": "ID-KS",
+    "name": "Kalimantan Selatan",
+    "lat": -3.092,
+    "lon": 115.283,
+    "regencies": [
+      {
+        "id": "ID-KS-BAR",
+        "name": "Kab. Barito Kuala",
+        "lat": -3.05,
+        "lon": 114.6,
+        "peat": true
+      },
+      {
+        "id": "ID-KS-BAN",
+        "name": "Kab. Banjar",
+        "lat": -3.32,
+        "lon": 114.85,
+        "peat": true
+      },
+      {
+        "id": "ID-KS-TLA",
+        "name": "Kab. Tanah Laut",
+        "lat": -3.88,
+        "lon": 114.78,
+        "peat": true
+      },
+      {
+        "id": "ID-KS-BDJ",
+        "name": "Kota Banjarmasin",
+        "lat": -3.32,
+        "lon": 114.59,
+        "peat": true
+      }
+    ]
+  },
+  {
+    "id": "ID-SU",
+    "name": "Sumatera Utara",
+    "lat": 2.115,
+    "lon": 99.545,
+    "regencies": [
+      {
+        "id": "ID-SU-LAB",
+        "name": "Kab. Labuhanbatu",
+        "lat": 2.22,
+        "lon": 99.83,
+        "peat": true
+      },
+      {
+        "id": "ID-SU-LBS",
+        "name": "Kab. Labuhanbatu Selatan",
+        "lat": 1.88,
+        "lon": 100.08,
+        "peat": true
+      },
+      {
+        "id": "ID-SU-ASAH",
+        "name": "Kab. Asahan",
+        "lat": 2.98,
+        "lon": 99.62,
+        "peat": true
+      },
+      {
+        "id": "ID-SU-MED",
+        "name": "Kota Medan",
+        "lat": 3.59,
+        "lon": 98.67,
+        "peat": false
+      }
+    ]
+  }
+]
