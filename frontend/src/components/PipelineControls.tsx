@@ -1,5 +1,5 @@
 import React from 'react';
-import { Settings, Play, Database, Cpu, Calendar, MapPin, RefreshCw, Satellite } from 'lucide-react';
+import { Settings, Play, Database, Cpu, Calendar, MapPin, RefreshCw, Satellite, CheckCircle2 } from 'lucide-react';
 import { Province, Regency } from './Header';
 
 interface PipelineControlsProps {
@@ -39,6 +39,14 @@ export const PipelineControls: React.FC<PipelineControlsProps> = ({
   onRunPipeline,
   isRunning
 }) => {
+  // Build flattened options list for a single unified dropdown
+  const allRegencies: { prov: Province; reg: Regency }[] = [];
+  provinces.forEach((prov) => {
+    prov.regencies.forEach((reg) => {
+      allRegencies.push({ prov, reg });
+    });
+  });
+
   return (
     <div className="telemetry-panel bg-white border border-slate-200 rounded-xl p-5 mb-6 shadow-sm">
       {/* Panel Header */}
@@ -50,7 +58,7 @@ export const PipelineControls: React.FC<PipelineControlsProps> = ({
               KONFIGURASI ALGORITMA & MODEL PIPELINE
             </h3>
             <p className="text-[11px] text-slate-500 font-medium">
-              Data telemetri ditarik dari API Satelit Open-Meteo ERA5 & NASA FIRMS berdasarkan lokasi target terpilih
+              Data telemetri ditarik secara live dari API Satelit Open-Meteo ERA5 & NASA FIRMS berdasarkan koordinat target terpilih
             </p>
           </div>
         </div>
@@ -59,67 +67,49 @@ export const PipelineControls: React.FC<PipelineControlsProps> = ({
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <span className="bg-emerald-50 text-emerald-900 border border-emerald-200 px-3 py-1 rounded-lg font-medium flex items-center gap-1.5 shadow-xs">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span>Target Lokasi: <strong>{selectedRegency ? selectedRegency.name : 'Kab. Siak'}</strong> ({selectedRegency ? `${selectedRegency.lat.toFixed(3)}°, ${selectedRegency.lon.toFixed(3)}°` : '0.820°, 102.050°'})</span>
+            <span>Target Aktif: <strong>{selectedRegency ? selectedRegency.name : 'Kab. Siak'}</strong> ({selectedRegency ? `${selectedRegency.lat.toFixed(3)}°, ${selectedRegency.lon.toFixed(3)}°` : '0.820°, 102.050°'})</span>
           </span>
           <span className="bg-blue-50 text-blue-900 border border-blue-200 px-2.5 py-1 rounded-lg font-mono text-[11px] font-semibold flex items-center gap-1">
             <Satellite className="w-3 h-3 text-blue-600" />
-            <span>Open-Meteo ERA5 & FIRMS API</span>
+            <span>Open-Meteo ERA5 & FIRMS API (Live Sat)</span>
           </span>
         </div>
       </div>
 
       {/* Grid Controls (5 Columns) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
-        {/* 1. Target Location Selector (Single Unified Place) */}
-        <div className="sm:col-span-2 lg:col-span-1 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+        {/* 1. Target Location Selector (Single Unified Dropdown) */}
+        <div>
           <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
             <span className="flex items-center gap-1.5">
               <MapPin className="w-3.5 h-3.5 text-emerald-600" />
               <span>Lokasi Target Prediksi:</span>
             </span>
           </label>
-          <div className="space-y-1.5">
-            <select
-              value={selectedProvince?.id || ''}
-              onChange={(e) => {
-                const foundProv = provinces.find((p) => p.id === e.target.value);
-                if (foundProv && foundProv.regencies.length > 0) {
-                  onSelectRegion(foundProv, foundProv.regencies[0]);
-                }
-              }}
-              className="w-full bg-white border border-slate-300 rounded-md px-2.5 py-1.5 text-xs font-mono text-slate-800 focus:outline-none focus:border-emerald-600 cursor-pointer font-medium"
-            >
-              {provinces.map((prov) => (
-                <option key={prov.id} value={prov.id}>
-                  {prov.name}
-                </option>
-              ))}
-            </select>
-
-            <select
-              value={selectedRegency?.id || ''}
-              onChange={(e) => {
-                if (selectedProvince) {
-                  const foundReg = selectedProvince.regencies.find((r) => r.id === e.target.value);
-                  if (foundReg) onSelectRegion(selectedProvince, foundReg);
-                }
-              }}
-              className="w-full bg-white border border-slate-300 rounded-md px-2.5 py-1.5 text-xs font-mono text-slate-800 focus:outline-none focus:border-emerald-600 cursor-pointer font-medium"
-            >
-              {selectedProvince?.regencies.map((reg) => (
-                <option key={reg.id} value={reg.id}>
-                  {reg.name} {reg.peat ? '(Gambut)' : ''}
-                </option>
-              ))}
-            </select>
-          </div>
+          <select
+            value={selectedRegency?.id || ''}
+            onChange={(e) => {
+              const selectedId = e.target.value;
+              const found = allRegencies.find((item) => item.reg.id === selectedId);
+              if (found) {
+                onSelectRegion(found.prov, found.reg);
+              }
+            }}
+            className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-mono text-slate-800 focus:outline-none focus:border-emerald-600 cursor-pointer font-medium"
+          >
+            {allRegencies.map(({ prov, reg }) => (
+              <option key={reg.id} value={reg.id}>
+                {prov.name} — {reg.name} {reg.peat ? '(Gambut)' : ''}
+              </option>
+            ))}
+          </select>
         </div>
 
-        {/* 2. Satellite Telemetry Fetch Button */}
+        {/* 2. Satellite Telemetry Fetch Button & Source Explanation */}
         <div>
           <label className="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
             <Satellite className="w-3.5 h-3.5 text-blue-600" />
-            <span>Telemetri Satelit:</span>
+            <span>Tarik Telemetri Satelit:</span>
           </label>
           <button
             onClick={onLoadRealtimeData}
@@ -127,7 +117,7 @@ export const PipelineControls: React.FC<PipelineControlsProps> = ({
             className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-300 transition-colors disabled:opacity-50 cursor-pointer shadow-xs"
           >
             <RefreshCw className={`w-3.5 h-3.5 text-blue-600 ${loadingRealtime ? 'animate-spin' : ''}`} />
-            <span>{loadingRealtime ? 'Tarik Data...' : 'Tarik Satelit Realtime'}</span>
+            <span>{loadingRealtime ? 'Tarik Data Satelit...' : 'Tarik Satelit Realtime'}</span>
           </button>
         </div>
 
@@ -193,6 +183,14 @@ export const PipelineControls: React.FC<PipelineControlsProps> = ({
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Explanatory Data Source Callout Footer */}
+      <div className="mt-3.5 pt-3 border-t border-slate-100 flex items-center gap-2 text-[11px] text-slate-500">
+        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+        <span>
+          <strong>Alur Data Satelit:</strong> Memilih lokasi (atau mengklik Peta GIS) menarik telemetri harian 30 hari (<code className="font-mono text-emerald-700">Temp</code>, <code className="font-mono text-blue-700">Rf</code>, <code className="font-mono text-cyan-700">SM</code>, <code className="font-mono text-amber-700">WT</code>) langsung dari <strong>Open-Meteo ERA5 API</strong> & <strong>NASA FIRMS API</strong> untuk diumpankan ke pipeline AI.
+        </span>
       </div>
     </div>
   );
