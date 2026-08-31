@@ -690,8 +690,29 @@ services:
     command: tunnel --no-autoupdate run"""
     blocks.append(code(compose_code, lang="yaml"))
 
-    blocks.append(h3("Perintah Git Push & Container Sync:"))
-    blocks.append(code("git add .\ngit commit -m \"feat: update peatfr light mode & notion docs\"\ngit push origin main", lang="shell"))
+    blocks.append(h3("Panduan Cara Menjalankan & Mengimplementasikan Sistem (Self-Hosting / 3rd Party Deployment Guide):"))
+    blocks.append(p("Jika pihak instansi atau peneliti lain ingin mengkloning, mengimplementasikan, dan menjalankan sistem PeatFR secara mandiri pada server internal/cloud, ikuti petunjuk operasional berikut:"))
+    
+    run_guide = """# 1. Kloning Repository Resmi GitHub
+git clone https://github.com/bagaswibowo/peatfr.git
+cd peatfr
+
+# 2. Konfigurasi Variable Lingkungan (.env)
+# Siapkan NASA FIRMS MAP_KEY terotorisasi (atau gunakan default key)
+echo "FIRMS_MAP_KEY=aa16407e5eb11df46b09cafc085fe020" > .env
+
+# 3. Jalankan Kontainer Docker (FastAPI Engine & Web React Light Mode)
+docker-compose up -d --build
+
+# 4. Verifikasi Status Kontainer & Endpoint Interaktif
+# - Akses Dashboard Web UI: http://localhost:8098 (atau via domain reverse proxy)
+# - Akses Swagger REST API Docs: http://localhost:8097/docs
+docker-compose ps
+
+# 5. Monitoring Log Live Engine & Web Service
+docker-compose logs -f peatfr-api peatfr-web"""
+
+    blocks.append(code(run_guide, lang="shell"))
 
     print(f"Total Notion blocks to append: {len(blocks)}")
     append_blocks_in_batches(PAGE_ID, blocks, batch_size=35)

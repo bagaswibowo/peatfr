@@ -3785,7 +3785,7 @@ CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8097"]
 ```
 ---
 
-# 6. LAMPIRAN INFRASTRUKTUR DEPLOYMENT
+# 6. LAMPIRAN INFRASTRUKTUR DEPLOYMENT & PANDUAN RUNNING MANDIRI
 
 ### docker-compose.yml
 ```yaml
@@ -3798,6 +3798,8 @@ services:
     restart: unless-stopped
     ports:
       - "8097:8097"
+    volumes:
+      - ./docs/screenshots:/app/screenshots
     environment:
       - PYTHONUNBUFFERED=1
       - FIRMS_MAP_KEY=${FIRMS_MAP_KEY:-aa16407e5eb11df46b09cafc085fe020}
@@ -3810,6 +3812,8 @@ services:
     restart: unless-stopped
     ports:
       - "8098:8098"
+    volumes:
+      - ./frontend/dist:/usr/share/nginx/html
     depends_on:
       - peatfr-api
 
@@ -3821,4 +3825,31 @@ services:
     environment:
       - TUNNEL_TOKEN=${TUNNEL_TOKEN}
     command: tunnel --no-autoupdate run
+```
+
+---
+
+### Panduan Cara Menjalankan & Mengimplementasikan Sistem (Self-Hosting / 3rd Party Deployment Guide)
+
+Jika pihak instansi, BPBD, atau peneliti lain ingin mengkloning, mengimplementasikan, dan menjalankan sistem PeatFR secara mandiri pada server internal/cloud mereka sendiri, ikuti petunjuk operasional berikut:
+
+```bash
+# 1. Kloning Repository Resmi GitHub
+git clone https://github.com/bagaswibowo/peatfr.git
+cd peatfr
+
+# 2. Konfigurasi Variable Lingkungan (.env)
+# Siapkan NASA FIRMS MAP_KEY terotorisasi (atau gunakan default key)
+echo "FIRMS_MAP_KEY=aa16407e5eb11df46b09cafc085fe020" > .env
+
+# 3. Jalankan Kontainer Docker (FastAPI Engine & Web React Light Mode)
+docker-compose up -d --build
+
+# 4. Verifikasi Status Kontainer & Endpoint Interaktif
+# - Akses Dashboard Web UI: http://localhost:8098 (atau via domain reverse proxy)
+# - Akses Swagger REST API Docs: http://localhost:8097/docs
+docker-compose ps
+
+# 5. Monitoring Log Live Engine & Web Service
+docker-compose logs -f peatfr-api peatfr-web
 ```
