@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, WMSTileLayer, Marker, Popup, Circle, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
-import { MapPin, Flame, Satellite, ShieldAlert, Radio, Crosshair, Zap, Navigation } from 'lucide-react';
+import { MapPin, Flame, Satellite, ShieldAlert, Radio, Crosshair, Zap, Navigation, CheckCircle2 } from 'lucide-react';
 import axios from 'axios';
 
 export interface LocationPreset {
@@ -175,6 +175,7 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
   const handleMapClick = (lat: number, lon: number) => {
     setClickedTarget({ lat, lon });
     const distKm = getDistanceKm(location.lat, location.lon, lat, lon);
+    const title = `Titik Klik Peta (${lat.toFixed(3)}, ${lon.toFixed(3)})`;
     setSelectedEntity({
       type: 'point',
       title: `Koordinat Klik Peta Satelit`,
@@ -187,6 +188,11 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
         'Status Wilayah': 'Realtime Satellite Grid Pick'
       }
     });
+
+    // Directly synchronize location target to custom coordinates on click
+    if (onSelectCustomLocation) {
+      onSelectCustomLocation(lat, lon, title);
+    }
   };
 
   const getMarkerColor = (pfvi: number) => {
@@ -212,7 +218,7 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
               </span>
             </h3>
             <p className="text-xs text-slate-500 font-medium">
-              Peta Satelit Live Resmi NASA FIRMS, VIIRS 375m & GFW Gambut. Klik lokasi manapun untuk inspeksi titik api.
+              Peta Satelit Live Resmi NASA FIRMS, VIIRS 375m & GFW Gambut. Klik titik peta untuk langsung memperbarui prediksi.
             </p>
           </div>
         </div>
@@ -220,8 +226,9 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
         {/* Live Satellite Layer Toggles */}
         <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
           <button
+            type="button"
             onClick={() => setShowFirmsWms(!showFirmsWms)}
-            className={`px-3 py-1.5 rounded border transition-colors flex items-center gap-1.5 font-bold ${
+            className={`px-3 py-1.5 rounded border transition-colors flex items-center gap-1.5 font-bold cursor-pointer ${
               showFirmsWms
                 ? 'bg-rose-600 text-white border-rose-700 shadow-xs'
                 : 'bg-slate-100 text-slate-600 border-slate-300'
@@ -232,8 +239,9 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
           </button>
 
           <button
+            type="button"
             onClick={() => setShowFirmsVector(!showFirmsVector)}
-            className={`px-3 py-1.5 rounded border transition-colors flex items-center gap-1.5 font-bold ${
+            className={`px-3 py-1.5 rounded border transition-colors flex items-center gap-1.5 font-bold cursor-pointer ${
               showFirmsVector
                 ? 'bg-orange-600 text-white border-orange-700 shadow-xs'
                 : 'bg-slate-100 text-slate-600 border-slate-300'
@@ -244,8 +252,9 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
           </button>
 
           <button
+            type="button"
             onClick={() => setShowGfwPeatland(!showGfwPeatland)}
-            className={`px-3 py-1.5 rounded border transition-colors flex items-center gap-1.5 font-bold ${
+            className={`px-3 py-1.5 rounded border transition-colors flex items-center gap-1.5 font-bold cursor-pointer ${
               showGfwPeatland
                 ? 'bg-red-600 text-white border-red-700 shadow-xs'
                 : 'bg-slate-100 text-slate-600 border-slate-300'
@@ -256,8 +265,9 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
           </button>
 
           <button
+            type="button"
             onClick={() => setShowGibsViirsDay(!showGibsViirsDay)}
-            className={`px-3 py-1.5 rounded border transition-colors flex items-center gap-1.5 font-bold ${
+            className={`px-3 py-1.5 rounded border transition-colors flex items-center gap-1.5 font-bold cursor-pointer ${
               showGibsViirsDay
                 ? 'bg-cyan-700 text-white border-cyan-800 shadow-xs'
                 : 'bg-slate-100 text-slate-600 border-slate-300'
@@ -285,6 +295,7 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
             {severeAlerts.map((alert) => (
               <button
                 key={alert.id}
+                type="button"
                 onClick={() => {
                   setSelectedEntity({
                     type: 'gfw',
@@ -295,7 +306,7 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
                       'Lokasi Kebakaran': alert.location,
                       'Estimasi Luas Terbakar': `${alert.estimated_burned_km2} km² (${alert.estimated_burned_ha} Ha)`,
                       'Intensitas FRP Maks': `${alert.frp_max_mw} MW`,
-                      'Satelit Pengawas': alert.satellite_sensor,
+                      'Satelit Sensor': alert.satellite_sensor,
                       'Tingkat Bahaya': alert.severity,
                       'Status Waktu': alert.updated_ago
                     }
@@ -313,7 +324,7 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
                 <div className="text-[11px] text-slate-700 truncate mt-1 font-medium">{alert.location}</div>
                 <div className="text-[10px] text-slate-500 mt-1.5 flex items-center justify-between pt-1 border-t border-slate-100">
                   <span>{alert.updated_ago}</span>
-                  <span className="text-emerald-700 font-bold group-hover:underline">Fokus Peta →</span>
+                  <span className="text-emerald-700 font-bold group-hover:underline">Fokus Peta & Prediksi →</span>
                 </div>
               </button>
             ))}
@@ -377,6 +388,7 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
                   click: (e) => {
                     e.originalEvent.stopPropagation();
                     const distKm = getDistanceKm(location.lat, location.lon, hotspot.latitude, hotspot.longitude);
+                    const title = `Hotspot NASA FIRMS (${hotspot.latitude.toFixed(3)}, ${hotspot.longitude.toFixed(3)})`;
                     setSelectedEntity({
                       type: 'hotspot',
                       title: `NASA FIRMS Hotspot (VIIRS)`,
@@ -391,6 +403,9 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
                         'Jarak ke Stasiun': `${distKm.toFixed(2)} km`
                       }
                     });
+                    if (onSelectCustomLocation) {
+                      onSelectCustomLocation(hotspot.latitude, hotspot.longitude, title);
+                    }
                   }
                 }}
               >
@@ -403,7 +418,10 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
                     <div>Kecerahan (T_i4): {hotspot.bright_ti4} K</div>
                     <div>Daya FRP: {hotspot.frp > 0 ? `${hotspot.frp} MW` : 'N/A'}</div>
                     <div>Satelit: {hotspot.satellite} ({hotspot.instrument})</div>
-                    <div className="mt-1 text-[10px] text-orange-700 font-bold">✓ Authorized NASA FIRMS Key</div>
+                    <div className="mt-1.5 text-[10px] text-emerald-700 font-bold flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                      <span>Prediksi Aktif Terpasang</span>
+                    </div>
                   </div>
                 </Popup>
               </Marker>
@@ -419,6 +437,7 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
                   click: (e) => {
                     e.originalEvent.stopPropagation();
                     const distKm = getDistanceKm(location.lat, location.lon, fire.latitude, fire.longitude);
+                    const title = `GFW Peatland Fire (${fire.latitude.toFixed(3)}, ${fire.longitude.toFixed(3)})`;
                     setSelectedEntity({
                       type: 'gfw',
                       title: `GFW Vector Fire on Peatland`,
@@ -433,6 +452,9 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
                         'Jarak ke Stasiun': `${distKm.toFixed(2)} km`
                       }
                     });
+                    if (onSelectCustomLocation) {
+                      onSelectCustomLocation(fire.latitude, fire.longitude, title);
+                    }
                   }
                 }}
               >
@@ -445,7 +467,10 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
                     <div>Lokasi: {fire.adm2 || 'Kab'}, {fire.adm1 || 'Prov'}</div>
                     <div>Kecerahan: {fire.bright_ti4__K || '-'} K</div>
                     <div>Daya FRP: {fire.frp__MW ? `${fire.frp__MW} MW` : '-'}</div>
-                    <div className="mt-1 text-[10px] text-emerald-700 font-bold">✓ Verified GFW Peatland Layer</div>
+                    <div className="mt-1 text-[10px] text-emerald-700 font-bold flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                      <span>Prediksi Aktif Terpasang</span>
+                    </div>
                   </div>
                 </Popup>
               </Marker>
@@ -461,12 +486,10 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
                     </div>
                     <div>Lat: {clickedTarget.lat.toFixed(5)}</div>
                     <div>Lon: {clickedTarget.lon.toFixed(5)}</div>
-                    <button
-                      onClick={() => onSelectCustomLocation && onSelectCustomLocation(clickedTarget.lat, clickedTarget.lon)}
-                      className="mt-2 w-full px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded text-[11px] transition-colors cursor-pointer"
-                    >
-                      Analisis Telemetri Titik Ini
-                    </button>
+                    <div className="mt-1 text-[10px] text-sky-700 font-bold flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3 text-sky-600" />
+                      <span>Telemetri & Prediksi AI Terhubung</span>
+                    </div>
                   </div>
                 </Popup>
               </Marker>
@@ -582,6 +605,7 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
 
                 {onSelectCustomLocation && (
                   <button
+                    type="button"
                     onClick={() => onSelectCustomLocation(selectedEntity.lat, selectedEntity.lon, selectedEntity.title)}
                     className="w-full mt-2 py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded text-xs transition-colors flex items-center justify-center gap-2 shadow-xs cursor-pointer"
                   >
@@ -602,7 +626,7 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
           </div>
 
           <div className="mt-4 pt-3 border-t border-slate-200 text-[10px] text-slate-500 font-mono flex items-center justify-between font-medium">
-            <span>Koordinat Stasiun:</span>
+            <span>Koordinat Active Target:</span>
             <span className="text-slate-800 font-bold">{location.lat.toFixed(3)}, {location.lon.toFixed(3)}</span>
           </div>
         </div>
