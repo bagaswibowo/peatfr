@@ -241,6 +241,28 @@ def main():
     ))
     blocks.append(divider())
 
+    # README.md Section in Notion
+    blocks.append(h1("📋 Project README & Quick Access"))
+    blocks.append(callout(
+        "Dokumentasi README.md Resmi Repository GitHub (https://github.com/bagaswibowo/peatfr):\n"
+        "• Production Live URL: https://peatfr.bagaswibowo.app/\n"
+        "• Baseline Journal Paper: Ecological Informatics 92 (2025) 103532\n"
+        "• Baseline R Package: https://github.com/mellygsln/peatfr\n"
+        "• Benchmark Dataset: https://bit.ly/DatasetSabangau",
+        emoji="📌",
+        color="blue_background"
+    ))
+    blocks.append(h2("Ringkasan Fitur Produksi vs Baseline Jurnal"))
+    blocks.append(bullet("Interface: React 18 + Vite Crisp Light Mode Web Interface (vs. R CLI/Script)"))
+    blocks.append(bullet("Backend Engine: Python 3.13 FastAPI Engine dengan PyTorch & SciPy (vs. R package functions)"))
+    blocks.append(bullet("Data Source: Live Realtime Open-Meteo ERA5 API untuk 38 Provinsi Indonesia (vs. Static CSV Sabangau 192 hari)"))
+    blocks.append(bullet("Hotspot Satelit: Live NASA FIRMS API (VIIRS 375m & MODIS) radius 50km (vs. Offline points)"))
+    blocks.append(bullet("Peta GIS Spasial: Leaflet GIS Interaktif dengan GFW Peatland & NASA GIBS WMS (vs. Static ggplot maps)"))
+    blocks.append(bullet("Fire Intelligence: Multi-Source Aggregator FIRMS, GFW, FirePing/GWIS (vs. Tidak ada)"))
+    blocks.append(bullet("Simulator: Interactive What-If Weather Scenario Simulator Sliders (vs. Re-run script manual)"))
+    blocks.append(bullet("Deployment: Docker Compose + Cloudflare Tunnel Deployment (vs. Sesi R lokal)"))
+    blocks.append(divider())
+
     # Metadata HKI Table
     blocks.append(h2("Data Pendaftaran Hak Cipta (HKI)"))
     blocks.append(bullet("Jenis Ciptaan: Program Komputer (Aplikasi Web Telemetri GIS Satelit & AI Fire Forecasting)"))
