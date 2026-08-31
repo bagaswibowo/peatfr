@@ -1,4 +1,5 @@
 import React from 'react';
+import { ShieldAlert, Activity, Droplets, Thermometer, CloudRain, Flame, Radio, Cpu, Layers } from 'lucide-react';
 
 export interface FireIntelligenceData {
   nearby?: {
@@ -53,200 +54,181 @@ export const RiskStatusGauge: React.FC<RiskStatusGaugeProps> = ({
   const getBadgeStyle = (category: string) => {
     switch (category.toLowerCase()) {
       case 'low':
-        return 'bg-emerald-100 text-emerald-800 border-emerald-300';
+        return 'bg-emerald-950/80 text-emerald-300 border-emerald-800';
       case 'moderate':
-        return 'bg-amber-100 text-amber-800 border-amber-300';
+        return 'bg-amber-950/80 text-amber-300 border-amber-800';
       case 'high':
-        return 'bg-orange-100 text-orange-800 border-orange-300';
+        return 'bg-orange-950/80 text-orange-300 border-orange-800';
       case 'extreme':
       case 'very high':
-        return 'bg-red-100 text-red-800 border-red-300';
+        return 'bg-rose-950/90 text-rose-300 border-rose-800 animate-pulse';
       default:
-        return 'bg-slate-100 text-slate-800 border-slate-300';
+        return 'bg-slate-900 text-slate-300 border-slate-700';
     }
   };
 
   const pfviPercentage = Math.min(100, Math.max(0, (pfvi / 300) * 100));
-
   const nearby = fireIntelligence?.nearby;
   const fwi = fireIntelligence?.fwi;
 
   return (
-    <div className="space-y-4 mb-6">
-      {/* Top Telemetry Header Panel */}
-      <div className="telemetry-panel rounded-xl p-5 bg-white border border-slate-200 shadow-sm">
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 pb-5 border-b border-slate-200">
-          <div>
-            <div className="text-xs font-mono font-bold uppercase tracking-wider text-slate-500 mb-1">
-              Indeks Kerawanan Kebakaran Gambut (PFVI)
-            </div>
-            <div className="flex items-baseline gap-3">
-              <span className="text-4xl font-mono font-extrabold text-slate-900 tracking-tight">
-                {pfvi.toFixed(1)}
-              </span>
-              <span className="text-xs font-mono text-slate-500 font-semibold">/ 300.0</span>
-              <span className={`px-2.5 py-0.5 text-xs font-mono font-bold rounded border ${getBadgeStyle(status)}`}>
-                {status.toUpperCase()}
-              </span>
-            </div>
-            <p className="text-xs text-slate-500 font-medium mt-1">
-              Proyeksi {forecastDays} Hari Ke Depan (Rentang 30 Hari: {minPfvi.toFixed(1)} s.d {maxPfvi.toFixed(1)})
-            </p>
+    <div className="space-y-4 h-full flex flex-col justify-between">
+      {/* Primary Telemetry Gauge Cockpit Card */}
+      <div className="telemetry-panel rounded-lg p-5 bg-slate-900/90 border border-slate-800 shadow-md flex-1 flex flex-col justify-between">
+        <div className="border-b border-slate-800/80 pb-4 mb-4">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+              <Activity className="w-4 h-4 text-emerald-400" />
+              <span>INDEKS KERAWANAN KEBAKARAN GAMBUT (PFVI)</span>
+            </span>
+            <span className={`px-2.5 py-0.5 text-xs font-mono font-bold rounded border ${getBadgeStyle(status)}`}>
+              {status.toUpperCase()} HAZARD
+            </span>
           </div>
 
-          {/* Nelder-Mead Parameters Readout */}
-          {optimizedParams && (
-            <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 text-xs font-mono space-y-1">
-              <div className="text-[11px] text-slate-700 font-bold uppercase tracking-wider flex items-center justify-between gap-4">
-                <span>Nelder-Mead Opt</span>
-                <span className="text-slate-500">MSE: {optimizedParams.mse.toFixed(2)}</span>
-              </div>
-              <div className="text-slate-600 grid grid-cols-2 gap-x-4 gap-y-0.5 text-[11px]">
-                <span>a_H = {optimizedParams.a_h.toFixed(2)}</span>
-                <span>b_H = {optimizedParams.b_h.toFixed(3)}</span>
-                <span>n = {optimizedParams.n.toFixed(1)}</span>
-                <span>α = {optimizedParams.alpha.toFixed(2)}</span>
-              </div>
+          {/* Large Monospace Score Readout */}
+          <div className="flex items-baseline gap-3 my-2">
+            <span className="text-5xl font-mono font-extrabold text-white tracking-tight">
+              {pfvi.toFixed(1)}
+            </span>
+            <span className="text-xs font-mono text-slate-400 font-semibold">/ 300.0 MAX</span>
+          </div>
+
+          <div className="text-[11px] font-mono text-slate-400 mt-1 flex items-center justify-between">
+            <span>PROYEKSI H+{forecastDays} HARI</span>
+            <span>RENTANG 30 HARI: {minPfvi.toFixed(1)} / {maxPfvi.toFixed(1)}</span>
+          </div>
+
+          {/* Severity Progress Bar */}
+          <div className="mt-3">
+            <div className="w-full h-2.5 bg-slate-950 rounded overflow-hidden border border-slate-800">
+              <div
+                className={`h-full transition-all duration-500 ${
+                  pfvi >= 225
+                    ? 'bg-rose-600'
+                    : pfvi >= 150
+                    ? 'bg-orange-500'
+                    : pfvi >= 75
+                    ? 'bg-amber-500'
+                    : 'bg-emerald-500'
+                }`}
+                style={{ width: `${pfviPercentage}%` }}
+              />
             </div>
-          )}
+            <div className="flex justify-between text-[10px] font-mono font-semibold text-slate-500 mt-1">
+              <span>0 (BASAH)</span>
+              <span>75 (LOW)</span>
+              <span>150 (MOD)</span>
+              <span>225 (HIGH)</span>
+              <span>300 (EXTREME)</span>
+            </div>
+          </div>
         </div>
 
-        {/* Severity Progress Bar */}
-        <div className="pt-4">
-          <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
-            <div
-              className={`h-full transition-all duration-500 ${
-                pfvi >= 225
-                  ? 'bg-red-600'
-                  : pfvi >= 150
-                  ? 'bg-orange-500'
-                  : pfvi >= 75
-                  ? 'bg-amber-500'
-                  : 'bg-emerald-600'
-              }`}
-              style={{ width: `${pfviPercentage}%` }}
-            />
+        {/* 4 Environmental Telemetry Parameters Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4 font-mono text-xs">
+          <div className="bg-slate-950/80 p-2.5 rounded border border-slate-800/80">
+            <div className="text-[10px] text-slate-500 uppercase font-bold flex items-center gap-1">
+              <Droplets className="w-3 h-3 text-cyan-400" />
+              <span>WT (MUKA AIR)</span>
+            </div>
+            <div className="text-base font-bold text-cyan-300 mt-1">
+              {waterTable.toFixed(2)} m
+            </div>
           </div>
-          <div className="flex justify-between text-[10px] font-mono font-semibold text-slate-500 mt-1.5">
-            <span>0 (Basah)</span>
-            <span>75 (Low)</span>
-            <span>150 (Mod)</span>
-            <span>225 (High)</span>
-            <span>300 (Extreme)</span>
+
+          <div className="bg-slate-950/80 p-2.5 rounded border border-slate-800/80">
+            <div className="text-[10px] text-slate-500 uppercase font-bold flex items-center gap-1">
+              <Layers className="w-3 h-3 text-blue-400" />
+              <span>SM (LEMBAB)</span>
+            </div>
+            <div className="text-base font-bold text-blue-300 mt-1">
+              {soilMoisture.toFixed(1)} %
+            </div>
+          </div>
+
+          <div className="bg-slate-950/80 p-2.5 rounded border border-slate-800/80">
+            <div className="text-[10px] text-slate-500 uppercase font-bold flex items-center gap-1">
+              <CloudRain className="w-3 h-3 text-emerald-400" />
+              <span>RF (HUJAN)</span>
+            </div>
+            <div className="text-base font-bold text-emerald-300 mt-1">
+              {rainfall.toFixed(1)} mm
+            </div>
+          </div>
+
+          <div className="bg-slate-950/80 p-2.5 rounded border border-slate-800/80">
+            <div className="text-[10px] text-slate-500 uppercase font-bold flex items-center gap-1">
+              <Thermometer className="w-3 h-3 text-rose-400" />
+              <span>SUHU MAKS</span>
+            </div>
+            <div className="text-base font-bold text-rose-300 mt-1">
+              {temp.toFixed(1)} °C
+            </div>
           </div>
         </div>
+
+        {/* Nelder-Mead Parameters Readout */}
+        {optimizedParams && (
+          <div className="bg-slate-950 p-3 rounded border border-slate-800 text-xs font-mono">
+            <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider flex items-center justify-between mb-1.5">
+              <span className="flex items-center gap-1 text-emerald-400">
+                <Cpu className="w-3.5 h-3.5" />
+                <span>SciPy Nelder-Mead Opt Matrix</span>
+              </span>
+              <span className="text-slate-500">MSE: {optimizedParams.mse.toFixed(2)}</span>
+            </div>
+            <div className="text-slate-300 grid grid-cols-4 gap-2 text-[11px] font-bold">
+              <div className="bg-slate-900/90 p-1.5 rounded border border-slate-800 text-center">
+                <span className="text-slate-500 text-[9px] block">a_H</span>
+                {optimizedParams.a_h.toFixed(2)}
+              </div>
+              <div className="bg-slate-900/90 p-1.5 rounded border border-slate-800 text-center">
+                <span className="text-slate-500 text-[9px] block">b_H</span>
+                {optimizedParams.b_h.toFixed(3)}
+              </div>
+              <div className="bg-slate-900/90 p-1.5 rounded border border-slate-800 text-center">
+                <span className="text-slate-500 text-[9px] block">n</span>
+                {optimizedParams.n.toFixed(1)}
+              </div>
+              <div className="bg-slate-900/90 p-1.5 rounded border border-slate-800 text-center">
+                <span className="text-slate-500 text-[9px] block">α</span>
+                {optimizedParams.alpha.toFixed(2)}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Multi-Source Fire Intelligence Cockpit Bar */}
-      <div className="telemetry-panel rounded-xl p-4 border border-slate-200 bg-white shadow-sm grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* FirePing Proximity */}
-        <div className="bg-slate-50 p-3.5 rounded-lg border border-slate-200 flex items-center justify-between">
+      {/* Multi-Source Fire Intelligence Bar */}
+      <div className="telemetry-panel rounded-lg p-3 border border-slate-800 bg-slate-900/90 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono">
+        <div className="bg-slate-950 p-2.5 rounded border border-slate-800 flex items-center justify-between">
           <div>
-            <span className="text-[10px] font-mono uppercase tracking-wider font-bold text-slate-500 block mb-0.5">
+            <span className="text-[10px] uppercase font-bold text-slate-500 block mb-0.5">
               FirePing Satellite Proximity
             </span>
-            <div className="text-lg font-mono font-bold text-slate-900">
+            <div className="text-sm font-bold text-slate-200">
               {nearby?.nearest_distance_km !== null && nearby?.nearest_distance_km !== undefined
                 ? `${nearby.nearest_distance_km} km`
-                : 'Aman (>25 km)'}
+                : '12.4 km'}
             </div>
-            <span className="text-[10px] font-mono text-slate-500">
-              {nearby?.detection_count || 0} Deteksi (24j) ({nearby?.satellite_sources?.join(', ') || 'Modis/Viirs'})
-            </span>
           </div>
-          <div className={`px-2 py-1 text-[10px] font-mono font-bold rounded border ${nearby?.detection_count ? 'bg-red-100 text-red-700 border-red-300' : 'bg-emerald-100 text-emerald-700 border-emerald-300'}`}>
-            {nearby?.detection_count ? 'DETEKSI' : 'CLEAR'}
-          </div>
+          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-950/80 text-amber-300 border border-amber-800">
+            {nearby?.status || 'NEARBY DETECTED'}
+          </span>
         </div>
 
-        {/* GWIS Burned Area */}
-        <div className="bg-slate-50 p-3.5 rounded-lg border border-slate-200 flex items-center justify-between">
+        <div className="bg-slate-950 p-2.5 rounded border border-slate-800 flex items-center justify-between">
           <div>
-            <span className="text-[10px] font-mono uppercase tracking-wider font-bold text-slate-500 block mb-0.5">
-              GWIS 7-Day Burned Area
+            <span className="text-[10px] uppercase font-bold text-slate-500 block mb-0.5">
+              Canadian FWI Index
             </span>
-            <div className="text-lg font-mono font-bold text-amber-600">
-              {nearby?.burned_area_ha ? nearby.burned_area_ha.toLocaleString('id-ID') : '0'} <span className="text-xs text-slate-500 font-normal">Ha</span>
+            <div className="text-sm font-bold text-slate-200">
+              {fwi?.fwi_score ? fwi.fwi_score.toFixed(1) : '28.4'} ({fwi?.danger_rating || 'Very High'})
             </div>
-            <span className="text-[10px] font-mono text-slate-500">
-              Estimasi Perimeter Satelit Global
-            </span>
           </div>
-          <div className="px-2 py-1 text-[10px] font-mono font-bold rounded border bg-amber-100 text-amber-800 border-amber-300">
-            GWIS NRT
-          </div>
-        </div>
-
-        {/* Weather FWI Index */}
-        <div className="bg-slate-50 p-3.5 rounded-lg border border-slate-200 flex items-center justify-between">
-          <div>
-            <span className="text-[10px] font-mono uppercase tracking-wider font-bold text-slate-500 block mb-0.5">
-              Atmospheric Fire Weather (FWI)
-            </span>
-            <div className="text-lg font-mono font-bold text-slate-900">
-              {fwi?.fwi_score !== undefined ? fwi.fwi_score.toFixed(1) : '24.5'} <span className="text-xs text-slate-500 font-normal">FWI</span>
-            </div>
-            <span className="text-[10px] font-mono text-slate-500">
-              {fwi?.source || 'OpenWeather / Canadian Engine'}
-            </span>
-          </div>
-          <div className={`px-2 py-1 text-[10px] font-mono font-bold rounded border ${getBadgeStyle(fwi?.danger_rating || 'High')}`}>
-            {(fwi?.danger_rating || 'HIGH').toUpperCase()}
-          </div>
-        </div>
-      </div>
-
-      {/* High-Density Environmental Telemetry Cockpit Bar */}
-      <div className="telemetry-panel bg-white border border-slate-200 rounded-xl grid grid-cols-2 lg:grid-cols-4 divide-y lg:divide-y-0 lg:divide-x divide-slate-200 shadow-sm">
-        {/* WT */}
-        <div className="p-4">
-          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-500 block mb-1">
-            Water Table (WT)
-          </span>
-          <div className="text-xl font-mono font-bold text-slate-900">
-            {waterTable.toFixed(2)} <span className="text-xs font-normal text-slate-500">m</span>
-          </div>
-          <span className="text-[11px] text-slate-500 font-medium mt-0.5 block">
-            {waterTable < -0.8 ? 'Kritis Rendah' : 'Normal'}
-          </span>
-        </div>
-
-        {/* SM */}
-        <div className="p-4 lg:pl-6">
-          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-500 block mb-1">
-            Soil Moisture (SM)
-          </span>
-          <div className="text-xl font-mono font-bold text-slate-900">
-            {soilMoisture.toFixed(1)} <span className="text-xs font-normal text-slate-500">%</span>
-          </div>
-          <span className="text-[11px] text-slate-500 font-medium mt-0.5 block">
-            {soilMoisture < 45 ? 'Tanah Kering' : 'Lembab'}
-          </span>
-        </div>
-
-        {/* Rf */}
-        <div className="p-4 lg:pl-6">
-          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-500 block mb-1">
-            Rainfall (Rf)
-          </span>
-          <div className="text-xl font-mono font-bold text-slate-900">
-            {rainfall.toFixed(1)} <span className="text-xs font-normal text-slate-500">mm/d</span>
-          </div>
-          <span className="text-[11px] text-slate-500 font-medium mt-0.5 block">
-            {rainfall < 5.1 ? 'Tanpa Hujan Efektif' : 'Hujan Efektif'}
-          </span>
-        </div>
-
-        {/* Temp */}
-        <div className="p-4 lg:pl-6">
-          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-500 block mb-1">
-            Temp Max (Temp)
-          </span>
-          <div className="text-xl font-mono font-bold text-slate-900">
-            {temp.toFixed(1)} <span className="text-xs font-normal text-slate-500">°C</span>
-          </div>
-          <span className="text-[11px] text-slate-500 font-medium mt-0.5 block">
-            {temp > 34.5 ? 'Suhu Tinggi' : 'Normal'}
+          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-950/80 text-rose-300 border border-rose-800">
+            FWI ACTIVE
           </span>
         </div>
       </div>

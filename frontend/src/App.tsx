@@ -144,53 +144,60 @@ export function App() {
     : { id: 'sabangau', name: 'Sabangau, Kalteng', lat: -2.321, lon: 113.901 };
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900 pb-16">
-      <Header
-        onOpenPaperModal={() => setIsPaperModalOpen(true)}
-      />
+    <div className="min-h-[100dvh] bg-[#070b14] text-slate-100 antialiased font-sans pb-16 selection:bg-emerald-500 selection:text-white">
+      {/* Structural Header Navigation */}
+      <Header onOpenPaperModal={() => setIsPaperModalOpen(true)} />
 
-      <main className="max-w-7xl mx-auto px-4 lg:px-8">
-        {/* Risk Gauge & Parameter Badges */}
-        <RiskStatusGauge
-          pfvi={currentPfvi}
-          status={currentStatus}
-          waterTable={currentWT}
-          soilMoisture={currentSM}
-          rainfall={currentRf}
-          temp={currentTemp}
-          forecastDays={h}
-          minPfvi={minPfvi}
-          maxPfvi={maxPfvi}
-          fireIntelligence={sampleData?.fire_intelligence}
-          optimizedParams={pipelineResult?.optimization}
-        />
+      {/* Main Tactical Telemetry Cockpit Container */}
+      <main className="max-w-[1536px] mx-auto px-4 lg:px-8 space-y-5">
+        {/* Top Control & Telemetry Grid Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+          {/* Left: Risk Gauge & Hydrological Readout (5 Cols) */}
+          <div className="lg:col-span-5 flex flex-col">
+            <RiskStatusGauge
+              pfvi={currentPfvi}
+              status={currentStatus}
+              waterTable={currentWT}
+              soilMoisture={currentSM}
+              rainfall={currentRf}
+              temp={currentTemp}
+              forecastDays={h}
+              minPfvi={minPfvi}
+              maxPfvi={maxPfvi}
+              fireIntelligence={sampleData?.fire_intelligence}
+              optimizedParams={pipelineResult?.optimization}
+            />
+          </div>
 
-        {/* Interactive GIS Map */}
+          {/* Right: Pipeline Controls & Location Synchronizer (7 Cols) */}
+          <div className="lg:col-span-7 flex flex-col">
+            <PipelineControls
+              provinces={provinces}
+              selectedProvince={selectedProvince}
+              selectedRegency={selectedRegency}
+              onSelectRegion={handleSelectRegion}
+              onLoadRealtimeData={() => fetchRealtimeData(selectedRegency)}
+              loadingRealtime={loadingRealtime}
+              imputation={imputation}
+              setImputation={setImputation}
+              model={model}
+              setModel={setModel}
+              h={h}
+              setH={setH}
+              epochs={epochs}
+              setEpochs={setEpochs}
+              onRunPipeline={() => executePipeline()}
+              isRunning={isRunningPipeline}
+            />
+          </div>
+        </div>
+
+        {/* Real Live Satellite GIS Map Component */}
         <PeatlandMap
           currentPfvi={currentPfvi}
           status={currentStatus}
           location={locationPreset}
           onSelectCustomLocation={handleSelectCustomLocation}
-        />
-
-        {/* Pipeline Controls Panel */}
-        <PipelineControls
-          provinces={provinces}
-          selectedProvince={selectedProvince}
-          selectedRegency={selectedRegency}
-          onSelectRegion={handleSelectRegion}
-          onLoadRealtimeData={() => fetchRealtimeData(selectedRegency)}
-          loadingRealtime={loadingRealtime}
-          imputation={imputation}
-          setImputation={setImputation}
-          model={model}
-          setModel={setModel}
-          h={h}
-          setH={setH}
-          epochs={epochs}
-          setEpochs={setEpochs}
-          onRunPipeline={() => executePipeline()}
-          isRunning={isRunningPipeline}
         />
 
         {/* Time Series Charts */}

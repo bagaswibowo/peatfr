@@ -53,7 +53,7 @@ function getDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): 
 const createCustomIcon = (color: string) => {
   return L.divIcon({
     className: 'custom-leaflet-marker',
-    html: `<div style="background-color: ${color}; width: 18px; height: 18px; border-radius: 50%; border: 2.5px solid white; box-shadow: 0 2px 10px rgba(0,0,0,0.5); cursor: pointer;"></div>`,
+    html: `<div style="background-color: ${color}; width: 18px; height: 18px; border-radius: 50%; border: 2.5px solid white; box-shadow: 0 0 12px ${color}; cursor: pointer;"></div>`,
     iconSize: [18, 18],
     iconAnchor: [9, 9]
   });
@@ -62,7 +62,7 @@ const createCustomIcon = (color: string) => {
 const createPeatlandFireIcon = () => {
   return L.divIcon({
     className: 'gfw-peatland-fire-marker',
-    html: `<div style="background-color: #dc2626; width: 14px; height: 14px; border-radius: 50%; border: 2px solid #fee2e2; box-shadow: 0 0 12px #dc2626; animation: pulse 1.5s infinite; cursor: pointer;"></div>`,
+    html: `<div style="background-color: #ef4444; width: 14px; height: 14px; border-radius: 50%; border: 2px solid #fee2e2; box-shadow: 0 0 14px #ef4444; animation: pulse 1.5s infinite; cursor: pointer;"></div>`,
     iconSize: [14, 14],
     iconAnchor: [7, 7]
   });
@@ -71,7 +71,7 @@ const createPeatlandFireIcon = () => {
 const createFirmsHotspotIcon = () => {
   return L.divIcon({
     className: 'firms-hotspot-marker',
-    html: `<div style="background-color: #ea580c; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #ffedd5; box-shadow: 0 0 10px #ea580c; cursor: pointer;"></div>`,
+    html: `<div style="background-color: #f97316; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #ffedd5; box-shadow: 0 0 10px #f97316; cursor: pointer;"></div>`,
     iconSize: [12, 12],
     iconAnchor: [6, 6]
   });
@@ -80,7 +80,7 @@ const createFirmsHotspotIcon = () => {
 const createTargetIcon = () => {
   return L.divIcon({
     className: 'clicked-target-marker',
-    html: `<div style="background-color: #0284c7; width: 16px; height: 16px; border-radius: 50%; border: 2.5px solid white; box-shadow: 0 0 12px #0284c7; cursor: pointer;"></div>`,
+    html: `<div style="background-color: #0284c7; width: 16px; height: 16px; border-radius: 50%; border: 2.5px solid white; box-shadow: 0 0 14px #0284c7; cursor: pointer;"></div>`,
     iconSize: [16, 16],
     iconAnchor: [8, 8]
   });
@@ -189,36 +189,35 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
       }
     });
 
-    // Directly synchronize location target to custom coordinates on click
     if (onSelectCustomLocation) {
       onSelectCustomLocation(lat, lon, title);
     }
   };
 
   const getMarkerColor = (pfvi: number) => {
-    if (pfvi >= 225) return '#dc2626'; // Red
-    if (pfvi >= 150) return '#ea580c'; // Orange
-    if (pfvi >= 75) return '#d97706';  // Amber
-    return '#16a34a'; // Green
+    if (pfvi >= 225) return '#ef4444'; // Red
+    if (pfvi >= 150) return '#f97316'; // Orange
+    if (pfvi >= 75) return '#f59e0b';  // Amber
+    return '#10b981'; // Green
   };
 
   const color = getMarkerColor(currentPfvi);
 
   return (
-    <div className="telemetry-panel rounded-xl p-5 mb-6 bg-white border border-slate-200 shadow-sm">
-      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 mb-4">
-        <div className="flex items-center gap-2">
-          <Satellite className="w-5 h-5 text-emerald-600 shrink-0" />
+    <div className="telemetry-panel rounded-lg p-5 bg-slate-900/90 border border-slate-800 shadow-md mb-5">
+      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 mb-4 border-b border-slate-800/80 pb-3">
+        <div className="flex items-center gap-2.5">
+          <Satellite className="w-5 h-5 text-emerald-400 shrink-0" />
           <div>
-            <h3 className="text-sm font-bold tracking-wide text-slate-900 flex items-center gap-2 flex-wrap">
+            <h3 className="text-xs font-mono font-bold tracking-wide text-white flex items-center gap-2 flex-wrap">
               REAL LIVE SATELLITE FIRE MAP (NASA FIRMS & VIIRS OVERPASS)
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-mono bg-emerald-100 text-emerald-800 border border-emerald-300 rounded font-semibold">
-                <Radio className="w-3 h-3 text-emerald-600 animate-pulse" />
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-mono bg-emerald-950/80 text-emerald-300 border border-emerald-800 rounded font-semibold">
+                <Radio className="w-3 h-3 text-emerald-400 animate-pulse" />
                 NASA FIRMS MAP_KEY ACTIVE
               </span>
             </h3>
-            <p className="text-xs text-slate-500 font-medium">
-              Peta Satelit Live Resmi NASA FIRMS, VIIRS 375m & GFW Gambut. Klik titik peta untuk langsung memperbarui prediksi.
+            <p className="text-[11px] font-mono text-slate-400 font-medium">
+              Peta Satelit Live NASA FIRMS, VIIRS 375m & GFW Gambut. Klik titik peta untuk langsung memperbarui prediksi.
             </p>
           </div>
         </div>
@@ -230,8 +229,8 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
             onClick={() => setShowFirmsWms(!showFirmsWms)}
             className={`px-3 py-1.5 rounded border transition-colors flex items-center gap-1.5 font-bold cursor-pointer ${
               showFirmsWms
-                ? 'bg-rose-600 text-white border-rose-700 shadow-xs'
-                : 'bg-slate-100 text-slate-600 border-slate-300'
+                ? 'bg-rose-900/80 text-rose-200 border-rose-700 shadow-xs'
+                : 'bg-slate-950 text-slate-400 border-slate-800'
             }`}
           >
             <Flame className="w-3.5 h-3.5" />
@@ -243,8 +242,8 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
             onClick={() => setShowFirmsVector(!showFirmsVector)}
             className={`px-3 py-1.5 rounded border transition-colors flex items-center gap-1.5 font-bold cursor-pointer ${
               showFirmsVector
-                ? 'bg-orange-600 text-white border-orange-700 shadow-xs'
-                : 'bg-slate-100 text-slate-600 border-slate-300'
+                ? 'bg-amber-900/80 text-amber-200 border-amber-700 shadow-xs'
+                : 'bg-slate-950 text-slate-400 border-slate-800'
             }`}
           >
             <Radio className="w-3.5 h-3.5" />
@@ -256,8 +255,8 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
             onClick={() => setShowGfwPeatland(!showGfwPeatland)}
             className={`px-3 py-1.5 rounded border transition-colors flex items-center gap-1.5 font-bold cursor-pointer ${
               showGfwPeatland
-                ? 'bg-red-600 text-white border-red-700 shadow-xs'
-                : 'bg-slate-100 text-slate-600 border-slate-300'
+                ? 'bg-red-900/80 text-red-200 border-red-700 shadow-xs'
+                : 'bg-slate-950 text-slate-400 border-slate-800'
             }`}
           >
             <ShieldAlert className="w-3.5 h-3.5" />
@@ -269,8 +268,8 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
             onClick={() => setShowGibsViirsDay(!showGibsViirsDay)}
             className={`px-3 py-1.5 rounded border transition-colors flex items-center gap-1.5 font-bold cursor-pointer ${
               showGibsViirsDay
-                ? 'bg-cyan-700 text-white border-cyan-800 shadow-xs'
-                : 'bg-slate-100 text-slate-600 border-slate-300'
+                ? 'bg-cyan-900/80 text-cyan-200 border-cyan-700 shadow-xs'
+                : 'bg-slate-950 text-slate-400 border-slate-800'
             }`}
           >
             <Satellite className="w-3.5 h-3.5" />
@@ -281,13 +280,13 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
 
       {/* Severe Fire Alerts Ticker */}
       {severeAlerts.length > 0 && (
-        <div className="mb-4 bg-red-50 border border-red-200 rounded-lg p-3 text-xs font-mono shadow-sm">
+        <div className="mb-4 bg-rose-950/40 border border-rose-900/80 rounded p-3 text-xs font-mono shadow-sm">
           <div className="flex items-center justify-between mb-2">
-            <span className="font-bold text-red-700 flex items-center gap-1.5 uppercase tracking-wide">
-              <Flame className="w-4 h-4 text-red-600 animate-pulse" />
+            <span className="font-bold text-rose-300 flex items-center gap-1.5 uppercase tracking-wide">
+              <Flame className="w-4 h-4 text-rose-500 animate-pulse" />
               PERINGATAN KEBAKARAN PARAH (SEVERE FIRE ALERTS)
             </span>
-            <span className="text-[10px] text-red-800 bg-red-100 border border-red-300 px-2 py-0.5 rounded font-bold">
+            <span className="text-[10px] text-rose-300 bg-rose-900/80 border border-rose-700 px-2 py-0.5 rounded font-bold">
               {severeAlerts.length} Area Terdampak Terdeteksi
             </span>
           </div>
@@ -315,16 +314,16 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
                     onSelectCustomLocation(alert.lat, alert.lon, alert.location);
                   }
                 }}
-                className="text-left bg-white hover:bg-red-50 p-2.5 rounded border border-red-200 hover:border-red-400 transition-all group shadow-xs cursor-pointer"
+                className="text-left bg-slate-950 hover:bg-rose-950/50 p-2.5 rounded border border-rose-900/60 hover:border-rose-600 transition-all group shadow-xs cursor-pointer"
               >
-                <div className="font-bold text-red-700 truncate flex items-center justify-between">
-                  <span className="group-hover:text-red-900 transition-colors">{alert.title}</span>
-                  <span className="text-[10px] px-1.5 py-0.2 bg-red-100 text-red-800 rounded font-bold">{alert.estimated_burned_km2} km²</span>
+                <div className="font-bold text-rose-400 truncate flex items-center justify-between">
+                  <span className="group-hover:text-rose-200 transition-colors">{alert.title}</span>
+                  <span className="text-[10px] px-1.5 py-0.2 bg-rose-900/80 text-rose-200 rounded font-bold">{alert.estimated_burned_km2} km²</span>
                 </div>
-                <div className="text-[11px] text-slate-700 truncate mt-1 font-medium">{alert.location}</div>
-                <div className="text-[10px] text-slate-500 mt-1.5 flex items-center justify-between pt-1 border-t border-slate-100">
+                <div className="text-[11px] text-slate-300 truncate mt-1 font-medium">{alert.location}</div>
+                <div className="text-[10px] text-slate-500 mt-1.5 flex items-center justify-between pt-1 border-t border-slate-900">
                   <span>{alert.updated_ago}</span>
-                  <span className="text-emerald-700 font-bold group-hover:underline">Fokus Peta & Prediksi →</span>
+                  <span className="text-emerald-400 font-bold group-hover:underline">Fokus Peta / Prediksi →</span>
                 </div>
               </button>
             ))}
@@ -334,7 +333,7 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
 
       {/* Dedicated Real Live Satellite Map Display */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-        <div className="lg:col-span-3 h-[460px] w-full rounded-lg overflow-hidden relative border border-slate-300 shadow-sm">
+        <div className="lg:col-span-3 h-[480px] w-full rounded overflow-hidden relative border border-slate-800 shadow-sm">
           <MapContainer
             center={pos}
             zoom={10}
@@ -541,10 +540,10 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
           </MapContainer>
 
           {/* Legend Overlay */}
-          <div className="absolute bottom-3 left-3 z-[1000] bg-white/95 backdrop-blur-xs p-3 rounded-lg border border-slate-300 text-xs shadow-md space-y-2 max-w-[90%] text-slate-800">
+          <div className="absolute bottom-3 left-3 z-[1000] bg-slate-950/90 backdrop-blur-xs p-3 rounded border border-slate-800 text-xs shadow-md space-y-2 max-w-[90%] text-slate-200">
             <div className="flex items-center gap-3 font-mono flex-wrap font-semibold text-[11px]">
               <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 inline-block" />
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />
                 <span>Low (&lt;75)</span>
               </div>
               <div className="flex items-center gap-1.5">
@@ -556,49 +555,49 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
                 <span>High</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-red-600 inline-block" />
+                <span className="w-2.5 h-2.5 rounded-full bg-rose-600 inline-block" />
                 <span>Extreme (&gt;225)</span>
               </div>
-              <div className="flex items-center gap-1.5 border-l border-slate-300 pl-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-orange-600 inline-block" />
-                <span className="text-orange-700 font-bold">FIRMS Hotspot</span>
+              <div className="flex items-center gap-1.5 border-l border-slate-800 pl-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-orange-500 inline-block" />
+                <span className="text-orange-400 font-bold">FIRMS Hotspot</span>
               </div>
               <div className="flex items-center gap-1.5 pl-1">
-                <span className="w-2.5 h-2.5 rounded-full bg-red-600 animate-ping inline-block" />
-                <span className="text-red-700 font-bold">GFW Gambut</span>
+                <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping inline-block" />
+                <span className="text-rose-400 font-bold">GFW Gambut</span>
               </div>
             </div>
           </div>
         </div>
 
         {/* Dynamic Satellite & Entity Inspector Panel */}
-        <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 flex flex-col justify-between shadow-xs">
+        <div className="bg-slate-950 border border-slate-800 rounded p-4 flex flex-col justify-between shadow-xs">
           <div>
-            <div className="flex items-center justify-between border-b border-slate-200 pb-3 mb-3">
-              <h4 className="text-xs font-bold tracking-wider text-emerald-700 uppercase font-mono flex items-center gap-1.5">
-                <Navigation className="w-3.5 h-3.5 text-emerald-600" />
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-3">
+              <h4 className="text-xs font-bold tracking-wider text-emerald-400 uppercase font-mono flex items-center gap-1.5">
+                <Navigation className="w-3.5 h-3.5 text-emerald-400" />
                 SATELLITE HOTSPOT INSPECTOR
               </h4>
-              <span className="text-[10px] font-mono px-2 py-0.5 bg-slate-200 rounded text-slate-700 font-bold">
+              <span className="text-[10px] font-mono px-2 py-0.5 bg-slate-900 rounded text-slate-300 border border-slate-800 font-bold">
                 {selectedEntity ? selectedEntity.type.toUpperCase() : 'TELEMETRI'}
               </span>
             </div>
 
             {selectedEntity ? (
               <div className="space-y-3 font-mono text-xs">
-                <div className="text-slate-900 font-bold flex items-center gap-1.5">
-                  {selectedEntity.type === 'hotspot' && <Flame className="w-4 h-4 text-orange-600 shrink-0" />}
-                  {selectedEntity.type === 'gfw' && <ShieldAlert className="w-4 h-4 text-red-600 shrink-0" />}
-                  {selectedEntity.type === 'point' && <Crosshair className="w-4 h-4 text-sky-600 shrink-0" />}
-                  {selectedEntity.type === 'station' && <MapPin className="w-4 h-4 text-emerald-600 shrink-0" />}
+                <div className="text-white font-bold flex items-center gap-1.5">
+                  {selectedEntity.type === 'hotspot' && <Flame className="w-4 h-4 text-orange-400 shrink-0" />}
+                  {selectedEntity.type === 'gfw' && <ShieldAlert className="w-4 h-4 text-rose-500 shrink-0" />}
+                  {selectedEntity.type === 'point' && <Crosshair className="w-4 h-4 text-sky-400 shrink-0" />}
+                  {selectedEntity.type === 'station' && <MapPin className="w-4 h-4 text-emerald-400 shrink-0" />}
                   <span>{selectedEntity.title}</span>
                 </div>
 
-                <div className="bg-white p-3 rounded border border-slate-200 space-y-2 text-slate-800 shadow-xs">
+                <div className="bg-slate-900/90 p-3 rounded border border-slate-800 space-y-2 text-slate-200 shadow-xs">
                   {Object.entries(selectedEntity.details).map(([k, v]) => (
                     <div key={k} className="flex justify-between items-center text-[11px]">
                       <span className="text-slate-500 font-medium">{k}:</span>
-                      <span className="font-bold text-slate-900">{String(v)}</span>
+                      <span className="font-bold text-slate-200">{String(v)}</span>
                     </div>
                   ))}
                 </div>
@@ -607,7 +606,7 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
                   <button
                     type="button"
                     onClick={() => onSelectCustomLocation(selectedEntity.lat, selectedEntity.lon, selectedEntity.title)}
-                    className="w-full mt-2 py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded text-xs transition-colors flex items-center justify-center gap-2 shadow-xs cursor-pointer"
+                    className="w-full mt-2 py-2 px-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded text-xs transition-all flex items-center justify-center gap-2 shadow-xs cursor-pointer active:scale-95"
                   >
                     <Zap className="w-3.5 h-3.5" />
                     <span>Fokuskan Telemetri ke Titik Ini</span>
@@ -616,18 +615,18 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
               </div>
             ) : (
               <div className="py-8 text-center text-slate-500 font-mono text-xs space-y-3">
-                <Crosshair className="w-8 h-8 text-slate-400 mx-auto animate-pulse" />
+                <Crosshair className="w-8 h-8 text-slate-600 mx-auto animate-pulse" />
                 <p>Klik titik mana saja di peta satelit atau marker hotspot kebakaran untuk inspeksi detail telemetri.</p>
-                <div className="text-[10px] text-emerald-800 bg-emerald-100 p-2 rounded border border-emerald-300 font-semibold">
+                <div className="text-[10px] text-emerald-400 bg-emerald-950/60 p-2 rounded border border-emerald-900 font-semibold">
                   ✓ High-Res Live Satellite Map & NASA FIRMS Key Active
                 </div>
               </div>
             )}
           </div>
 
-          <div className="mt-4 pt-3 border-t border-slate-200 text-[10px] text-slate-500 font-mono flex items-center justify-between font-medium">
+          <div className="mt-4 pt-3 border-t border-slate-800 text-[10px] text-slate-400 font-mono flex items-center justify-between font-medium">
             <span>Koordinat Active Target:</span>
-            <span className="text-slate-800 font-bold">{location.lat.toFixed(3)}, {location.lon.toFixed(3)}</span>
+            <span className="text-white font-bold">{location.lat.toFixed(3)}, {location.lon.toFixed(3)}</span>
           </div>
         </div>
       </div>
