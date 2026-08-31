@@ -12,6 +12,7 @@ interface PipelineControlsProps {
   setEpochs: (val: number) => void;
   onRunPipeline: () => void;
   isRunning: boolean;
+  selectedRegency?: { name: string; lat: number; lon: number } | null;
 }
 
 export const PipelineControls: React.FC<PipelineControlsProps> = ({
@@ -24,18 +25,25 @@ export const PipelineControls: React.FC<PipelineControlsProps> = ({
   epochs,
   setEpochs,
   onRunPipeline,
-  isRunning
+  isRunning,
+  selectedRegency
 }) => {
   return (
     <div className="telemetry-panel bg-white border border-slate-200 rounded-xl p-5 mb-6 shadow-sm">
-      <div className="flex items-center justify-between mb-4 border-b border-slate-200 pb-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 border-b border-slate-200 pb-3">
         <div className="flex items-center gap-2">
           <Settings className="w-4 h-4 text-emerald-600" />
           <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
             KONFIGURASI ALGORITMA & MODEL PIPELINE
           </h3>
         </div>
-        <span className="text-xs text-slate-500 font-mono font-semibold">FastAPI Engine</span>
+        <div className="flex items-center gap-2 text-xs">
+          <span className="bg-emerald-50 text-emerald-800 border border-emerald-200/80 px-2.5 py-1 rounded-md font-medium flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>Prediksi Lokasi: <strong>{selectedRegency ? selectedRegency.name : 'Kab. Siak'}</strong> ({selectedRegency ? `${selectedRegency.lat.toFixed(3)}°, ${selectedRegency.lon.toFixed(3)}°` : '0.820°, 102.050°'})</span>
+          </span>
+          <span className="text-slate-500 font-mono font-semibold hidden md:inline">FastAPI Engine</span>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">

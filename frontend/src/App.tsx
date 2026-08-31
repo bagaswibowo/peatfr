@@ -188,6 +188,7 @@ export function App() {
           setEpochs={setEpochs}
           onRunPipeline={() => executePipeline()}
           isRunning={isRunningPipeline}
+          selectedRegency={selectedRegency}
         />
 
         {/* Time Series Charts */}
