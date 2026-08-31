@@ -146,12 +146,7 @@ export function App() {
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900 pb-16">
       <Header
-        selectedProvince={selectedProvince}
-        selectedRegency={selectedRegency}
-        onSelectRegion={handleSelectRegion}
-        onLoadRealtimeData={() => fetchRealtimeData(selectedRegency)}
         onOpenPaperModal={() => setIsPaperModalOpen(true)}
-        loadingRealtime={loadingRealtime}
       />
 
       <main className="max-w-7xl mx-auto px-4 lg:px-8">
@@ -184,6 +179,8 @@ export function App() {
           selectedProvince={selectedProvince}
           selectedRegency={selectedRegency}
           onSelectRegion={handleSelectRegion}
+          onLoadRealtimeData={() => fetchRealtimeData(selectedRegency)}
+          loadingRealtime={loadingRealtime}
           imputation={imputation}
           setImputation={setImputation}
           model={model}
