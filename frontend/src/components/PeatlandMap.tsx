@@ -327,7 +327,7 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
                       details: {
                         'Tanggal / Jam UTC': `${hotspot.acq_date} ${hotspot.acq_time} UTC`,
                         'Kecerahan (T_i4)': `${hotspot.bright_ti4} K`,
-                        'Daya FRP': hotspot.frp > 0 ? `${hotspot.frp} MW` : 'N/A',
+                        'Daya radiasi api': hotspot.frp > 0 ? `${hotspot.frp} MW` : 'N/A',
                         'Satelit Sensor': `${hotspot.satellite} (${hotspot.instrument})`
                       }
                     });
@@ -370,7 +370,7 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
                         'Tanggal Alert': fire.alert__date,
                         'Kabupaten / Provinsi': `${fire.adm2 || 'Kab'}, ${fire.adm1 || 'Prov'}`,
                         'Kecerahan (K)': fire.bright_ti4__K ? `${fire.bright_ti4__K} K` : '-',
-                        'Daya FRP': fire.frp__MW ? `${fire.frp__MW} MW` : '-',
+                        'Daya radiasi api': fire.frp__MW ? `${fire.frp__MW} MW` : '-',
                         'Atribusi Gambut': fire.peatland_attribution
                           ? `${fire.peatland_attribution} (${fire.regency_centroid_km} km)`
                           : 'tidak tersedia'
