@@ -78,11 +78,11 @@ def api(method, path, payload=None, raw=None, content_type=None, timeout=60):
 
 
 # ---------------------------------------------------------------- inline rich text
-INLINE = re.compile(r"(\*\*.+?\*\*|`[^`]+`|\*[^*]+?\*)")
+INLINE = re.compile(r"(\*\*.+?\*\*|`[^`]+`|\*[^*]+?\*|\$[^$\n]+?\$)")
 
 
 def rich_text(text, limit=CHUNK):
-    """Split markdown inline emphasis/code into Notion rich_text runs."""
+    """Split markdown inline emphasis/code/equations into Notion rich_text runs."""
     text = text.replace("\t", "  ")
     out = []
     for part in INLINE.split(text):
@@ -96,6 +96,12 @@ def rich_text(text, limit=CHUNK):
             body, ann["code"] = part[1:-1], True
         elif part.startswith("*") and part.endswith("*") and len(part) > 2:
             body, ann["italic"] = part[1:-1], True
+        elif part.startswith("$") and part.endswith("$") and len(part) > 2:
+            # Inline math: native Notion equation rich_text (renders KaTeX).
+            for i in range(0, len(part) - 2, limit):
+                out.append({"type": "equation",
+                            "equation": {"expression": part[1:-1][i:i + limit]}})
+            continue
         # Notion rejects empty content strings and caps each run at 2000 chars.
         for i in range(0, max(len(body), 1), limit):
             piece = body[i:i + limit] or " "
@@ -184,6 +190,11 @@ def parse_markdown(md):
                 i += 1
             i += 1  # closing fence
             code = "\n".join(buf).rstrip()
+            # Block math renders as a native Notion equation block.
+            if lang == "math":
+                blocks.append({"object": "block", "type": "equation",
+                               "equation": {"expression": code}})
+                continue
             valid = {"python", "yaml", "json", "bash", "javascript", "typescript", "sql", "mermaid",
                      "html", "css", "plain text", "markdown", "shell", "docker", "r", "java", "go",
                      "rust", "kotlin", "swift", "php", "ruby", "c", "c++", "c#", "latex", "diff"}

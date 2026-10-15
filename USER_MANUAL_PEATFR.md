@@ -41,45 +41,54 @@ Aplikasi ini menghubungkan stasiun telemetri lingkungan realtime (Open-Meteo ERA
 
 Sistem PeatFR dirancang menggunakan arsitektur 4-tier berkinerja tinggi:
 
-```
-+-----------------------------------------------------------------------------------+
-|                        1. EXTERNAL DATA PROVIDERS LAYER                           |
-|  [Open-Meteo ERA5]  [NASA FIRMS WMS]  [Zona Gambut (atribusi)]  [Esri Satellite GIS]  |
-+-----------------------------------------------------------------------------------+
-                                         |
-                                         v
-+-----------------------------------------------------------------------------------+
-|                        2. BACKEND COMPUTATION ENGINE (FastAPI)                    |
-|  - Realtime Satellite Proxy & Hydrologic Telemetry Mapper                         |
-|  - Physical Engine (PFVI Equation: DF Evapotranspiration, RF Rain, WTF Moisture)  |
-|  - SciPy Nelder-Mead Parameter Optimization with Physical Bounds (a_H, b_H >= 0)  |
-|  - PyTorch Deep Learning (LSTM / GRU) & Stochastic ARIMA Forecasting Engine       |
-+-----------------------------------------------------------------------------------+
-                                         |
-                                         v
-+-----------------------------------------------------------------------------------+
-|                        3. CONTAINER & INFRASTRUCTURE LAYER                        |
-|  [peatfr-api: Python 3.11]  <-->  [peatfr-web: Nginx]  <-->  [Cloudflare Tunnel]    |
-+-----------------------------------------------------------------------------------+
-                                         |
-                                         v
-+-----------------------------------------------------------------------------------+
-|                        4. CLIENT PRESENTATION LAYER (React 18)                    |
-|  - Tabbed Interface: Pemantauan (Status | Peringatan | Peta | Proyeksi) + Simulasi   |
-|  - Signature Component: Peringatan Aktif (klaster hotspot zona gambut, FRP-graded) |
-|  - Interactive GIS Satellite Map (Leaflet, NASA FIRMS WMS, VIIRS Hotspots)         |
-+-----------------------------------------------------------------------------------+
+```mermaid
+flowchart TD
+    subgraph L1["1. EXTERNAL DATA PROVIDERS"]
+        OM["Open-Meteo ERA5-Land"]
+        FIRMS["NASA FIRMS WMS & Vector API"]
+        GIBS["NASA GIBS WMS"]
+        ZG["Zona Gambut (atribusi sentroid)"]
+    end
+
+    subgraph L2["2. BACKEND COMPUTATION ENGINE — FastAPI"]
+        PROXY["Realtime Satellite Proxy & Hydrologic Telemetry Mapper"]
+        PFVI["Physical Engine — PFVI (DF, RF, WTF)"]
+        OPT["SciPy Nelder-Mead Optimization (a_H, b_H ≥ 0)"]
+        AI["PyTorch LSTM / GRU & ARIMA Forecasting"]
+    end
+
+    subgraph L3["3. CONTAINER & INFRASTRUCTURE"]
+        API["peatfr-api — Python 3.11"]
+        WEB["peatfr-web — Nginx"]
+        CFT["Cloudflare Tunnel"]
+    end
+
+    subgraph L4["4. CLIENT PRESENTATION — React 18"]
+        TABS["Tab Pemantauan (Status · Peringatan · Peta · Proyeksi) + Simulasi"]
+        HERO["HeroStatus — narasi bahasa awam + skala PFVI"]
+        MAP["Peta GIS Leaflet (FIRMS WMS, hotspot VIIRS)"]
+    end
+
+    L1 --> L2 --> L3 --> L4
 ```
 
 ### Persamaan Matematika Model Fisika PeatFR:
 * **Laju Evapotranspirasi ($DF_t$):**
-  $$DF_t = \frac{(300 - PFVI_{t-1}) \cdot [0.4982 \cdot e^{0.0905 T_{max} + 1.6096} - 4.268] \cdot 10^{-3}}{1 + 10.88 \cdot e^{-0.0017358 \cdot R_0}}$$
+  ```math
+DF_t = \frac{(300 - PFVI_{t-1}) \cdot [0.4982 \cdot e^{0.0905 T_{max} + 1.6096} - 4.268] \cdot 10^{-3}}{1 + 10.88 \cdot e^{-0.0017358 \cdot R_0}}
+```
 * **Faktor Curah Hujan Efektif ($RF_t$):**
-  $$RF_t = \max(0, Rf_t - 5.1)$$
+  ```math
+RF_t = \max(0, Rf_t - 5.1)
+```
 * **Faktor Muka Air Tanah ($WTF_t$ van Genuchten):**
-  $$WTF_t = a_H - b_H \cdot (1 - \theta(v)) \cdot 300, \quad \text{dengan } \theta(v) = \left[1 + \left(\frac{v}{\alpha}\right)^n\right]^{\frac{1 - n}{n}}$$
+  ```math
+WTF_t = a_H - b_H \cdot (1 - \theta(v)) \cdot 300, \quad \text{dengan } \theta(v) = \left[1 + \left(\frac{v}{\alpha}\right)^n\right]^{\frac{1 - n}{n}}
+```
 * **Physical Boundary Constraints:**
-  $$a_H \ge 0.0, \quad b_H \ge 0.0, \quad n > 1.05, \quad \alpha > 0.01$$
+  ```math
+a_H \ge 0.0, \quad b_H \ge 0.0, \quad n > 1.05, \quad \alpha > 0.01
+```
 
 ---
 

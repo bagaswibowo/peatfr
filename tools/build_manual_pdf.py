@@ -112,12 +112,18 @@ def build(repo, out_path):
         s = line.strip()
 
         if s.startswith("```"):
+            lang = s[3:].strip()
             i += 1
             buf = []
             while i < n and not lines[i].strip().startswith("```"):
                 buf.append(lines[i])
                 i += 1
             i += 1
+            if lang == "math":
+                # Render TeX source as-is; the PDF has no KaTeX, but the listing is
+                # still readable and correct.
+                story.append(code_block("$ " + " ".join(buf) + " $", max_chars=92))
+                continue
             story.append(code_block("\n".join(buf)))
             continue
 
