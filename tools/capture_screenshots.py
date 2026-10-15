@@ -109,20 +109,20 @@ def main():
     cdp = CDP(a.base)
     try:
         cdp.goto(a.base + "/")
-        # Wait for pipeline data: hero scale + status badge present.
+        # Wait for pipeline data + map tiles.
         for _ in range(60):
             ok = cdp.js(
-                "!!document.querySelector('.hero') && "
-                "document.body.innerText.includes('Kondisi gambut di')")
+                "!!document.getElementById('bagian-peta') && "
+                "document.querySelectorAll('.leaflet-tile-loaded').length >= 4")
             if ok:
                 break
             time.sleep(1)
-        time.sleep(2)
+        time.sleep(3)
 
         # Give map tiles time, then capture full page.
         time.sleep(6)
         metrics = cdp.cmd("Page.getLayoutMetrics")
-        full_h = min(int(metrics["cssContentSize"]["height"]) + 40, 6000)
+        full_h = min(int(metrics["cssContentSize"]["height"]) + 40, 7000)
         cdp.cmd("Emulation.setDeviceMetricsOverride",
                 width=WIDTH, height=full_h, deviceScaleFactor=1, mobile=False)
         time.sleep(3)
@@ -130,33 +130,34 @@ def main():
 
         # Section crops: get anchor offsets.
         anchors = cdp.js(
-            "['bagian-ringkasan','bagian-peringatan','bagian-peta','bagian-proyeksi']"
+            "['bagian-peta','bagian-proyeksi']"
             ".map(id => { const el = document.getElementById(id); "
             "  return el ? Math.round(el.getBoundingClientRect().top + window.scrollY) : null })")
         print("  anchors:", anchors)
 
-        cdp.shot(os.path.join(OUT, "00-header.png"))  # placeholder; cropped later
+        cdp.cmd("Emulation.setDeviceMetricsOverride",
+                width=WIDTH, height=1000, deviceScaleFactor=1, mobile=False)
+        time.sleep(2)
+        cdp.shot(os.path.join(OUT, "00-header.png"))
+
+        # Peringatan tab.
+        cdp.js("Array.from(document.querySelectorAll('[role=tab]'))"
+               ".find(b => b.textContent.includes('Peringatan'))?.click()")
+        time.sleep(2.5)
+        cdp.shot(os.path.join(OUT, "02-peringatan.png"))
 
         # Simulasi tab.
-        cdp.cmd("Emulation.setDeviceMetricsOverride",
-                width=WIDTH, height=1400, deviceScaleFactor=1, mobile=False)
         cdp.js("Array.from(document.querySelectorAll('[role=tab]'))"
                ".find(b => b.textContent.includes('Simulasi'))?.click()")
         time.sleep(2.5)
-        cdp.shot(os.path.join(OUT, "02-simulasi.png"))
+        cdp.shot(os.path.join(OUT, "03-simulasi.png"))
 
         # Mobile.
         cdp.js("Array.from(document.querySelectorAll('[role=tab]'))"
                ".find(b => b.textContent.includes('Pemantauan'))?.click()")
         time.sleep(1)
         cdp.cmd("Emulation.setDeviceMetricsOverride",
-                width=390, height=1800, deviceScaleFactor=2, mobile=True)
-        cdp.goto(a.base + "/")
-        for _ in range(40):
-            ok = cdp.js("document.body.innerText.includes('Kondisi gambut di')")
-            if ok:
-                break
-            time.sleep(1)
+                width=390, height=1600, deviceScaleFactor=2, mobile=True)
         time.sleep(3)
         cdp.shot(os.path.join(OUT, "05-mobile.png"))
     finally:

@@ -2,7 +2,7 @@
 ## USER MANUAL, ARSITEKTUR, APIS, & KODE SUMBER PER FITUR
 **Aplikasi PeatFR — Fire Intelligence System & Early Warning Kebakaran Lahan Gambut**
 
-*Antarmuka PeatFR disusun sebagai dua tab operasional (Pemantauan dan Simulasi) dengan satu bilah atas global untuk pemilihan wilayah target. Seluruh angka yang ditampilkan berasal dari API publik tanpa data simulasi.*
+*Antarmuka PeatFR disusun sebagai tiga tab operasional (Pemantauan, Peringatan, dan Simulasi) dengan satu bilah atas global untuk pemilihan wilayah target. Seluruh angka yang ditampilkan berasal dari API publik tanpa data simulasi.*
 *(Mahdiyasa et al., 2025)*
 
 ---
@@ -14,7 +14,7 @@
 | **Jenis Ciptaan** | **Program Komputer** (Aplikasi Web Telemetri GIS Satelit & AI Fire Forecasting) |
 | **Judul Ciptaan** | **Aplikasi PeatFR — Fire Intelligence System & Early Warning Kebakaran Lahan Gambut**
 
-*Antarmuka PeatFR disusun sebagai dua tab operasional (Pemantauan dan Simulasi) dengan satu bilah atas global untuk pemilihan wilayah target. Seluruh angka yang ditampilkan berasal dari API publik tanpa data simulasi.* |
+*Antarmuka PeatFR disusun sebagai tiga tab operasional (Pemantauan, Peringatan, dan Simulasi) dengan satu bilah atas global untuk pemilihan wilayah target. Seluruh angka yang ditampilkan berasal dari API publik tanpa data simulasi.* |
 | **Pencipta & Pemegang Hak Cipta** | **Bagas Wibowo, S.Pd., M.Eng.** & Tim Peneliti Kelompok Keahlian SEAL Telkom University |
 | **Tanggal & Tempat Pertama Diumumkan** | **30 Agustus 2026** di Bandung, Jawa Barat, Republik Indonesia |
 | **Teknologi Stack** | **Python 3.11** (FastAPI, PyTorch, SciPy) & **React 18** (TypeScript, Vite, Leaflet GIS) |
@@ -64,9 +64,10 @@ flowchart TD
     end
 
     subgraph L4["4. CLIENT PRESENTATION — React 18"]
-        TABS["Tab Pemantauan (Status · Peringatan · Peta · Proyeksi) + Simulasi"]
-        HERO["HeroStatus — narasi bahasa awam + skala PFVI"]
-        MAP["Peta GIS Leaflet (FIRMS WMS, hotspot VIIRS)"]
+        TABS["Tiga tab: Pemantauan (peta + analisis) · Peringatan · Simulasi"]
+        MAP["Peta GIS Leaflet — klik titik = target telemetri (FIRMS WMS, hotspot VIIRS)"]
+        PANEL["Panel Kondisi Titik Terpilih (badge risiko + skala PFVI)"]
+        TABS --> MAP --> PANEL
     end
 
     L1 --> L2 --> L3 --> L4
@@ -120,36 +121,32 @@ a_H \ge 0.0, \quad b_H \ge 0.0, \quad n > 1.05, \quad \alpha > 0.01
 
 # 5. PANDUAN PETUNJUK FITUR-DEMI-FITUR & KODE SUMBER TERHUBUNG
 
-Aplikasi disusun sebagai dua tab operasional dengan satu bilah atas global. Tab **Pemantauan** memuat
-seluruh alur pemantauan (status, peringatan, peta, proyeksi) dan menyediakan chip navigasi bagian agar
-pengguna tidak perlu menggulir panjang; tab **Simulasi** memuat simulator skenario. Setiap fitur di bawah
-ini memuat deskripsi, tangkapan layar mode terang, langkah penggunaan, dan daftar kode sumber terkait.
+Aplikasi disusun sebagai tiga tab operasional — **Pemantauan**, **Peringatan**, dan **Simulasi** — dengan satu bilah atas global untuk pemilihan wilayah. Tab **Pemantauan** menampilkan peta satelit sebagai layar utama: klik titik mana saja untuk mengganti lokasi pantauan, dan seluruh panel (status risiko, pengaturan, kondisi saat ini, grafik) mengikuti titik tersebut. Tab **Peringatan** memuat daftar klaster hotspot aktif, sedangkan tab **Simulasi** memuat simulator skenario. Setiap fitur di bawah ini memuat deskripsi, tangkapan layar, langkah penggunaan, dan daftar kode sumber terkait.
 
 | Fitur | Layar / Komponen | Berkas Sumber Utama |
 |---|---|---|
-| 1. Bilah Atas & Pemilih Wilayah Global | Kedua tab | `Header.tsx` |
-| 2. Status Risiko & Skala PFVI (Bahasa Awam) | Tab Pemantauan (bagian Status) | `HeroStatus.tsx`, `pfviStatus.ts` |
-| 3. Peringatan Aktif Klaster Hotspot | Tab Pemantauan (bagian Peringatan) | `ActiveAlerts.tsx` |
-| 4. Peta Titik Panas & Inspektor | Tab Pemantauan (bagian Peta) | `PeatlandMap.tsx` |
-| 5. Konfigurasi Model & Grafik Proyeksi | Tab Pemantauan (bagian Proyeksi) | `PipelineControls.tsx`, `ForecastCharts.tsx` |
-| 6. Simulasi Skenario | Tab Simulasi | `ScenarioSimulator.tsx` |
-| 7. Backend API & Telemetri Realtime | FastAPI :8097 | `main.py` |
-| 8. Physical Engine & Optimasi Nelder-Mead | FastAPI :8097 | `pfvi.py` |
-| 9. Multi-Source Fire Intelligence Proxy | FastAPI :8097 | `fire_intelligence.py` |
-| 10. Shell Aplikasi (Tab Router & State Global) | React 18 | `App.tsx` |
-| 11. Infrastruktur Deployment | Docker Compose | `docker-compose.yml` |
+| 1. Bilah Atas & Pemilih Wilayah Global | Semua tab | `Header.tsx` |
+| 2. Peta & Status Titik Terpilih (Bahasa Awam) | Tab Pemantauan (peta) | `PeatlandMap.tsx`, `pfviStatus.ts` |
+| 3. Peringatan Aktif Klaster Hotspot | Tab Peringatan | `ActiveAlerts.tsx` |
+| 4. Pengaturan Perhitungan & Grafik Proyeksi | Tab Pemantauan (bawah peta) | `PipelineControls.tsx`, `ForecastCharts.tsx` |
+| 5. Simulasi Skenario | Tab Simulasi | `ScenarioSimulator.tsx` |
+| 6. Backend API & Telemetri Realtime | FastAPI :8097 | `main.py` |
+| 7. Physical Engine & Optimasi Nelder-Mead | FastAPI :8097 | `pfvi.py` |
+| 8. Multi-Source Fire Intelligence Proxy | FastAPI :8097 | `fire_intelligence.py` |
+| 9. Shell Aplikasi (Tab Router & State Global) | React 18 | `App.tsx` |
+| 10. Infrastruktur Deployment | Docker Compose | `docker-compose.yml` |
 
 ## FITUR 1: Bilah Atas, Pemilih Wilayah Global, & Mode Tampilan
 
-**Deskripsi & Tujuan Fitur:** Bilah atas menyatukan identitas aplikasi, pemilih wilayah target, tombol tarik ulang telemetri, sakelar mode terang/gelap, dan tautan spesifikasi jurnal. Pemilih wilayah sengaja diletakkan di sini karena lokasi adalah state global yang memengaruhi kedua tab.
+**Deskripsi & Tujuan Fitur:** Bilah atas menyatukan identitas aplikasi, pemilih wilayah target, tombol tarik ulang telemetri, sakelar mode terang/gelap, dan tautan spesifikasi jurnal. Pemilih wilayah sengaja diletakkan di sini karena lokasi adalah state global yang memengaruhi semua tab.
 
-![Bilah atas PeatFR: pemilih wilayah global, tarik ulang telemetri, mode tampilan, dan dua tab operasional](docs/screenshots/00-header.png)
+![Bilah atas PeatFR: pemilih wilayah global, tarik ulang telemetri, mode tampilan, dan tiga tab operasional](docs/screenshots/00-header.png)
 
-*Gambar: Bilah atas PeatFR: pemilih wilayah global, tarik ulang telemetri, mode tampilan, dan dua tab operasional.*
+*Gambar: Bilah atas PeatFR: pemilih wilayah global, tarik ulang telemetri, mode tampilan, dan tiga tab operasional.*
 
-![Tampilan mobile 390px: bilah atas, dua tab, dan chip navigasi bagian tetap rapi tanpa overflow horizontal](docs/screenshots/05-mobile.png)
+![Tampilan mobile 390px: bilah atas dan tiga tab operasional tetap rapi tanpa overflow horizontal](docs/screenshots/05-mobile.png)
 
-*Gambar: Tampilan mobile 390px: bilah atas, dua tab, dan chip navigasi bagian tetap rapi tanpa overflow horizontal.*
+*Gambar: Tampilan mobile 390px: bilah atas dan tiga tab operasional tetap rapi tanpa overflow horizontal.*
 
 **Cara Menggunakan:**
 
@@ -328,23 +325,27 @@ export const Header: React.FC<HeaderProps> = ({
 
 ---
 
-## FITUR 2: Tab Pemantauan — Status Risiko & Skala PFVI (Bahasa Awam)
+## FITUR 2: Tab Pemantauan — Peta Titik Api & Kondisi Titik Terpilih
 
-**Deskripsi & Tujuan Fitur:** Blok pertama tab Pemantauan menjawab pertanyaan paling mendesak bagi pengguna awam: *"apakah lahan gambut di sini berbahaya hari ini?"* — dalam bahasa sehari-hari, bukan angka statistik. Hero ini menampilkan satu paragraf penjelasan polos (kedalaman air tanah vs batas aman 40 cm PP 71/2014, kelembapan tanah, tren beberapa hari ke depan, dan aksi nyata yang bisa dilakukan warga), badge status **Rendah / Sedang / Tinggi / Ekstrem**, serta skala status empat segmen berjarum pada ambang PFVI 0/75/150/225 sebagai elemen utama. Angka teknis (skor PFVI, rentang proyeksi, muka air tanah dalam meter, kelembapan) tetap tersedia tetapi disembunyikan di balik tombol **"Lihat detail teknis"** agar layar utama tidak membingungkan.
+**Deskripsi & Tujuan Fitur:** Tab Pemantauan menampilkan peta satelit sebagai layar utama. Peta memuat citra Esri World Imagery, overlay label kota, lapisan termal NASA FIRMS WMS & GIBS VIIRS, serta titik hotspot vector dari API FIRMS yang sudah terotorisasi. Klik titik mana saja — titik api, titik zona gambut, atau koordinat bebas — untuk mengganti lokasi pantauan: panel di samping peta langsung menampilkan **nama lokasi**, **badge risiko (Rendah/Sedang/Tinggi/Ekstrem)**, skala status berjarum, dan kedalaman air tanah. Seluruh panel di bawah peta (pengaturan, kondisi saat ini, grafik) ikut menghitung ulang mengikuti titik yang diklik.
 
-![Bagian Status tab Pemantauan: narasi bahasa awam, skala status PFVI berjarum, dan detail teknis tersembunyi](docs/screenshots/01a-status.png)
+![Tab Pemantauan: peta titik api & lahan gambut dengan panel kondisi titik terpilih di sampingnya](docs/screenshots/01a-peta.png)
 
-*Gambar: Bagian Status tab Pemantauan: narasi bahasa awam, skala status PFVI berjarum, dan detail teknis tersembunyi.*
+*Gambar: Tab Pemantauan — peta satelit dengan panel Kondisi Titik Terpilih di sampingnya.*
 
 **Cara Menggunakan:**
 
-1. Tab **Pemantauan** terbuka secara default saat aplikasi dimuat.
-2. Baca badge status berwarna (**Rendah** hijau, **Sedang** kuning, **Tinggi** oranye, **Ekstrem** merah) dan paragraf penjelasan di bawahnya — paragraf ini menyebut kedalaman air tanah aktual dan apa yang bisa dilakukan warga.
-3. Perhatikan **skala status** di bawah narasi: jarum hitam menunjukkan posisi skor risiko saat ini di antara ambang 0/75/150/225/300.
-4. Dua fakta singkat di bawah skala menampilkan kedalaman air tanah (cm) dan jarak titik api terdekat dari lokasi terpilih.
-5. Klik **"Lihat detail teknis (angka PFVI & proyeksi)"** untuk membuka angka teknis lengkap; klik lagi untuk menyembunyikan.
-6. Gunakan chip **Status / Peringatan / Peta / Proyeksi** di bawah tab bar untuk melompat ke bagian lain.
-7. Bila sumber data satelit tidak dapat dihubungi, aplikasi menampilkan banner merah dan menahan angka risiko kosong alih-alih menampilkan nilai perkiraan.
+1. Tab **Pemantauan** terbuka secara default saat aplikasi dimuat; titik awal = wilayah terpilih di dropdown bilah atas (mis. Kab. Siak).
+2. **Klik titik mana saja di peta** (area kosong = koordinat bebas; titik merah/oranye = hotspot terdeteksi satelit). Peta akan terbang ke lokasi dan memicu penarikan telemetri + perhitungan PFVI otomatis.
+3. Baca **panel Kondisi Titik Terpilih** di samping peta:
+   - Nama lokasi (kabupaten terdekat, atau "Titik Klik Peta (lat, lon)" untuk titik bebas).
+   - Badge **Risiko Rendah / Sedang / Tinggi / Ekstrem** sesuai ambang PFVI 75 / 150 / 225.
+   - Skala status 0–300 dengan jarum yang menunjukkan posisi skor risiko saat ini.
+   - Kedalaman air tanah (cm) — ditandai merah bila melewati batas aman 40 cm (PP 71/2014).
+4. Klik titik lain untuk memindah lokasi; klik **"Fokuskan Telemetri ke Titik Ini"** untuk mengunci fokus panel grafik ke titik yang sedang dipilih.
+5. Gunakan tombol lapisan satelit di atas peta untuk menyalakan/matikan: **FIRMS WMS (NASA Key)**, **Hotspots API**, dan **Zona Gambut**.
+6. Tombol **+ / −** dan seret peta untuk navigasi; scroll akan menggerakkan halaman (bukan zoom) agar peta tidak "menangkap" scroll.
+7. Bila sumber data satelit tidak dapat dihubungi, aplikasi menampilkan banner merah dan menahan angka risiko — tidak ada nilai perkiraan yang ditampilkan.
 
 #### Kode Sumber (Source Code Listing): `frontend/src/utils/pfviStatus.ts`
 
@@ -459,235 +460,581 @@ export function badgeToneClass(tone: 'ok' | 'warn' | 'danger'): string {
 }
 ```
 
-#### Kode Sumber (Source Code Listing): `frontend/src/components/HeroStatus.tsx`
+#### Kode Sumber (Source Code Listing): `frontend/src/components/PeatlandMap.tsx`
 
 ```tsx
-import React, { useState } from 'react';
-import { Printer, Info, Droplets, Flame } from 'lucide-react';
-import { statusKey, StatusKey, STATUS_ID, STATUS_MIN, STATUS_ORDER, trendInfo, WT_CRITICAL_CM, layStatusParagraph } from '../utils/pfviStatus';
+import React, { useEffect, useState } from 'react';
+import { MapContainer, TileLayer, WMSTileLayer, Marker, Popup, Circle, useMap, useMapEvents } from 'react-leaflet';
+import L from 'leaflet';
+import { MapPin, Flame, Satellite, ShieldAlert, Radio, Crosshair, Zap, Navigation, CheckCircle2, Droplets } from 'lucide-react';
+import axios from 'axios';
+import { statusKey, STATUS_ID } from '../utils/pfviStatus';
 
-interface HeroStatusProps {
-  hasData?: boolean;
-  pfvi: number;
-  status: string;
-  waterTable: number;
-  soilMoisture: number;
-  forecastDays: number;
-  minPfvi?: number;
-  maxPfvi?: number;
-  locationName: string;
-  nearby?: {
-    status?: string;
-    detection_count?: number;
-    nearest_distance_km?: number | null;
-  };
+export interface LocationPreset {
+  id: string;
+  name: string;
+  lat: number;
+  lon: number;
 }
 
-// Status scale bar: one thick segmented strip with PFVI thresholds (0/75/150/225)
-// and a needle at the current value — the signature element of the hero.
-const StatusScale: React.FC<{ pfvi: number; status: StatusKey }> = ({ pfvi, status }) => {
-  const pct = Math.min(100, Math.max(0, (pfvi / 300) * 100));
-  return (
-    <div className="w-full">
-      <div className="relative h-3.5 rounded-full overflow-hidden flex border border-[var(--line)]">
-        <div className="h-full bg-[var(--ok)]" style={{ width: '25%' }} />
-        <div className="h-full bg-[var(--warn)]" style={{ width: '25%' }} />
-        <div className="h-full bg-[var(--high)]" style={{ width: '25%' }} />
-        <div className="h-full bg-[var(--danger)]" style={{ width: '25%' }} />
-      </div>
-      {/* Needle */}
-      <div className="relative h-0">
-        <div
-          className="absolute -top-[15px] w-[3px] h-[19px] bg-[var(--text)] rounded-sm shadow transition-all duration-700"
-          style={{ left: `calc(${pct}% - 1.5px)` }}
-          aria-hidden="true"
-        />
-      </div>
-      <div className="flex justify-between font-mono text-[10.5px] text-[var(--text-dim)] mt-1.5">
-        <span>0</span>
-        <span>75</span>
-        <span>150</span>
-        <span>225</span>
-        <span>300</span>
-      </div>
-      <div className="flex justify-between text-[10.5px] font-semibold mt-0.5">
-        {STATUS_ORDER.map((k) => (
-          <span
-            key={k}
-            className={k === status ? 'text-[var(--text)]' : 'text-[var(--text-dim)]'}
-            style={{ width: '25%', textAlign: k === 'low' ? 'left' : k === 'extreme' ? 'right' : 'center' }}
-          >
-            {STATUS_ID[k]}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
+export interface GfwPeatlandFire {
+  latitude: number;
+  longitude: number;
+  alert__date: string;
+  confidence__cat?: string;
+  bright_ti4__K?: number;
+  frp__MW?: number;
+  is__peatland?: boolean;
+  adm1?: string;
+  adm2?: string;
+  peatland_attribution?: string;
+  regency_centroid_km?: number;
+}
+
+export interface FirmsHotspot {
+  latitude: number;
+  longitude: number;
+  bright_ti4: number;
+  frp: number;
+  acq_date: string;
+  acq_time: string;
+  satellite: string;
+  instrument: string;
+  confidence: string;
+  daynight: string;
+}
+
+const FIRMS_MAP_KEY = "aa16407e5eb11df46b09cafc085fe020";
+
+const createCustomIcon = (color: string) => {
+  return L.divIcon({
+    className: 'custom-leaflet-marker',
+    html: `<div style="background-color: ${color}; width: 18px; height: 18px; border-radius: 50%; border: 2.5px solid white; box-shadow: 0 0 12px ${color}; cursor: pointer;"></div>`,
+    iconSize: [18, 18],
+    iconAnchor: [9, 9]
+  });
 };
 
-export const HeroStatus: React.FC<HeroStatusProps> = ({
-  hasData = true,
-  pfvi,
-  status,
-  waterTable,
-  soilMoisture,
-  forecastDays,
-  minPfvi = 0,
-  maxPfvi = 0,
-  locationName,
-  nearby
-}) => {
-  const [showDetail, setShowDetail] = useState(false);
-  const key = statusKey(status);
-  const wtCm = Math.abs(waterTable) * 100;
-  const trend = trendInfo(minPfvi, maxPfvi);
-  const paragraph = layStatusParagraph({
-    status: key,
-    wtCm,
-    sm: soilMoisture,
-    locationName,
-    trendLabel: trend.label
+const createPeatlandFireIcon = () => {
+  return L.divIcon({
+    className: 'gfw-peatland-fire-marker',
+    html: `<div style="background-color: var(--danger); width: 14px; height: 14px; border-radius: 50%; border: 2px solid #fee2e2; box-shadow: 0 0 14px var(--danger); animation: pulse 1.5s infinite; cursor: pointer;"></div>`,
+    iconSize: [14, 14],
+    iconAnchor: [7, 7]
   });
+};
 
-  const nearestDist = nearby?.nearest_distance_km ?? null;
-  const hotspotTxt = nearby?.status === 'error'
-    ? 'Sumber tidak terbaca'
-    : nearestDist !== null
-      ? (nearestDist <= 25 ? `⚠ ${nearestDist} km dari sini` : `${nearestDist} km dari sini`)
-      : nearby?.status === 'no_detections'
-        ? 'Tidak ada dalam radius 25 km'
-        : 'Tidak tersedia';
-  const hotspotDanger = nearestDist !== null && nearestDist <= 25;
+const createFirmsHotspotIcon = () => {
+  return L.divIcon({
+    className: 'firms-hotspot-marker',
+    html: `<div style="background-color: var(--accent); width: 12px; height: 12px; border-radius: 50%; border: 2px solid #ffedd5; box-shadow: 0 0 10px var(--accent); cursor: pointer;"></div>`,
+    iconSize: [12, 12],
+    iconAnchor: [6, 6]
+  });
+};
 
-  if (!hasData) {
-    return (
-      <section className="hero border border-[var(--line)] rounded-[var(--r-md)] bg-[var(--surface)] p-8 flex flex-col items-center justify-center gap-3 text-center min-h-[220px]">
-        <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full font-mono text-[12px] font-bold uppercase tracking-wide bg-[var(--line)] text-[var(--text-mute)]">
-          <Info className="w-3.5 h-3.5" /> Data belum tersedia
-        </span>
-        <h1 className="font-disp text-lg font-bold tracking-tight text-[var(--text)] max-w-[46ch] leading-snug">
-          Kondisi gambut untuk lokasi ini belum bisa dihitung
-        </h1>
-        <p className="text-sm text-[var(--text-mute)] max-w-[60ch] leading-relaxed">
-          Pilih wilayah dari menu di atas, lalu tunggu data satelit ditarik.
-          PeatFR tidak menampilkan angka perkiraan — hanya data sungguhan.
-        </p>
-      </section>
-    );
-  }
+const createTargetIcon = () => {
+  return L.divIcon({
+    className: 'clicked-target-marker',
+    html: `<div style="background-color: var(--ok); width: 16px; height: 16px; border-radius: 50%; border: 2.5px solid white; box-shadow: 0 0 14px var(--ok); cursor: pointer;"></div>`,
+    iconSize: [16, 16],
+    iconAnchor: [8, 8]
+  });
+};
+
+function MapFlyTo({ lat, lon }: { lat: number; lon: number }) {
+  const map = useMap();
+  useEffect(() => {
+    map.flyTo([lat, lon], 10, { duration: 1.5 });
+  }, [lat, lon, map]);
+  return null;
+}
+
+// Leaflet measures its container once at mount; if the map renders inside a
+// tab/flex layout that settles later, tiles only cover the stale box and the
+// bottom of the map shows a blank void when scrolled or panned. Re-measure on
+// mount, on window resize, and shortly after mount as a catch-all.
+function MapResizeGuard() {
+  const map = useMap();
+  useEffect(() => {
+    const fix = () => map.invalidateSize();
+    const t1 = setTimeout(fix, 100);
+    const t2 = setTimeout(fix, 600);
+    window.addEventListener('resize', fix);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      window.removeEventListener('resize', fix);
+    };
+  }, [map]);
+  return null;
+}
+
+function MapClickHandler({ onMapClick }: { onMapClick: (lat: number, lon: number) => void }) {
+  useMapEvents({
+    click(e) {
+      onMapClick(e.latlng.lat, e.latlng.lng);
+    }
+  });
+  return null;
+}
+
+interface PeatlandMapProps {
+  currentPfvi: number;
+  status: string;
+  location: LocationPreset;
+  waterTable?: number;
+  onSelectCustomLocation?: (lat: number, lon: number, name?: string) => void;
+}
+
+export const PeatlandMap: React.FC<PeatlandMapProps> = ({
+  currentPfvi,
+  status,
+  location,
+  waterTable,
+  onSelectCustomLocation
+}) => {
+  const pos: [number, number] = [location.lat, location.lon];
+
+  // Live Satellite Overlay Layers state
+  const [showFirmsWms, setShowFirmsWms] = useState(true);
+  const [showFirmsVector, setShowFirmsVector] = useState(true);
+  const [showGibsViirsDay, setShowGibsViirsDay] = useState(true);
+  const [showGfwPeatland, setShowGfwPeatland] = useState(true);
+  
+  // Interactivity state
+  const [clickedTarget, setClickedTarget] = useState<{ lat: number; lon: number } | null>(null);
+  const [selectedEntity, setSelectedEntity] = useState<{
+    type: 'hotspot' | 'gfw' | 'station' | 'point';
+    title: string;
+    lat: number;
+    lon: number;
+    details: Record<string, any>;
+  } | null>(null);
+
+  const [gfwFires, setGfwFires] = useState<GfwPeatlandFire[]>([]);
+  const [firmsHotspots, setFirmsHotspots] = useState<FirmsHotspot[]>([]);
+
+  useEffect(() => {
+    if (showGfwPeatland) {
+      axios.get('/api/v1/fire-intelligence/gfw-peatland-fires?limit=100')
+        .then((res) => {
+          if (res.data && res.data.fires) {
+            setGfwFires(res.data.fires);
+          }
+        })
+        .catch((err) => console.warn('Could not fetch GFW peatland fires:', err));
+    }
+  }, [showGfwPeatland]);
+
+  useEffect(() => {
+    if (showFirmsVector) {
+      axios.get('/api/v1/fire-intelligence/firms-hotspots?day_range=1')
+        .then((res) => {
+          if (res.data && res.data.hotspots) {
+            setFirmsHotspots(res.data.hotspots);
+          }
+        })
+        .catch((err) => console.warn('Could not fetch NASA FIRMS vector hotspots:', err));
+    }
+  }, [showFirmsVector]);
+
+  const handleMapClick = (lat: number, lon: number) => {
+    setClickedTarget({ lat, lon });
+    const title = `Titik Klik Peta (${lat.toFixed(3)}, ${lon.toFixed(3)})`;
+    setSelectedEntity({
+      type: 'point',
+      title: `Koordinat Klik Peta Satelit`,
+      lat,
+      lon,
+      details: {
+        'Latitude': lat.toFixed(5),
+        'Longitude': lon.toFixed(5)
+      }
+    });
+
+    if (onSelectCustomLocation) {
+      onSelectCustomLocation(lat, lon, title);
+    }
+  };
+
+  const getMarkerColor = (pfvi: number) => {
+    if (pfvi >= 225) return 'var(--danger)'; // Red
+    if (pfvi >= 150) return 'var(--high)';   // Orange
+    if (pfvi >= 75) return 'var(--warn)';    // Amber
+    return 'var(--ok)'; // Green
+  };
+
+  const color = getMarkerColor(currentPfvi);
 
   return (
-    <section className="hero border border-[var(--line)] rounded-[var(--r-md)] bg-[var(--surface)] overflow-hidden">
-      <div className="p-6 sm:p-8 flex flex-col gap-6">
-        {/* Plain-language headline */}
-        <div className="flex flex-col gap-3 max-w-[75ch]">
-          <div className="flex flex-wrap items-center gap-2.5">
-            <span className="text-[13px] text-[var(--text-mute)] flex items-center gap-1.5">
-              Kondisi gambut di <b className="text-[var(--text)]">{locationName}</b>
-            </span>
-            <span
-              className="inline-flex items-center px-3 py-1 rounded-full text-[12.5px] font-bold uppercase tracking-wide text-[#0a0c0a]"
-              style={{
-                background:
-                  key === 'extreme' ? 'var(--danger)'
-                  : key === 'high' ? 'var(--high)'
-                  : key === 'moderate' ? 'var(--warn)'
-                  : 'var(--ok)'
-              }}
-            >
-              Risiko {STATUS_ID[key]}
-            </span>
-          </div>
-
-          <p className="text-[15.5px] sm:text-[17px] leading-relaxed text-[var(--text)]">
-            {paragraph}
+    <section>
+      {/* Section Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-baseline justify-between gap-3 mb-3">
+        <div>
+          <h2 className="font-disp text-[17px] font-bold tracking-tight text-[var(--text)] flex items-center gap-2">
+            <Satellite className="w-4 h-4 text-[var(--accent)]" />
+            <span>Peta titik api &amp; lahan gambut</span>
+          </h2>
+          <p className="text-[13px] text-[var(--text-dim)] mt-0.5">
+            Data satelit NASA (VIIRS 375m) langsung, dicocokkan ke kabupaten gambut terdekat (maks 75 km). Klik titik mana saja untuk melihat detail lokasi.
           </p>
         </div>
 
-        {/* Signature: status scale with needle */}
-        <StatusScale pfvi={pfvi} status={key} />
-
-        {/* Two quick facts */}
-        <div className="flex flex-wrap gap-x-8 gap-y-2 text-[13.5px]">
-          <span className="flex items-center gap-1.5 text-[var(--text-mute)]">
-            <Droplets className="w-4 h-4 text-[var(--ok)]" />
-            Kedalaman air tanah: <b className="text-[var(--text)] num">{wtCm.toFixed(0)} cm</b>
-            {wtCm > WT_CRITICAL_CM && <b className="text-[var(--danger)]">(terlalu kering)</b>}
-          </span>
-          <span className="flex items-center gap-1.5 text-[var(--text-mute)]">
-            <Flame className={`w-4 h-4 ${hotspotDanger ? 'text-[var(--danger)]' : 'text-[var(--text-dim)]'}`} />
-            Titik api terdekat: <b className={hotspotDanger ? 'text-[var(--danger)]' : 'text-[var(--text)]'}>{hotspotTxt}</b>
-          </span>
-        </div>
-
-        {/* Technical detail, hidden behind a toggle */}
-        <div className="border-t border-[var(--line-soft)] pt-4 flex flex-col gap-3">
+        {/* Live Satellite Layer Toggles */}
+        <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
           <button
             type="button"
-            onClick={() => setShowDetail(!showDetail)}
-            aria-expanded={showDetail}
-            className="self-start font-mono text-[12px] text-[var(--text-mute)] hover:text-[var(--accent)] transition-colors cursor-pointer"
+            onClick={() => setShowFirmsWms(!showFirmsWms)}
+            className={`px-3 py-1.5 rounded-[var(--r-sm)] border transition-colors flex items-center gap-1.5 font-semibold cursor-pointer ${
+              showFirmsWms
+                ? 'bg-[var(--accent-soft)] text-[var(--accent)] border-[var(--accent-line)]'
+                : 'bg-[var(--surface-2)] text-[var(--text-mute)] border-[var(--line)]'
+            }`}
           >
-            {showDetail ? '▾ Tutup detail teknis' : '▸ Lihat detail teknis (angka PFVI & proyeksi)'}
+            <Flame className="w-3.5 h-3.5" />
+            <span>FIRMS WMS (NASA Key)</span>
           </button>
-          {showDetail && (
-            <dl className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-3 font-mono text-[12.5px]">
-              <div>
-                <dt className="text-[10.5px] uppercase tracking-wider text-[var(--text-dim)]">Skor PFVI</dt>
-                <dd className="num font-bold text-[var(--text)] text-base">{pfvi.toFixed(1)} <span className="text-[10.5px] font-normal text-[var(--text-dim)]">/ 300</span></dd>
-              </div>
-              <div>
-                <dt className="text-[10.5px] uppercase tracking-wider text-[var(--text-dim)]">Proyeksi {forecastDays} hari</dt>
-                <dd className="num font-bold text-[var(--text)] text-base">{minPfvi.toFixed(0)}–{maxPfvi.toFixed(0)}</dd>
-              </div>
-              <div>
-                <dt className="text-[10.5px] uppercase tracking-wider text-[var(--text-dim)]">Muka air tanah</dt>
-                <dd className="num font-bold text-[var(--text)] text-base">{waterTable.toFixed(2)} m</dd>
-              </div>
-              <div>
-                <dt className="text-[10.5px] uppercase tracking-wider text-[var(--text-dim)]">Kelembapan tanah</dt>
-                <dd className="num font-bold text-[var(--text)] text-base">{soilMoisture.toFixed(1)}%</dd>
-              </div>
-            </dl>
-          )}
+
+          <button
+            type="button"
+            onClick={() => setShowFirmsVector(!showFirmsVector)}
+            className={`px-3 py-1.5 rounded-[var(--r-sm)] border transition-colors flex items-center gap-1.5 font-semibold cursor-pointer ${
+              showFirmsVector
+                ? 'bg-[var(--accent-soft)] text-[var(--accent)] border-[var(--accent-line)]'
+                : 'bg-[var(--surface-2)] text-[var(--text-mute)] border-[var(--line)]'
+            }`}
+          >
+            <Radio className="w-3.5 h-3.5" />
+            <span>Hotspots API ({firmsHotspots.length})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setShowGfwPeatland(!showGfwPeatland)}
+            className={`px-3 py-1.5 rounded-[var(--r-sm)] border transition-colors flex items-center gap-1.5 font-semibold cursor-pointer ${
+              showGfwPeatland
+                ? 'bg-[var(--accent-soft)] text-[var(--accent)] border-[var(--accent-line)]'
+                : 'bg-[var(--surface-2)] text-[var(--text-mute)] border-[var(--line)]'
+            }`}
+          >
+            <ShieldAlert className="w-3.5 h-3.5" />
+            <span>Zona Gambut ({gfwFires.length})</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Map Row Container */}
+      <div className="border border-[var(--line)] rounded-[var(--r-md)] bg-[var(--surface)] overflow-hidden grid grid-cols-1 lg:grid-cols-4">
+        {/* Left Map (3 Cols) */}
+        <div className="lg:col-span-3 h-[440px] w-full relative">
+          <MapContainer
+            center={pos}
+            zoom={10}
+            scrollWheelZoom={true}
+            doubleClickZoom={true}
+            touchZoom={true}
+            className="h-full w-full cursor-crosshair"
+          >
+            <MapFlyTo lat={location.lat} lon={location.lon} />
+            <MapResizeGuard />
+            <MapClickHandler onMapClick={handleMapClick} />
+
+            {/* Satellite Base Layer */}
+            <TileLayer
+              attribution='&copy; <a href="https://www.esri.com/">Esri World Imagery</a>'
+              url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+            />
+
+            {/* Place Names & Labels Overlay */}
+            <TileLayer
+              attribution='&copy; <a href="https://carto.com/">CARTO Voyager Labels</a>'
+              url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png"
+            />
+
+            {/* NASA FIRMS Dedicated WMS Thermal Layer */}
+            {showFirmsWms && (
+              <WMSTileLayer
+                url={`https://firms.modaps.eosdis.nasa.gov/mapserver/wms/fires/${FIRMS_MAP_KEY}/`}
+                layers="fires_viirs_24,fires_modis_24"
+                format="image/png"
+                transparent={true}
+                attribution="NASA FIRMS WMS"
+              />
+            )}
+
+            {/* NASA GIBS VIIRS 375m Layer */}
+            {showGibsViirsDay && (
+              <WMSTileLayer
+                url="https://gibs.earthdata.nasa.gov/wms/epsg3857/best/wms.cgi"
+                layers="VIIRS_SNPP_Thermal_Anomalies_375m_Day,VIIRS_SNPP_Thermal_Anomalies_375m_Night"
+                format="image/png"
+                transparent={true}
+                attribution="NASA GIBS VIIRS"
+              />
+            )}
+
+            {/* NASA FIRMS Vector Hotspot Point Markers */}
+            {showFirmsVector && firmsHotspots.map((hotspot, idx) => (
+              <Marker
+                key={`firms-vector-${idx}`}
+                position={[hotspot.latitude, hotspot.longitude]}
+                icon={createFirmsHotspotIcon()}
+                eventHandlers={{
+                  click: (e) => {
+                    e.originalEvent.stopPropagation();
+                    const title = `Hotspot NASA FIRMS (${hotspot.latitude.toFixed(3)}, ${hotspot.longitude.toFixed(3)})`;
+                    setSelectedEntity({
+                      type: 'hotspot',
+                      title: `NASA FIRMS Hotspot (VIIRS)`,
+                      lat: hotspot.latitude,
+                      lon: hotspot.longitude,
+                      details: {
+                        'Tanggal / Jam UTC': `${hotspot.acq_date} ${hotspot.acq_time} UTC`,
+                        'Kecerahan (T_i4)': `${hotspot.bright_ti4} K`,
+                        'Daya radiasi api': hotspot.frp > 0 ? `${hotspot.frp} MW` : 'N/A',
+                        'Satelit Sensor': `${hotspot.satellite} (${hotspot.instrument})`
+                      }
+                    });
+                    if (onSelectCustomLocation) {
+                      onSelectCustomLocation(hotspot.latitude, hotspot.longitude, title);
+                    }
+                  }
+                }}
+              >
+                <Popup className="custom-popup">
+                  <div className="p-2 font-mono text-xs text-slate-900">
+                    <div className="font-bold text-orange-600 mb-1 flex items-center gap-1">
+                      <Flame className="w-3.5 h-3.5 inline" /> NASA FIRMS Hotspot (VIIRS)
+                    </div>
+                    <div>Tgl / Jam: {hotspot.acq_date} {hotspot.acq_time} UTC</div>
+                    <div>Kecerahan: {hotspot.bright_ti4} K</div>
+                    <div>Daya FRP: {hotspot.frp > 0 ? `${hotspot.frp} MW` : 'N/A'}</div>
+                    <div className="mt-1 text-[10px] text-emerald-700 font-bold">✓ Authorized NASA FIRMS Key</div>
+                  </div>
+                </Popup>
+              </Marker>
+            ))}
+
+            {/* Hotspots attributed to a peat zone (NASA FIRMS + nearest-regency attribution) */}
+            {showGfwPeatland && gfwFires.map((fire, idx) => (
+              <Marker
+                key={`gfw-fire-${idx}`}
+                position={[fire.latitude, fire.longitude]}
+                icon={createPeatlandFireIcon()}
+                eventHandlers={{
+                  click: (e) => {
+                    e.originalEvent.stopPropagation();
+                    const title = `Hotspot zona gambut (${fire.latitude.toFixed(3)}, ${fire.longitude.toFixed(3)})`;
+                    setSelectedEntity({
+                      type: 'gfw',
+                      title: `Hotspot pada Zona Gambut`,
+                      lat: fire.latitude,
+                      lon: fire.longitude,
+                      details: {
+                        'Tanggal Alert': fire.alert__date,
+                        'Kabupaten / Provinsi': `${fire.adm2 || 'Kab'}, ${fire.adm1 || 'Prov'}`,
+                        'Kecerahan (K)': fire.bright_ti4__K ? `${fire.bright_ti4__K} K` : '-',
+                        'Daya radiasi api': fire.frp__MW ? `${fire.frp__MW} MW` : '-',
+                        'Atribusi Gambut': fire.peatland_attribution
+                          ? `${fire.peatland_attribution} (${fire.regency_centroid_km} km)`
+                          : 'tidak tersedia'
+                      }
+                    });
+                    if (onSelectCustomLocation) {
+                      onSelectCustomLocation(fire.latitude, fire.longitude, title);
+                    }
+                  }
+                }}
+              >
+                <Popup className="custom-popup">
+                  <div className="p-2 font-mono text-xs text-slate-900">
+                    <div className="font-bold text-red-600 mb-1 flex items-center gap-1">
+                      <Flame className="w-3.5 h-3.5 inline" /> Active Fire on Peatland
+                    </div>
+                    <div>Tgl Alert: {fire.alert__date}</div>
+                    <div>Lokasi: {fire.adm2 || 'Kab'}, {fire.adm1 || 'Prov'}</div>
+                    <div className="mt-1 text-[10px] text-slate-600">
+                      NASA FIRMS VIIRS 375m · atribusi gambut {fire.regency_centroid_km ?? '-'} km dari sentroid kabupaten
+                    </div>
+                  </div>
+                </Popup>
+              </Marker>
+            ))}
+
+            {/* User Clicked Target Point Marker */}
+            {clickedTarget && (
+              <Marker position={[clickedTarget.lat, clickedTarget.lon]} icon={createTargetIcon()}>
+                <Popup className="custom-popup">
+                  <div className="p-2 font-mono text-xs text-slate-900">
+                    <div className="font-bold text-emerald-600 mb-1 flex items-center gap-1">
+                      <Crosshair className="w-3.5 h-3.5 inline" /> Titik Peta Satelit Terpilih
+                    </div>
+                    <div>Lat: {clickedTarget.lat.toFixed(5)}</div>
+                    <div>Lon: {clickedTarget.lon.toFixed(5)}</div>
+                  </div>
+                </Popup>
+              </Marker>
+            )}
+
+            {/* Telemetry Station Marker */}
+            <Marker position={pos} icon={createCustomIcon(color)}>
+              <Popup className="custom-popup">
+                <div className="p-2 text-slate-900">
+                  <h4 className="font-bold text-slate-900 text-sm mb-1">{location.name}</h4>
+                  <div className="text-xs font-mono font-semibold text-slate-900">
+                    Skor risiko (PFVI): {currentPfvi.toFixed(1)} / 300 ({status})
+                  </div>
+                </div>
+              </Popup>
+            </Marker>
+
+            <Circle
+              center={pos}
+              radius={currentPfvi >= 225 ? 15000 : 8000}
+              pathOptions={{ color: color, fillColor: color, fillOpacity: 0.15, weight: 1.5 }}
+            />
+          </MapContainer>
+        </div>
+
+        {/* Right Inspector & Legend (1 Col) */}
+        <div className="border-t lg:border-t-0 lg:border-l border-[var(--line)] bg-[var(--surface)] flex flex-col justify-between">
+          <div>
+            <div className="p-4 border-b border-[var(--line)]">
+              <h3 className="text-[12.5px] font-semibold text-[var(--text)] flex items-center justify-between">
+                <span>Kondisi titik terpilih</span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[var(--surface-2)] text-[var(--text-mute)]">
+                  {selectedEntity ? selectedEntity.type.toUpperCase() : 'KLIK PETA'}
+                </span>
+              </h3>
+              <p className="text-[11px] text-[var(--text-dim)] mt-0.5">Klik titik mana saja di peta untuk mengganti lokasi pantauan</p>
+            </div>
+
+            {/* Active-location status summary — always reflects the point the
+                charts below are computed from (map click or region dropdown). */}
+            <div className="p-4 border-b border-[var(--line)] flex flex-col gap-2.5">
+              {(() => {
+                const key = statusKey(status);
+                const wtCm = waterTable !== undefined ? Math.abs(waterTable) * 100 : null;
+                const badgeBg = key === 'extreme' ? 'var(--danger)'
+                  : key === 'high' ? 'var(--high)'
+                  : key === 'moderate' ? 'var(--warn)' : 'var(--ok)';
+                return (
+                  <>
+                    <div className="flex flex-col gap-1.5">
+                      <span className="text-[13px] font-semibold text-[var(--text)] leading-snug">
+                        {location.name}
+                      </span>
+                      <span
+                        className="inline-flex w-fit items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide text-[#0a0c0a]"
+                        style={{ background: badgeBg }}
+                      >
+                        Risiko {STATUS_ID[key]}
+                      </span>
+                    </div>
+                    {/* Mini status scale with needle */}
+                    <div>
+                      <div className="relative h-2.5 rounded-full overflow-hidden flex border border-[var(--line)]">
+                        <div className="h-full bg-[var(--ok)]" style={{ width: '25%' }} />
+                        <div className="h-full bg-[var(--warn)]" style={{ width: '25%' }} />
+                        <div className="h-full bg-[var(--high)]" style={{ width: '25%' }} />
+                        <div className="h-full bg-[var(--danger)]" style={{ width: '25%' }} />
+                      </div>
+                      <div className="relative h-0">
+                        <div
+                          className="absolute -top-[13px] w-[3px] h-[15px] bg-[var(--text)] rounded-sm shadow transition-all duration-700"
+                          style={{ left: `calc(${Math.min(100, Math.max(0, (currentPfvi / 300) * 100))}% - 1.5px)` }}
+                          aria-hidden="true"
+                        />
+                      </div>
+                      <div className="flex justify-between font-mono text-[9.5px] text-[var(--text-dim)] mt-1">
+                        <span>0</span><span>75</span><span>150</span><span>225</span><span>300</span>
+                      </div>
+                    </div>
+                    {wtCm !== null && (
+                      <span className="flex items-center gap-1.5 text-[12px] text-[var(--text-mute)]">
+                        <Droplets className="w-3.5 h-3.5 text-[var(--ok)]" />
+                        Air tanah: <b className="text-[var(--text)] num">{wtCm.toFixed(0)} cm</b>
+                        {wtCm > 40 && <b className="text-[var(--danger)]">(terlalu kering)</b>}
+                      </span>
+                    )}
+                  </>
+                );
+              })()}
+            </div>
+
+            <div className="p-4">
+              {selectedEntity && (
+                <div className="space-y-3 font-mono text-xs">
+                  <div className="text-[var(--text)] font-semibold text-[13px]">
+                    {selectedEntity.title}
+                  </div>
+                  <div className="space-y-2 border-t border-[var(--line-soft)] pt-2">
+                    {Object.entries(selectedEntity.details).map(([k, v]) => (
+                      <div key={k} className="flex justify-between items-center text-[12px] py-1 border-b border-[var(--line-soft)]">
+                        <span className="text-[var(--text-mute)]">{k}:</span>
+                        <span className="font-semibold text-[var(--text)]">{String(v)}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {onSelectCustomLocation && (
+                    <button
+                      type="button"
+                      onClick={() => onSelectCustomLocation(selectedEntity.lat, selectedEntity.lon, selectedEntity.title)}
+                      className="w-full mt-2 py-2 px-3 bg-[var(--accent)] text-[#0a0c0a] font-bold rounded-[var(--r-sm)] text-xs transition-opacity hover:opacity-90 flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <Zap className="w-3.5 h-3.5" />
+                      <span>Fokuskan Telemetri ke Titik Ini</span>
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Map Legend Footer */}
+          <div className="p-3.5 border-t border-[var(--line)] flex flex-col gap-1.5 text-[11px] font-mono">
+            <div className="flex items-center gap-2 text-[var(--text-mute)]">
+              <span className="w-2 h-2 rounded-full bg-[var(--ok)] shrink-0" />
+              <span>Rendah &lt; 75</span>
+            </div>
+            <div className="flex items-center gap-2 text-[var(--text-mute)]">
+              <span className="w-2 h-2 rounded-full bg-[var(--warn)] shrink-0" />
+              <span>Sedang 75 / 150</span>
+            </div>
+            <div className="flex items-center gap-2 text-[var(--text-mute)]">
+              <span className="w-2 h-2 rounded-full bg-[var(--high)] shrink-0" />
+              <span>Tinggi 150 / 225</span>
+            </div>
+            <div className="flex items-center gap-2 text-[var(--text-mute)]">
+              <span className="w-2 h-2 rounded-full bg-[var(--danger)] shrink-0" />
+              <span>Ekstrem &gt; 225</span>
+            </div>
+          </div>
         </div>
       </div>
     </section>
   );
 };
-
-// Compact printable summary (kept for field printouts; plain wording).
-export const PrintHint: React.FC = () => (
-  <button
-    type="button"
-    onClick={() => window.print()}
-    className="flex items-center gap-1.5 font-mono text-[12px] text-[var(--text-mute)] hover:text-[var(--accent)] cursor-pointer"
-  >
-    <Printer className="w-3.5 h-3.5" />
-    <span>Cetak ringkasan</span>
-  </button>
-);
-
-export { STATUS_MIN };
 ```
 
 ---
 
-## FITUR 3: Tab Pemantauan — Peringatan Aktif Klaster Hotspot
+## FITUR 3: Tab Peringatan — Daftar Klaster Hotspot Aktif
 
-**Deskripsi & Tujuan Fitur:** Daftar peringatan hasil klaster titik panas NASA FIRMS pada zona gambut. Ini satu-satunya tempat teks peringatan ditampilkan, sehingga pengguna tidak menemukan informasi yang sama di dua tempat berbeda.
+**Deskripsi & Tujuan Fitur:** Tab Peringatan memuat satu daftar tunggal klaster kebakaran gambut (grid ~16 km) yang diderivasi langsung dari hotspot NASA FIRMS, dinilai dari FRP maksimum & jumlah deteksi. Setiap baris dapat diklik untuk langsung memfokuskan peta ke lokasi kejadian.
 
-![Bagian Peringatan tab Pemantauan: daftar klaster hotspot zona gambut terurut FRP](docs/screenshots/01b-peringatan.png)
+![Tab Peringatan: daftar klaster hotspot zona gambut terurut FRP](docs/screenshots/02-peringatan.png)
 
-*Gambar: Bagian Peringatan tab Pemantauan: daftar klaster hotspot zona gambut terurut FRP.*
+*Gambar: Tab Peringatan — daftar klaster hotspot zona gambut 24 jam terakhir.*
 
 **Cara Menggunakan:**
 
-1. Bagian **Peringatan aktif** mendaftar setiap klaster titik panas pada zona gambut dalam 24 jam terakhir, diurutkan dari FRP tertinggi.
-2. Setiap baris menampilkan tingkat bahaya (Kebakaran parah / Anomali termal tinggi / Waspada gambut), wilayah, jumlah deteksi, FRP maksimum, dan luas terbakar bila tersedia.
-3. Angka pada label tab Pemantauan adalah jumlah klaster aktif.
-4. Klik **Lihat di peta** pada baris mana pun untuk memfokuskan peta ke koordinat klaster tersebut dan menggulir ke bagian Peta.
-5. Bila tidak ada klaster dalam 24 jam terakhir, aplikasi menampilkan status aman, bukan daftar kosong tanpa penjelasan.
+1. Klik tab **Peringatan** di bilah atas. Badge angka merah pada tab menunjukkan jumlah klaster aktif.
+2. Setiap baris menampilkan: label severity (**Kebakaran parah** merah, **Anomali termal tinggi** oranye, **Waspada gambut** kuning), lokasi kabupaten, jumlah deteksi satelit, FRP maksimum (MW), dan perkiraan luas terbakar (ha).
+3. Klik baris mana saja untuk berpindah ke tab Pemantauan dengan peta terfokus ke lokasi kejadian.
+4. Bila daftar kosong, aplikasi menampilkan kabar baik: tidak ada titik api di lahan gambut dalam 24 jam terakhir.
 
 #### Kode Sumber (Source Code Listing): `frontend/src/components/ActiveAlerts.tsx`
 
@@ -793,539 +1140,13 @@ export const ActiveAlerts: React.FC<ActiveAlertsProps> = ({ alerts, onFocus }) =
 
 ---
 
-## FITUR 4: Tab Pemantauan — Peta Titik Panas & Inspektor Hotspot
+## FITUR 4: Tab Pemantauan — Pengaturan Perhitungan & Grafik Proyeksi
 
-**Deskripsi & Tujuan Fitur:** Peta GIS berbasis Esri World Imagery dengan layer thermal NASA FIRMS terotorisasi, hotspot vector, dan atribusi zona gambut. Inspektor di sisi kanan menampilkan rincian setiap titik yang dipilih.
+**Deskripsi & Tujuan Fitur:** Di bawah peta, tab Pemantauan memuat panel **Pengaturan perhitungan** (untuk pengguna pakar), kartu **Kondisi saat ini** (empat nilai terbaru dengan badge yang dihitung dari nilai aktual), grafik utama **Perkembangan risiko, kemarin dan beberapa hari ke depan** dengan pita ambang, serta **Grafik lengkap tiap variabel**. Semua panel ini mengikuti titik yang dipilih di peta.
 
-![Bagian Peta tab Pemantauan: layer NASA FIRMS, marker hotspot, dan Inspektor Titik Panas](docs/screenshots/01c-peta.png)
+![Tab Pemantauan bagian Analisis: pengaturan perhitungan, kondisi saat ini, dan grafik proyeksi](docs/screenshots/01b-proyeksi.png)
 
-*Gambar: Bagian Peta tab Pemantauan: layer NASA FIRMS, marker hotspot, dan Inspektor Titik Panas.*
-
-**Cara Menggunakan:**
-
-1. Gulir ke bagian **Peta** atau klik chip Peta di bawah tab bar.
-2. Aktifkan atau matikan layer lewat tombol di kanan atas peta: **FIRMS WMS (NASA Key)**, **Hotspots API** (jumlah deteksi vector), dan **Zona Gambut** (deteksi yang diatribusikan ke kabupaten gambut terdekat, maksimum 75 km).
-3. Klik titik mana pun pada peta untuk mengambil koordinat dan menarik telemetri titik tersebut; peta memfokus ulang ke lokasi baru.
-4. Klik marker hotspot (oranye/merah) untuk melihat tanggal-jam akuisisi UTC, kecerahan T_i4 (K), daya FRP (MW), satelit pengawas, dan jarak ke stasiun utama.
-5. Panel **Inspektor Titik Panas** di kanan menampilkan rincian titik terpilih beserta tombol **Fokuskan Telemetri ke Titik Ini**.
-6. Legenda di bawah inspektor menjelaskan ambang warna marker: Rendah < 75, Sedang 75-150, Tinggi 150-225, Ekstrem > 225.
-
-#### Kode Sumber (Source Code Listing): `frontend/src/components/PeatlandMap.tsx`
-
-```tsx
-import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, WMSTileLayer, Marker, Popup, Circle, useMap, useMapEvents } from 'react-leaflet';
-import L from 'leaflet';
-import { MapPin, Flame, Satellite, ShieldAlert, Radio, Crosshair, Zap, Navigation, CheckCircle2 } from 'lucide-react';
-import axios from 'axios';
-
-export interface LocationPreset {
-  id: string;
-  name: string;
-  lat: number;
-  lon: number;
-}
-
-export interface GfwPeatlandFire {
-  latitude: number;
-  longitude: number;
-  alert__date: string;
-  confidence__cat?: string;
-  bright_ti4__K?: number;
-  frp__MW?: number;
-  is__peatland?: boolean;
-  adm1?: string;
-  adm2?: string;
-  peatland_attribution?: string;
-  regency_centroid_km?: number;
-}
-
-export interface FirmsHotspot {
-  latitude: number;
-  longitude: number;
-  bright_ti4: number;
-  frp: number;
-  acq_date: string;
-  acq_time: string;
-  satellite: string;
-  instrument: string;
-  confidence: string;
-  daynight: string;
-}
-
-const FIRMS_MAP_KEY = "aa16407e5eb11df46b09cafc085fe020";
-
-function getDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371;
-  const dLat = (lat2 - lat1) * (Math.PI / 180);
-  const dLon = (lon2 - lon1) * (Math.PI / 180);
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-}
-
-const createCustomIcon = (color: string) => {
-  return L.divIcon({
-    className: 'custom-leaflet-marker',
-    html: `<div style="background-color: ${color}; width: 18px; height: 18px; border-radius: 50%; border: 2.5px solid white; box-shadow: 0 0 12px ${color}; cursor: pointer;"></div>`,
-    iconSize: [18, 18],
-    iconAnchor: [9, 9]
-  });
-};
-
-const createPeatlandFireIcon = () => {
-  return L.divIcon({
-    className: 'gfw-peatland-fire-marker',
-    html: `<div style="background-color: var(--danger); width: 14px; height: 14px; border-radius: 50%; border: 2px solid #fee2e2; box-shadow: 0 0 14px var(--danger); animation: pulse 1.5s infinite; cursor: pointer;"></div>`,
-    iconSize: [14, 14],
-    iconAnchor: [7, 7]
-  });
-};
-
-const createFirmsHotspotIcon = () => {
-  return L.divIcon({
-    className: 'firms-hotspot-marker',
-    html: `<div style="background-color: var(--accent); width: 12px; height: 12px; border-radius: 50%; border: 2px solid #ffedd5; box-shadow: 0 0 10px var(--accent); cursor: pointer;"></div>`,
-    iconSize: [12, 12],
-    iconAnchor: [6, 6]
-  });
-};
-
-const createTargetIcon = () => {
-  return L.divIcon({
-    className: 'clicked-target-marker',
-    html: `<div style="background-color: var(--ok); width: 16px; height: 16px; border-radius: 50%; border: 2.5px solid white; box-shadow: 0 0 14px var(--ok); cursor: pointer;"></div>`,
-    iconSize: [16, 16],
-    iconAnchor: [8, 8]
-  });
-};
-
-function MapFlyTo({ lat, lon }: { lat: number; lon: number }) {
-  const map = useMap();
-  useEffect(() => {
-    map.flyTo([lat, lon], 10, { duration: 1.5 });
-  }, [lat, lon, map]);
-  return null;
-}
-
-function MapClickHandler({ onMapClick }: { onMapClick: (lat: number, lon: number) => void }) {
-  useMapEvents({
-    click(e) {
-      onMapClick(e.latlng.lat, e.latlng.lng);
-    }
-  });
-  return null;
-}
-
-interface PeatlandMapProps {
-  currentPfvi: number;
-  status: string;
-  location: LocationPreset;
-  onSelectCustomLocation?: (lat: number, lon: number, name?: string) => void;
-}
-
-export const PeatlandMap: React.FC<PeatlandMapProps> = ({
-  currentPfvi,
-  status,
-  location,
-  onSelectCustomLocation
-}) => {
-  const pos: [number, number] = [location.lat, location.lon];
-
-  // Live Satellite Overlay Layers state
-  const [showFirmsWms, setShowFirmsWms] = useState(true);
-  const [showFirmsVector, setShowFirmsVector] = useState(true);
-  const [showGibsViirsDay, setShowGibsViirsDay] = useState(true);
-  const [showGfwPeatland, setShowGfwPeatland] = useState(true);
-  
-  // Interactivity state
-  const [clickedTarget, setClickedTarget] = useState<{ lat: number; lon: number } | null>(null);
-  const [selectedEntity, setSelectedEntity] = useState<{
-    type: 'hotspot' | 'gfw' | 'station' | 'point';
-    title: string;
-    lat: number;
-    lon: number;
-    details: Record<string, any>;
-  } | null>(null);
-
-  const [gfwFires, setGfwFires] = useState<GfwPeatlandFire[]>([]);
-  const [firmsHotspots, setFirmsHotspots] = useState<FirmsHotspot[]>([]);
-
-  useEffect(() => {
-    if (showGfwPeatland) {
-      axios.get('/api/v1/fire-intelligence/gfw-peatland-fires?limit=100')
-        .then((res) => {
-          if (res.data && res.data.fires) {
-            setGfwFires(res.data.fires);
-          }
-        })
-        .catch((err) => console.warn('Could not fetch GFW peatland fires:', err));
-    }
-  }, [showGfwPeatland]);
-
-  useEffect(() => {
-    if (showFirmsVector) {
-      axios.get('/api/v1/fire-intelligence/firms-hotspots?day_range=1')
-        .then((res) => {
-          if (res.data && res.data.hotspots) {
-            setFirmsHotspots(res.data.hotspots);
-          }
-        })
-        .catch((err) => console.warn('Could not fetch NASA FIRMS vector hotspots:', err));
-    }
-  }, [showFirmsVector]);
-
-  const handleMapClick = (lat: number, lon: number) => {
-    setClickedTarget({ lat, lon });
-    const distKm = getDistanceKm(location.lat, location.lon, lat, lon);
-    const title = `Titik Klik Peta (${lat.toFixed(3)}, ${lon.toFixed(3)})`;
-    setSelectedEntity({
-      type: 'point',
-      title: `Koordinat Klik Peta Satelit`,
-      lat,
-      lon,
-      details: {
-        'Latitude': lat.toFixed(5),
-        'Longitude': lon.toFixed(5),
-        'Jarak ke Stasiun Utama': `${distKm.toFixed(2)} km`,
-        'Status Wilayah': 'Realtime Satellite Grid Pick'
-      }
-    });
-
-    if (onSelectCustomLocation) {
-      onSelectCustomLocation(lat, lon, title);
-    }
-  };
-
-  const getMarkerColor = (pfvi: number) => {
-    if (pfvi >= 225) return 'var(--danger)'; // Red
-    if (pfvi >= 150) return 'var(--high)';   // Orange
-    if (pfvi >= 75) return 'var(--warn)';    // Amber
-    return 'var(--ok)'; // Green
-  };
-
-  const color = getMarkerColor(currentPfvi);
-
-  return (
-    <section>
-      {/* Section Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-baseline justify-between gap-3 mb-3">
-        <div>
-          <h2 className="font-disp text-[17px] font-bold tracking-tight text-[var(--text)] flex items-center gap-2">
-            <Satellite className="w-4 h-4 text-[var(--accent)]" />
-            <span>Peta titik api &amp; lahan gambut</span>
-          </h2>
-          <p className="text-[13px] text-[var(--text-dim)] mt-0.5">
-            Data satelit NASA (VIIRS 375m) langsung, dicocokkan ke kabupaten gambut terdekat (maks 75 km). Klik titik mana saja untuk melihat detail lokasi.
-          </p>
-        </div>
-
-        {/* Live Satellite Layer Toggles */}
-        <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
-          <button
-            type="button"
-            onClick={() => setShowFirmsWms(!showFirmsWms)}
-            className={`px-3 py-1.5 rounded-[var(--r-sm)] border transition-colors flex items-center gap-1.5 font-semibold cursor-pointer ${
-              showFirmsWms
-                ? 'bg-[var(--accent-soft)] text-[var(--accent)] border-[var(--accent-line)]'
-                : 'bg-[var(--surface-2)] text-[var(--text-mute)] border-[var(--line)]'
-            }`}
-          >
-            <Flame className="w-3.5 h-3.5" />
-            <span>FIRMS WMS (NASA Key)</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setShowFirmsVector(!showFirmsVector)}
-            className={`px-3 py-1.5 rounded-[var(--r-sm)] border transition-colors flex items-center gap-1.5 font-semibold cursor-pointer ${
-              showFirmsVector
-                ? 'bg-[var(--accent-soft)] text-[var(--accent)] border-[var(--accent-line)]'
-                : 'bg-[var(--surface-2)] text-[var(--text-mute)] border-[var(--line)]'
-            }`}
-          >
-            <Radio className="w-3.5 h-3.5" />
-            <span>Hotspots API ({firmsHotspots.length})</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setShowGfwPeatland(!showGfwPeatland)}
-            className={`px-3 py-1.5 rounded-[var(--r-sm)] border transition-colors flex items-center gap-1.5 font-semibold cursor-pointer ${
-              showGfwPeatland
-                ? 'bg-[var(--accent-soft)] text-[var(--accent)] border-[var(--accent-line)]'
-                : 'bg-[var(--surface-2)] text-[var(--text-mute)] border-[var(--line)]'
-            }`}
-          >
-            <ShieldAlert className="w-3.5 h-3.5" />
-            <span>Zona Gambut ({gfwFires.length})</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Map Row Container */}
-      <div className="border border-[var(--line)] rounded-[var(--r-md)] bg-[var(--surface)] overflow-hidden grid grid-cols-1 lg:grid-cols-4">
-        {/* Left Map (3 Cols) */}
-        <div className="lg:col-span-3 h-[440px] w-full relative">
-          <MapContainer
-            center={pos}
-            zoom={10}
-            scrollWheelZoom={true}
-            doubleClickZoom={true}
-            touchZoom={true}
-            className="h-full w-full cursor-crosshair"
-          >
-            <MapFlyTo lat={location.lat} lon={location.lon} />
-            <MapClickHandler onMapClick={handleMapClick} />
-
-            {/* Satellite Base Layer */}
-            <TileLayer
-              attribution='&copy; <a href="https://www.esri.com/">Esri World Imagery</a>'
-              url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-            />
-
-            {/* Place Names & Labels Overlay */}
-            <TileLayer
-              attribution='&copy; <a href="https://carto.com/">CARTO Voyager Labels</a>'
-              url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png"
-            />
-
-            {/* NASA FIRMS Dedicated WMS Thermal Layer */}
-            {showFirmsWms && (
-              <WMSTileLayer
-                url={`https://firms.modaps.eosdis.nasa.gov/mapserver/wms/fires/${FIRMS_MAP_KEY}/`}
-                layers="fires_viirs_24,fires_modis_24"
-                format="image/png"
-                transparent={true}
-                attribution="NASA FIRMS WMS"
-              />
-            )}
-
-            {/* NASA GIBS VIIRS 375m Layer */}
-            {showGibsViirsDay && (
-              <WMSTileLayer
-                url="https://gibs.earthdata.nasa.gov/wms/epsg3857/best/wms.cgi"
-                layers="VIIRS_SNPP_Thermal_Anomalies_375m_Day,VIIRS_SNPP_Thermal_Anomalies_375m_Night"
-                format="image/png"
-                transparent={true}
-                attribution="NASA GIBS VIIRS"
-              />
-            )}
-
-            {/* NASA FIRMS Vector Hotspot Point Markers */}
-            {showFirmsVector && firmsHotspots.map((hotspot, idx) => (
-              <Marker
-                key={`firms-vector-${idx}`}
-                position={[hotspot.latitude, hotspot.longitude]}
-                icon={createFirmsHotspotIcon()}
-                eventHandlers={{
-                  click: (e) => {
-                    e.originalEvent.stopPropagation();
-                    const distKm = getDistanceKm(location.lat, location.lon, hotspot.latitude, hotspot.longitude);
-                    const title = `Hotspot NASA FIRMS (${hotspot.latitude.toFixed(3)}, ${hotspot.longitude.toFixed(3)})`;
-                    setSelectedEntity({
-                      type: 'hotspot',
-                      title: `NASA FIRMS Hotspot (VIIRS)`,
-                      lat: hotspot.latitude,
-                      lon: hotspot.longitude,
-                      details: {
-                        'Tanggal / Jam UTC': `${hotspot.acq_date} ${hotspot.acq_time} UTC`,
-                        'Kecerahan (T_i4)': `${hotspot.bright_ti4} K`,
-                        'Daya FRP': hotspot.frp > 0 ? `${hotspot.frp} MW` : 'N/A',
-                        'Satelit Sensor': `${hotspot.satellite} (${hotspot.instrument})`,
-                        'Tingkat Kepercayaan': hotspot.confidence,
-                        'Jarak ke Stasiun': `${distKm.toFixed(2)} km`
-                      }
-                    });
-                    if (onSelectCustomLocation) {
-                      onSelectCustomLocation(hotspot.latitude, hotspot.longitude, title);
-                    }
-                  }
-                }}
-              >
-                <Popup className="custom-popup">
-                  <div className="p-2 font-mono text-xs text-slate-900">
-                    <div className="font-bold text-orange-600 mb-1 flex items-center gap-1">
-                      <Flame className="w-3.5 h-3.5 inline" /> NASA FIRMS Hotspot (VIIRS)
-                    </div>
-                    <div>Tgl / Jam: {hotspot.acq_date} {hotspot.acq_time} UTC</div>
-                    <div>Kecerahan: {hotspot.bright_ti4} K</div>
-                    <div>Daya FRP: {hotspot.frp > 0 ? `${hotspot.frp} MW` : 'N/A'}</div>
-                    <div className="mt-1 text-[10px] text-emerald-700 font-bold">✓ Authorized NASA FIRMS Key</div>
-                  </div>
-                </Popup>
-              </Marker>
-            ))}
-
-            {/* Hotspots attributed to a peat zone (NASA FIRMS + nearest-regency attribution) */}
-            {showGfwPeatland && gfwFires.map((fire, idx) => (
-              <Marker
-                key={`gfw-fire-${idx}`}
-                position={[fire.latitude, fire.longitude]}
-                icon={createPeatlandFireIcon()}
-                eventHandlers={{
-                  click: (e) => {
-                    e.originalEvent.stopPropagation();
-                    const distKm = getDistanceKm(location.lat, location.lon, fire.latitude, fire.longitude);
-                    const title = `Hotspot zona gambut (${fire.latitude.toFixed(3)}, ${fire.longitude.toFixed(3)})`;
-                    setSelectedEntity({
-                      type: 'gfw',
-                      title: `Hotspot pada Zona Gambut`,
-                      lat: fire.latitude,
-                      lon: fire.longitude,
-                      details: {
-                        'Tanggal Alert': fire.alert__date,
-                        'Kabupaten / Provinsi': `${fire.adm2 || 'Kab'}, ${fire.adm1 || 'Prov'}`,
-                        'Kecerahan (K)': fire.bright_ti4__K ? `${fire.bright_ti4__K} K` : '-',
-                        'Daya FRP': fire.frp__MW ? `${fire.frp__MW} MW` : '-',
-                        'Atribusi Gambut': fire.peatland_attribution
-                          ? `${fire.peatland_attribution} (${fire.regency_centroid_km} km)`
-                          : 'tidak tersedia',
-                        'Jarak ke Stasiun': `${distKm.toFixed(2)} km`
-                      }
-                    });
-                    if (onSelectCustomLocation) {
-                      onSelectCustomLocation(fire.latitude, fire.longitude, title);
-                    }
-                  }
-                }}
-              >
-                <Popup className="custom-popup">
-                  <div className="p-2 font-mono text-xs text-slate-900">
-                    <div className="font-bold text-red-600 mb-1 flex items-center gap-1">
-                      <Flame className="w-3.5 h-3.5 inline" /> Active Fire on Peatland
-                    </div>
-                    <div>Tgl Alert: {fire.alert__date}</div>
-                    <div>Lokasi: {fire.adm2 || 'Kab'}, {fire.adm1 || 'Prov'}</div>
-                    <div className="mt-1 text-[10px] text-slate-600">
-                      NASA FIRMS VIIRS 375m · atribusi gambut {fire.regency_centroid_km ?? '-'} km dari sentroid kabupaten
-                    </div>
-                  </div>
-                </Popup>
-              </Marker>
-            ))}
-
-            {/* User Clicked Target Point Marker */}
-            {clickedTarget && (
-              <Marker position={[clickedTarget.lat, clickedTarget.lon]} icon={createTargetIcon()}>
-                <Popup className="custom-popup">
-                  <div className="p-2 font-mono text-xs text-slate-900">
-                    <div className="font-bold text-emerald-600 mb-1 flex items-center gap-1">
-                      <Crosshair className="w-3.5 h-3.5 inline" /> Titik Peta Satelit Terpilih
-                    </div>
-                    <div>Lat: {clickedTarget.lat.toFixed(5)}</div>
-                    <div>Lon: {clickedTarget.lon.toFixed(5)}</div>
-                  </div>
-                </Popup>
-              </Marker>
-            )}
-
-            {/* Telemetry Station Marker */}
-            <Marker position={pos} icon={createCustomIcon(color)}>
-              <Popup className="custom-popup">
-                <div className="p-2 text-slate-900">
-                  <h4 className="font-bold text-slate-900 text-sm mb-1">{location.name}</h4>
-                  <div className="text-xs font-mono font-semibold text-slate-900">
-                    Skor risiko (PFVI): {currentPfvi.toFixed(1)} / 300 ({status})
-                  </div>
-                </div>
-              </Popup>
-            </Marker>
-
-            <Circle
-              center={pos}
-              radius={currentPfvi >= 225 ? 15000 : 8000}
-              pathOptions={{ color: color, fillColor: color, fillOpacity: 0.15, weight: 1.5 }}
-            />
-          </MapContainer>
-        </div>
-
-        {/* Right Inspector & Legend (1 Col) */}
-        <div className="border-t lg:border-t-0 lg:border-l border-[var(--line)] bg-[var(--surface)] flex flex-col justify-between">
-          <div>
-            <div className="p-4 border-b border-[var(--line)]">
-              <h3 className="text-[12.5px] font-semibold text-[var(--text)] flex items-center justify-between">
-                <span>Inspektor Titik Panas</span>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[var(--surface-2)] text-[var(--text-mute)]">
-                  {selectedEntity ? selectedEntity.type.toUpperCase() : 'SELECT POINT'}
-                </span>
-              </h3>
-              <p className="text-[11px] text-[var(--text-dim)] mt-0.5">Pilih titik pada peta satelit</p>
-            </div>
-
-            <div className="p-4">
-              {selectedEntity ? (
-                <div className="space-y-3 font-mono text-xs">
-                  <div className="text-[var(--text)] font-semibold text-[13px]">
-                    {selectedEntity.title}
-                  </div>
-                  <div className="space-y-2 border-t border-[var(--line-soft)] pt-2">
-                    {Object.entries(selectedEntity.details).map(([k, v]) => (
-                      <div key={k} className="flex justify-between items-center text-[12px] py-1 border-b border-[var(--line-soft)]">
-                        <span className="text-[var(--text-mute)]">{k}:</span>
-                        <span className="font-semibold text-[var(--text)]">{String(v)}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  {onSelectCustomLocation && (
-                    <button
-                      type="button"
-                      onClick={() => onSelectCustomLocation(selectedEntity.lat, selectedEntity.lon, selectedEntity.title)}
-                      className="w-full mt-2 py-2 px-3 bg-[var(--accent)] text-[#0a0c0a] font-bold rounded-[var(--r-sm)] text-xs transition-opacity hover:opacity-90 flex items-center justify-center gap-2 cursor-pointer"
-                    >
-                      <Zap className="w-3.5 h-3.5" />
-                      <span>Fokuskan Telemetri ke Titik Ini</span>
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <div className="py-8 text-center text-[var(--text-dim)] flex flex-col items-center justify-center gap-2 font-mono text-xs">
-                  <Crosshair className="w-6 h-6 text-[var(--text-dim)]" />
-                  <p className="max-w-[20ch] leading-snug">Klik salah satu titik di peta untuk melihat telemetri lokal</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Map Legend Footer */}
-          <div className="p-3.5 border-t border-[var(--line)] flex flex-col gap-1.5 text-[11px] font-mono">
-            <div className="flex items-center gap-2 text-[var(--text-mute)]">
-              <span className="w-2 h-2 rounded-full bg-[var(--ok)] shrink-0" />
-              <span>Rendah &lt; 75</span>
-            </div>
-            <div className="flex items-center gap-2 text-[var(--text-mute)]">
-              <span className="w-2 h-2 rounded-full bg-[var(--warn)] shrink-0" />
-              <span>Sedang 75 / 150</span>
-            </div>
-            <div className="flex items-center gap-2 text-[var(--text-mute)]">
-              <span className="w-2 h-2 rounded-full bg-[var(--high)] shrink-0" />
-              <span>Tinggi 150 / 225</span>
-            </div>
-            <div className="flex items-center gap-2 text-[var(--text-mute)]">
-              <span className="w-2 h-2 rounded-full bg-[var(--danger)] shrink-0" />
-              <span>Ekstrem &gt; 225</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-};
-```
-
----
-
-## FITUR 5: Tab Pemantauan — Konfigurasi Model & Grafik Proyeksi
-
-**Deskripsi & Tujuan Fitur:** Bagian Proyeksi menggabungkan panel pengaturan perhitungan (untuk pengguna pakar) dengan grafik historis dan proyeksi PFVI, ditambah empat grafik variabel pendukung. Seluruh label panel memakai bahasa awam, dan badge kondisi pada kartu sinyal dihitung dari nilai aktual (misalnya muka air tanah -60 cm otomatis berlabel "Melewati batas aman", bukan "Normal").
-
-![Bagian Proyeksi tab Pemantauan: konfigurasi model, sinyal penggerak, dan grafik PFVI historis-proyeksi](docs/screenshots/01d-proyeksi.png)
-
-*Gambar: Bagian Proyeksi tab Pemantauan: konfigurasi model, sinyal penggerak, dan grafik PFVI historis-proyeksi.*
+*Gambar: Pengaturan perhitungan, kartu Kondisi saat ini, dan grafik perkembangan risiko.*
 
 **Cara Menggunakan:**
 
@@ -1333,8 +1154,9 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
 2. Pilih **Model perhitungan**: ARIMA (bawaan, cepat), LSTM (AI, lebih berat), atau GRU (AI, lebih berat).
 3. Pilih **Berapa hari ke depan**: 4, 7, atau 14 hari.
 4. Klik **Hitung ulang proyeksi** untuk menjalankan ulang imputasi, forecasting, dan optimasi parameter Nelder-Mead.
-5. Grafik **Perkembangan risiko, kemarin dan beberapa hari ke depan** menampilkan garis solid untuk observasi dan garis putus-putus untuk proyeksi, dengan pita warna ambang risiko.
-6. Panel **Grafik lengkap tiap variabel** menampilkan muka air tanah, kelembapan tanah, curah hujan, dan suhu maksimum sebagai grafik kecil; kartu **Kondisi saat ini** di atasnya menampilkan nilai terbaru dengan badge yang dihitung dari nilai aktual.
+5. Kartu **Kondisi saat ini** menampilkan muka air tanah, kelembapan tanah, curah hujan, dan suhu maksimum beserta badge (Aman/Lembap/Kering/Panas) yang dihitung dari nilai aktual.
+6. Grafik **Perkembangan risiko** menampilkan garis solid untuk observasi dan garis putus-putus untuk proyeksi, dengan pita warna ambang 75/150/225.
+7. Panel **Grafik lengkap tiap variabel** menampilkan empat grafik garis (muka air tanah, kelembapan tanah, curah hujan, suhu maksimum).
 
 #### Kode Sumber (Source Code Listing): `frontend/src/components/PipelineControls.tsx`
 
@@ -1775,22 +1597,20 @@ export const ForecastCharts: React.FC<ForecastChartsProps> = ({
 
 ---
 
-## FITUR 6: Tab Simulasi — Skenario Bagaimana Jika
+## FITUR 5: Tab Simulasi — Skenario "Bagaimana Jika"
 
-**Deskripsi & Tujuan Fitur:** Simulator interaktif untuk menguji dampak kenaikan suhu, durasi kemarau, dan kedalaman muka air tanah terhadap PFVI. Simulator memakai parameter hidrologi hasil kalibrasi pipeline untuk wilayah terpilih, dan jatuh ke nilai default jurnal Sabangau hanya bila pipeline belum menghasilkan parameter.
+**Deskripsi & Tujuan Fitur:** Tab Simulasi mengizinkan pengguna menguji dampak skenario cuaca kering terhadap PFVI tanpa mengubah data nyata, memakai persamaan fisika yang sama dengan pipeline utama.
 
-![Tab Simulasi: skenario bagaimana jika dengan parameter hidrologi terkalibrasi](docs/screenshots/02-simulasi.png)
+![Tab Simulasi: slider skenario dan panel hasil PFVI simulasi](docs/screenshots/03-simulasi.png)
 
-*Gambar: Tab Simulasi: skenario bagaimana jika dengan parameter hidrologi terkalibrasi.*
+*Gambar: Tab Simulasi — slider skenario kering dan hasil PFVI.*
 
 **Cara Menggunakan:**
 
-1. Buka tab **Simulasi**.
-2. Geser **Kenaikan suhu udara** (0-6 derajat Celsius) dan **Durasi kemarau tanpa hujan** (0-30 hari).
-3. Geser **Kedalaman muka air tanah** (0-3 m) sesuai skenario drainase yang ingin diuji.
-4. Geser **PFVI dasar awal** bila ingin memulai dari kondisi hipotetis, bukan kondisi terkini.
-5. Baca **Proyeksi PFVI setelah periode simulasi** beserta selisih terhadap dasar dan kategorinya.
-6. Angka **Evapotranspirasi rata-rata (DF)** dan **Serapan muka air (WTF)** di bawahnya adalah rata-rata harian yang benar-benar dihitung model selama periode simulasi.
+1. Klik tab **Simulasi** di bilah atas.
+2. Atur slider: **Kenaikan suhu udara**, **Durasi kemarau tanpa hujan**, **Kedalaman air tanah**, dan **Skor risiko awal** (otomatis mengikuti kondisi saat ini dari peta).
+3. Hasil di panel kanan menampilkan **Skor risiko setelah simulasi**, arah perubahan (naik/turun … dari kondisi sekarang), serta rata-rata Evapotranspirasi (DF) dan Serapan muka air (WTF) per hari.
+4. Bila belum ada data pipeline untuk lokasi terpilih, parameter hidrologi memakai default jurnal Sabangau (Mahdiyasa dkk., 2025).
 
 #### Kode Sumber (Source Code Listing): `frontend/src/components/ScenarioSimulator.tsx`
 
@@ -1970,7 +1790,7 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({ currentPfv
 
 ---
 
-## FITUR 7: Backend API Routing & Telemetri Satelit Realtime (Backend Core Server)
+## FITUR 6: Backend API Routing & Telemetri Satelit Realtime (Backend Core Server)
 **Deskripsi & Tujuan Fitur:** API Server FastAPI yang bertugas memproses request HTTP, mengambil data satelit Open-Meteo ERA5-Land, mengolah hotspot NASA FIRMS, dan menjalankan pipeline otomatis.
 
 **Cara Menggunakan:**
@@ -2364,7 +2184,7 @@ def run_auto_pipeline(req: AutoPipelineRequest):
 
 ---
 
-## FITUR 8: PeatFR Mathematical Engine & Optimasi Nelder-Mead (Physical Core)
+## FITUR 7: PeatFR Mathematical Engine & Optimasi Nelder-Mead (Physical Core)
 **Deskripsi & Tujuan Fitur:** Modul backend terinti yang menghitung formula fisik PFVI, evapotranspirasi (DF), rain factor (RF), water table factor (WTF van Genuchten), dan optimasi Nelder-Mead ber-constraint fisik.
 
 **Cara Menggunakan:**
@@ -2528,7 +2348,7 @@ def optimize_pfvi_parameters(
 
 ---
 
-## FITUR 9: Multi-Source Fire Intelligence Proxy (Satellite Aggregator)
+## FITUR 8: Multi-Source Fire Intelligence Proxy (Satellite Aggregator)
 **Deskripsi & Tujuan Fitur:** Modul backend yang mengagregasi data thermal anomaly dari NASA FIRMS API (MAP_KEY authorized), GWIS burned area, dan FirePing public API.
 
 **Cara Menggunakan:**
@@ -2979,11 +2799,11 @@ fire_engine = FireIntelligenceEngine()
 
 ---
 
-## FITUR 10: Main Application Layout & State Management (App Core)
-**Deskripsi & Tujuan Fitur:** Shell aplikasi yang mengelola state global (wilayah target, hasil telemetri, hasil pipeline, daftar peringatan aktif) dan merutekannya ke dua tab operasional. Lokasi dan atribusi jenis tanah menjadi state bersama antara bilah atas, peta, dan panel konfigurasi.
+## FITUR 9: Main Application Layout & State Management (App Core)
+**Deskripsi & Tujuan Fitur:** Shell aplikasi yang mengelola state global (wilayah target, hasil telemetri, hasil pipeline, daftar peringatan aktif) dan merutekannya ke tiga tab operasional. Lokasi dan atribusi jenis tanah menjadi state bersama antara bilah atas, peta, dan panel konfigurasi.
 
 **Cara Menggunakan:**
-Tab **Pemantauan** memuat HeroStatus, ActiveAlerts, PeatlandMap, PipelineControls, dan ForecastCharts secara berurutan dengan chip navigasi bagian; tab **Simulasi** memuat ScenarioSimulator. Bilah atas (Header) memuat pemilih wilayah dan kontrol tema, sedangkan TheoreticalSpecsModal terbuka dari bilah atas maupun footer.
+Tab **Pemantauan** memuat PeatlandMap lalu PipelineControls & ForecastCharts secara berurutan; tab **Peringatan** memuat ActiveAlerts; tab **Simulasi** memuat ScenarioSimulator. Bilah atas (Header) memuat pemilih wilayah dan kontrol tema, sedangkan TheoreticalSpecsModal terbuka dari bilah atas maupun footer.
 
 #### Kode Sumber (Source Code Listing): `frontend/src/App.tsx`
 ```tsx
@@ -2991,7 +2811,6 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { AlertTriangle, Gauge, Sliders } from 'lucide-react';
 import { Header, Province, Regency } from './components/Header';
-import { HeroStatus } from './components/HeroStatus';
 import { PeatlandMap } from './components/PeatlandMap';
 import { ForecastCharts } from './components/ForecastCharts';
 import { ScenarioSimulator } from './components/ScenarioSimulator';
@@ -3003,6 +2822,7 @@ const API_BASE = '/api/v1';
 
 const TABS = [
   { id: 'pemantauan', label: 'Pemantauan', Icon: Gauge },
+  { id: 'peringatan', label: 'Peringatan', Icon: AlertTriangle },
   { id: 'simulasi', label: 'Simulasi', Icon: Sliders }
 ] as const;
 
@@ -3155,10 +2975,6 @@ export function App() {
   const pfviList = pipelineResult ? pipelineResult.full_series.PFVI : [];
   const currentPfvi = pfviList.length ? pfviList[pfviList.length - 1] : 0;
 
-  const forecastPfviList = pfviList.slice(-h);
-  const minForecastPfvi = forecastPfviList.length ? Math.min(...forecastPfviList) : 0;
-  const maxForecastPfvi = forecastPfviList.length ? Math.max(...forecastPfviList) : 0;
-
   const currentStatus = pipelineResult ? pipelineResult.forecast.Current_Status : 'Unknown';
 
   const lastOf = (series: number[] | undefined, fallback: number) =>
@@ -3175,17 +2991,17 @@ export function App() {
 
   const focusAlert = (alert: any) => {
     handleSelectCustomLocation(alert.lat, alert.lon, alert.location);
-    // The map lives on the same tab, so just bring it into view instead of switching tabs.
-    document.getElementById('bagian-peta')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setActiveTab('pemantauan');
+    // Let the tab render the map before scrolling to it.
+    setTimeout(() => {
+      document.getElementById('bagian-peta')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 80);
   };
 
-  // In-tab anchors: the Pemantauan tab holds the whole monitoring story, so give users
-  // a way to jump between its four blocks instead of forcing one long scroll.
+  // In-tab anchors for the Pemantauan tab (map -> analysis).
   const SECTIONS = [
-    { id: 'bagian-ringkasan', label: 'Status' },
-    { id: 'bagian-peringatan', label: 'Peringatan' },
     { id: 'bagian-peta', label: 'Peta' },
-    { id: 'bagian-proyeksi', label: 'Proyeksi' }
+    { id: 'bagian-proyeksi', label: 'Analisis' }
   ];
 
   return (
@@ -3205,7 +3021,7 @@ export function App() {
 
       {/* Tab bar — one section per screen instead of one very long scroll */}
       <nav className="border-b border-[var(--line)] bg-[var(--surface)] sticky top-[60px] z-30">
-        <div className="max-w-[1440px] mx-auto px-4 lg:px-7 flex gap-1 overflow-x-auto">
+        <div className="max-w-[1440px] mx-auto px-4 lg:px-7 flex items-stretch gap-1 overflow-x-auto">
           {TABS.map(({ id, label, Icon }) => {
             const isActive = activeTab === id;
             return (
@@ -3215,7 +3031,7 @@ export function App() {
                 role="tab"
                 aria-selected={isActive}
                 onClick={() => setActiveTab(id)}
-                className={`flex items-center gap-1.5 px-3.5 py-3 text-[14px] font-medium border-b-2 whitespace-nowrap transition-colors cursor-pointer ${
+                className={`flex items-center gap-1.5 px-4 py-3 text-[14px] font-medium border-b-2 whitespace-nowrap transition-colors cursor-pointer ${
                   isActive
                     ? 'border-[var(--accent)] text-[var(--text)]'
                     : 'border-transparent text-[var(--text-mute)] hover:text-[var(--text)]'
@@ -3223,7 +3039,7 @@ export function App() {
               >
                 <Icon className="w-3.5 h-3.5" />
                 <span>{label}</span>
-                {id === 'pemantauan' && severeAlerts.length > 0 && (
+                {id === 'peringatan' && severeAlerts.length > 0 && (
                   <span className="ml-0.5 min-w-[17px] h-[17px] px-1 rounded-full bg-[var(--danger)] text-[10px] font-mono font-bold text-white flex items-center justify-center">
                     {severeAlerts.length}
                   </span>
@@ -3231,23 +3047,23 @@ export function App() {
               </button>
             );
           })}
-        </div>
 
-        {/* Section jump chips: keep the Pemantauan tab navigable without splitting it again */}
-        {activeTab === 'pemantauan' && (
-          <div className="max-w-[1440px] mx-auto px-4 lg:px-7 flex gap-2 overflow-x-auto pb-2">
-            {SECTIONS.map(({ id, label }) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                className="shrink-0 px-2.5 py-1 rounded-full border border-[var(--line)] bg-[var(--surface)] text-[11px] font-mono text-[var(--text-mute)] hover:border-[var(--accent-line)] hover:text-[var(--accent)] transition-colors cursor-pointer"
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        )}
+          {/* Section anchors inline with the tabs, pushed right — no cramped second row. */}
+          {activeTab === 'pemantauan' && (
+            <div className="ml-auto hidden sm:flex items-center gap-1.5">
+              {SECTIONS.map(({ id, label }) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                  className="shrink-0 px-3 py-1.5 rounded-full border border-[var(--line)] text-[12px] text-[var(--text-mute)] hover:border-[var(--accent-line)] hover:text-[var(--accent)] transition-colors cursor-pointer"
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </nav>
 
       <main className="max-w-[1440px] mx-auto px-4 lg:px-7 pt-6 flex flex-col gap-6">
@@ -3273,30 +3089,14 @@ export function App() {
 
         {activeTab === 'pemantauan' && (
           <>
-            <div id="bagian-ringkasan" className="scroll-mt-[120px]">
-              <HeroStatus
-                hasData={hasData}
-                pfvi={currentPfvi}
-                status={currentStatus}
-                waterTable={currentWT}
-                soilMoisture={currentSM}
-                forecastDays={h}
-                minPfvi={minForecastPfvi}
-                maxPfvi={maxForecastPfvi}
-                locationName={locationPreset.name}
-                nearby={sampleData?.fire_intelligence?.nearby}
-              />
-            </div>
-
-            <div id="bagian-peringatan" className="scroll-mt-[120px]">
-              <ActiveAlerts alerts={severeAlerts} onFocus={focusAlert} />
-            </div>
-
+            {/* Map is the primary surface: clicking any point re-targets every
+                panel below (settings, current conditions, charts). */}
             <div id="bagian-peta" className="scroll-mt-[120px]">
               <PeatlandMap
                 currentPfvi={currentPfvi}
                 status={currentStatus}
                 location={locationPreset}
+                waterTable={currentWT}
                 onSelectCustomLocation={handleSelectCustomLocation}
               />
             </div>
@@ -3317,12 +3117,16 @@ export function App() {
               {pipelineResult ? (
                 <ForecastCharts fullSeries={pipelineResult.full_series} forecastHorizon={h} />
               ) : (
-                <div className="border border-[var(--line)] rounded-[var(--r-md)] bg-[var(--surface)] p-6 text-center text-xs text-[var(--text-mute)]">
-                  Grafik tren muncul setelah pipeline PFVI menghasilkan data.
+                <div className="border border-[var(--line)] rounded-[var(--r-md)] bg-[var(--surface)] p-6 text-center text-[13px] text-[var(--text-mute)]">
+                  Grafik tren muncul setelah perhitungan selesai.
                 </div>
               )}
             </div>
           </>
+        )}
+
+        {activeTab === 'peringatan' && (
+          <ActiveAlerts alerts={severeAlerts} onFocus={focusAlert} />
         )}
 
         {activeTab === 'simulasi' && (
@@ -3357,11 +3161,20 @@ export default App;
 
 ---
 
-## FITUR 11: Infrastruktur Deployment & Container Orchestration
+## FITUR 10: Infrastruktur Deployment & Container Orchestration
 **Deskripsi & Tujuan Fitur:** Spesifikasi Docker Compose multi-container yang mengisolasi layanan web UI (Nginx), API Engine (Uvicorn FastAPI), dan Cloudflare Tunnel SSL.
 
-**Cara Menggunakan:**
-Perintah Deployment Server: `docker compose build && docker compose up -d`
+**Cara Menggunakan — Akses Kode dari GitHub / Git:**
+
+Proyek ini disimpan sebagai repositori Git di server deployment (`sxz-server`). Untuk mengambil, memperbarui, atau men-deploy ulang dari sumber:
+
+1. **Clone (sekali saja):** `git clone <URL-repo> peatfr` — repositori utama saat ini ada di `sxz:/home/sxz/projects/active/peatfr`. Bila ingin mirror ke GitHub, tambahkan remote: `git remote add github git@github.com:<user>/<repo>.git && git push github main`.
+2. **Perbarui kode:** `cd peatfr && git pull` (dari remote yang dipakai).
+3. **Build & jalankan ulang container:** `docker compose build && docker compose up -d`.
+4. **Status & log:** `docker compose ps` dan `docker compose logs -f peatfr-api peatfr-web`.
+5. **Setelah ubah frontend saja:** cukup `docker compose build peatfr-web && docker compose up -d peatfr-web` (aset sudah di-bake ke image lewat Dockerfile multi-stage).
+
+Catatan keamanan: token `FIRMS_MAP_KEY` dan `TUNNEL_TOKEN` dibaca dari environment (file `.env` atau shell), jangan pernah di-commit ke GitHub. Gunakan GitHub Environment/Secrets bila CI/CD menyusul.
 
 #### Kode Sumber (Source Code Listing): `docker-compose.yml`
 ```yaml
