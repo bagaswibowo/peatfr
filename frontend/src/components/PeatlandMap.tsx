@@ -41,18 +41,6 @@ export interface FirmsHotspot {
 
 const FIRMS_MAP_KEY = "aa16407e5eb11df46b09cafc085fe020";
 
-function getDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371;
-  const dLat = (lat2 - lat1) * (Math.PI / 180);
-  const dLon = (lon2 - lon1) * (Math.PI / 180);
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-}
-
 const createCustomIcon = (color: string) => {
   return L.divIcon({
     className: 'custom-leaflet-marker',
@@ -188,7 +176,6 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
 
   const handleMapClick = (lat: number, lon: number) => {
     setClickedTarget({ lat, lon });
-    const distKm = getDistanceKm(location.lat, location.lon, lat, lon);
     const title = `Titik Klik Peta (${lat.toFixed(3)}, ${lon.toFixed(3)})`;
     setSelectedEntity({
       type: 'point',
@@ -197,9 +184,7 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
       lon,
       details: {
         'Latitude': lat.toFixed(5),
-        'Longitude': lon.toFixed(5),
-        'Jarak ke Stasiun Utama': `${distKm.toFixed(2)} km`,
-        'Status Wilayah': 'Realtime Satellite Grid Pick'
+        'Longitude': lon.toFixed(5)
       }
     });
 
@@ -333,7 +318,6 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
                 eventHandlers={{
                   click: (e) => {
                     e.originalEvent.stopPropagation();
-                    const distKm = getDistanceKm(location.lat, location.lon, hotspot.latitude, hotspot.longitude);
                     const title = `Hotspot NASA FIRMS (${hotspot.latitude.toFixed(3)}, ${hotspot.longitude.toFixed(3)})`;
                     setSelectedEntity({
                       type: 'hotspot',
@@ -344,9 +328,7 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
                         'Tanggal / Jam UTC': `${hotspot.acq_date} ${hotspot.acq_time} UTC`,
                         'Kecerahan (T_i4)': `${hotspot.bright_ti4} K`,
                         'Daya FRP': hotspot.frp > 0 ? `${hotspot.frp} MW` : 'N/A',
-                        'Satelit Sensor': `${hotspot.satellite} (${hotspot.instrument})`,
-                        'Tingkat Kepercayaan': hotspot.confidence,
-                        'Jarak ke Stasiun': `${distKm.toFixed(2)} km`
+                        'Satelit Sensor': `${hotspot.satellite} (${hotspot.instrument})`
                       }
                     });
                     if (onSelectCustomLocation) {
@@ -378,7 +360,6 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
                 eventHandlers={{
                   click: (e) => {
                     e.originalEvent.stopPropagation();
-                    const distKm = getDistanceKm(location.lat, location.lon, fire.latitude, fire.longitude);
                     const title = `Hotspot zona gambut (${fire.latitude.toFixed(3)}, ${fire.longitude.toFixed(3)})`;
                     setSelectedEntity({
                       type: 'gfw',
@@ -392,8 +373,7 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
                         'Daya FRP': fire.frp__MW ? `${fire.frp__MW} MW` : '-',
                         'Atribusi Gambut': fire.peatland_attribution
                           ? `${fire.peatland_attribution} (${fire.regency_centroid_km} km)`
-                          : 'tidak tersedia',
-                        'Jarak ke Stasiun': `${distKm.toFixed(2)} km`
+                          : 'tidak tersedia'
                       }
                     });
                     if (onSelectCustomLocation) {
