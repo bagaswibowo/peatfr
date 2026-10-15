@@ -14,6 +14,7 @@ const API_BASE = '/api/v1';
 
 const TABS = [
   { id: 'pemantauan', label: 'Pemantauan', Icon: Gauge },
+  { id: 'peringatan', label: 'Peringatan', Icon: AlertTriangle },
   { id: 'simulasi', label: 'Simulasi', Icon: Sliders }
 ] as const;
 
@@ -186,17 +187,18 @@ export function App() {
 
   const focusAlert = (alert: any) => {
     handleSelectCustomLocation(alert.lat, alert.lon, alert.location);
-    // The map lives on the same tab, so just bring it into view instead of switching tabs.
-    document.getElementById('bagian-peta')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setActiveTab('pemantauan');
+    // Let the tab render the map before scrolling to it.
+    setTimeout(() => {
+      document.getElementById('bagian-peta')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 80);
   };
 
-  // In-tab anchors: the Pemantauan tab holds the whole monitoring story, so give users
-  // a way to jump between its four blocks instead of forcing one long scroll.
+  // In-tab anchors for the Pemantauan tab (status -> map -> analysis).
   const SECTIONS = [
     { id: 'bagian-ringkasan', label: 'Status' },
-    { id: 'bagian-peringatan', label: 'Peringatan' },
     { id: 'bagian-peta', label: 'Peta' },
-    { id: 'bagian-proyeksi', label: 'Proyeksi' }
+    { id: 'bagian-proyeksi', label: 'Analisis' }
   ];
 
   return (
@@ -234,7 +236,7 @@ export function App() {
               >
                 <Icon className="w-3.5 h-3.5" />
                 <span>{label}</span>
-                {id === 'pemantauan' && severeAlerts.length > 0 && (
+                {id === 'peringatan' && severeAlerts.length > 0 && (
                   <span className="ml-0.5 min-w-[17px] h-[17px] px-1 rounded-full bg-[var(--danger)] text-[10px] font-mono font-bold text-white flex items-center justify-center">
                     {severeAlerts.length}
                   </span>
@@ -244,7 +246,7 @@ export function App() {
           })}
         </div>
 
-        {/* Section jump chips: keep the Pemantauan tab navigable without splitting it again */}
+        {/* Section jump chips: keep the Pemantauan tab navigable */}
         {activeTab === 'pemantauan' && (
           <div className="max-w-[1440px] mx-auto px-4 lg:px-7 flex gap-2 overflow-x-auto pb-2">
             {SECTIONS.map(({ id, label }) => (
@@ -299,15 +301,14 @@ export function App() {
               />
             </div>
 
-            <div id="bagian-peringatan" className="scroll-mt-[120px]">
-              <ActiveAlerts alerts={severeAlerts} onFocus={focusAlert} />
-            </div>
-
+            {/* Map right under the status: clicking any point re-targets every
+                panel below (settings, current conditions, charts). */}
             <div id="bagian-peta" className="scroll-mt-[120px]">
               <PeatlandMap
                 currentPfvi={currentPfvi}
                 status={currentStatus}
                 location={locationPreset}
+                waterTable={currentWT}
                 onSelectCustomLocation={handleSelectCustomLocation}
               />
             </div>
@@ -328,12 +329,16 @@ export function App() {
               {pipelineResult ? (
                 <ForecastCharts fullSeries={pipelineResult.full_series} forecastHorizon={h} />
               ) : (
-                <div className="border border-[var(--line)] rounded-[var(--r-md)] bg-[var(--surface)] p-6 text-center text-xs text-[var(--text-mute)]">
-                  Grafik tren muncul setelah pipeline PFVI menghasilkan data.
+                <div className="border border-[var(--line)] rounded-[var(--r-md)] bg-[var(--surface)] p-6 text-center text-[13px] text-[var(--text-mute)]">
+                  Grafik tren muncul setelah perhitungan selesai.
                 </div>
               )}
             </div>
           </>
+        )}
+
+        {activeTab === 'peringatan' && (
+          <ActiveAlerts alerts={severeAlerts} onFocus={focusAlert} />
         )}
 
         {activeTab === 'simulasi' && (

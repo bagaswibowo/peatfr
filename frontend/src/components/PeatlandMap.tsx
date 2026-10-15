@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, WMSTileLayer, Marker, Popup, Circle, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
-import { MapPin, Flame, Satellite, ShieldAlert, Radio, Crosshair, Zap, Navigation, CheckCircle2 } from 'lucide-react';
+import { MapPin, Flame, Satellite, ShieldAlert, Radio, Crosshair, Zap, Navigation, CheckCircle2, Droplets } from 'lucide-react';
 import axios from 'axios';
+import { statusKey, STATUS_ID } from '../utils/pfviStatus';
 
 export interface LocationPreset {
   id: string;
@@ -109,6 +110,7 @@ interface PeatlandMapProps {
   currentPfvi: number;
   status: string;
   location: LocationPreset;
+  waterTable?: number;
   onSelectCustomLocation?: (lat: number, lon: number, name?: string) => void;
 }
 
@@ -116,6 +118,7 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
   currentPfvi,
   status,
   location,
+  waterTable,
   onSelectCustomLocation
 }) => {
   const pos: [number, number] = [location.lat, location.lon];
@@ -433,12 +436,65 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
           <div>
             <div className="p-4 border-b border-[var(--line)]">
               <h3 className="text-[12.5px] font-semibold text-[var(--text)] flex items-center justify-between">
-                <span>Inspektor Titik Panas</span>
+                <span>Kondisi titik terpilih</span>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[var(--surface-2)] text-[var(--text-mute)]">
-                  {selectedEntity ? selectedEntity.type.toUpperCase() : 'SELECT POINT'}
+                  {selectedEntity ? selectedEntity.type.toUpperCase() : 'KLIK PETA'}
                 </span>
               </h3>
-              <p className="text-[11px] text-[var(--text-dim)] mt-0.5">Pilih titik pada peta satelit</p>
+              <p className="text-[11px] text-[var(--text-dim)] mt-0.5">Klik titik mana saja di peta untuk mengganti lokasi pantauan</p>
+            </div>
+
+            {/* Active-location status summary — always reflects the point the
+                charts below are computed from (map click or region dropdown). */}
+            <div className="p-4 border-b border-[var(--line)] flex flex-col gap-2.5">
+              {(() => {
+                const key = statusKey(status);
+                const wtCm = waterTable !== undefined ? Math.abs(waterTable) * 100 : null;
+                const badgeBg = key === 'extreme' ? 'var(--danger)'
+                  : key === 'high' ? 'var(--high)'
+                  : key === 'moderate' ? 'var(--warn)' : 'var(--ok)';
+                return (
+                  <>
+                    <div className="flex flex-col gap-1.5">
+                      <span className="text-[13px] font-semibold text-[var(--text)] leading-snug">
+                        {location.name}
+                      </span>
+                      <span
+                        className="inline-flex w-fit items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide text-[#0a0c0a]"
+                        style={{ background: badgeBg }}
+                      >
+                        Risiko {STATUS_ID[key]}
+                      </span>
+                    </div>
+                    {/* Mini status scale with needle */}
+                    <div>
+                      <div className="relative h-2.5 rounded-full overflow-hidden flex border border-[var(--line)]">
+                        <div className="h-full bg-[var(--ok)]" style={{ width: '25%' }} />
+                        <div className="h-full bg-[var(--warn)]" style={{ width: '25%' }} />
+                        <div className="h-full bg-[var(--high)]" style={{ width: '25%' }} />
+                        <div className="h-full bg-[var(--danger)]" style={{ width: '25%' }} />
+                      </div>
+                      <div className="relative h-0">
+                        <div
+                          className="absolute -top-[13px] w-[3px] h-[15px] bg-[var(--text)] rounded-sm shadow transition-all duration-700"
+                          style={{ left: `calc(${Math.min(100, Math.max(0, (currentPfvi / 300) * 100))}% - 1.5px)` }}
+                          aria-hidden="true"
+                        />
+                      </div>
+                      <div className="flex justify-between font-mono text-[9.5px] text-[var(--text-dim)] mt-1">
+                        <span>0</span><span>75</span><span>150</span><span>225</span><span>300</span>
+                      </div>
+                    </div>
+                    {wtCm !== null && (
+                      <span className="flex items-center gap-1.5 text-[12px] text-[var(--text-mute)]">
+                        <Droplets className="w-3.5 h-3.5 text-[var(--ok)]" />
+                        Air tanah: <b className="text-[var(--text)] num">{wtCm.toFixed(0)} cm</b>
+                        {wtCm > 40 && <b className="text-[var(--danger)]">(terlalu kering)</b>}
+                      </span>
+                    )}
+                  </>
+                );
+              })()}
             </div>
 
             <div className="p-4">
@@ -468,9 +524,9 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
                   )}
                 </div>
               ) : (
-                <div className="py-8 text-center text-[var(--text-dim)] flex flex-col items-center justify-center gap-2 font-mono text-xs">
+                <div className="py-8 text-center text-[var(--text-dim)] flex flex-col items-center justify-center gap-2 text-[12px]">
                   <Crosshair className="w-6 h-6 text-[var(--text-dim)]" />
-                  <p className="max-w-[20ch] leading-snug">Klik salah satu titik di peta untuk melihat telemetri lokal</p>
+                  <p className="max-w-[24ch] leading-snug">Klik titik api atau lokasi mana saja di peta untuk melihat detailnya</p>
                 </div>
               )}
             </div>
