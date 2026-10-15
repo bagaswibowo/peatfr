@@ -519,7 +519,7 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
             </div>
 
             <div className="p-4">
-              {selectedEntity ? (
+              {selectedEntity && (
                 <div className="space-y-3 font-mono text-xs">
                   <div className="text-[var(--text)] font-semibold text-[13px]">
                     {selectedEntity.title}
@@ -543,11 +543,6 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
                       <span>Fokuskan Telemetri ke Titik Ini</span>
                     </button>
                   )}
-                </div>
-              ) : (
-                <div className="py-8 text-center text-[var(--text-dim)] flex flex-col items-center justify-center gap-2 text-[12px]">
-                  <Crosshair className="w-6 h-6 text-[var(--text-dim)]" />
-                  <p className="max-w-[24ch] leading-snug">Klik titik api atau lokasi mana saja di peta untuk melihat detailnya</p>
                 </div>
               )}
             </div>
