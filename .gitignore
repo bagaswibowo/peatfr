@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Node / frontend build output (dibangun ulang di dalam Dockerfile)
+node_modules/
+frontend/dist/
+
+# Rahasia & artefak biner
+.env
+*.tunnel.token
+*.pdf
