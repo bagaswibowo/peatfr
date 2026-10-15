@@ -97,6 +97,26 @@ function MapFlyTo({ lat, lon }: { lat: number; lon: number }) {
   return null;
 }
 
+// Leaflet measures its container once at mount; if the map renders inside a
+// tab/flex layout that settles later, tiles only cover the stale box and the
+// bottom of the map shows a blank void when scrolled or panned. Re-measure on
+// mount, on window resize, and shortly after mount as a catch-all.
+function MapResizeGuard() {
+  const map = useMap();
+  useEffect(() => {
+    const fix = () => map.invalidateSize();
+    const t1 = setTimeout(fix, 100);
+    const t2 = setTimeout(fix, 600);
+    window.addEventListener('resize', fix);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      window.removeEventListener('resize', fix);
+    };
+  }, [map]);
+  return null;
+}
+
 function MapClickHandler({ onMapClick }: { onMapClick: (lat: number, lon: number) => void }) {
   useMapEvents({
     click(e) {
@@ -267,6 +287,7 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
             className="h-full w-full cursor-crosshair"
           >
             <MapFlyTo lat={location.lat} lon={location.lon} />
+            <MapResizeGuard />
             <MapClickHandler onMapClick={handleMapClick} />
 
             {/* Satellite Base Layer */}
