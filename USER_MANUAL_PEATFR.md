@@ -3168,13 +3168,15 @@ export default App;
 
 Proyek ini disimpan sebagai repositori Git di server deployment (`sxz-server`). Untuk mengambil, memperbarui, atau men-deploy ulang dari sumber:
 
-1. **Clone (sekali saja):** `git clone <URL-repo> peatfr` — repositori utama saat ini ada di `sxz:/home/sxz/projects/active/peatfr`. Bila ingin mirror ke GitHub, tambahkan remote: `git remote add github git@github.com:<user>/<repo>.git && git push github main`.
-2. **Perbarui kode:** `cd peatfr && git pull` (dari remote yang dipakai).
-3. **Build & jalankan ulang container:** `docker compose build && docker compose up -d`.
-4. **Status & log:** `docker compose ps` dan `docker compose logs -f peatfr-api peatfr-web`.
-5. **Setelah ubah frontend saja:** cukup `docker compose build peatfr-web && docker compose up -d peatfr-web` (aset sudah di-bake ke image lewat Dockerfile multi-stage).
+1. **Repo:** kode & manual ada di GitHub — `https://github.com/bagaswibowo/peatfr` (branch `main`). Clone: `git clone https://github.com/bagaswibowo/peatfr`.
+2. **Perbarui kode:** `cd peatfr && git pull origin main`.
+3. **Build & jalankan:** `docker compose build && docker compose up -d` (butuh Docker + Docker Compose; API di :8097, web UI di :8098).
+4. **Setelah ubah frontend saja:** `docker compose build peatfr-web && docker compose up -d peatfr-web` (aset sudah di-bake ke image lewat Dockerfile multi-stage; jangan bind-mount `frontend/dist`).
+5. **Periksa & log:** `docker compose ps` dan `docker compose logs -f peatfr-api peatfr-web`.
+6. **Kirim perubahan:** `git add -A && git commit -m "..." && git push origin main`.
+7. **Jalankan ulang manual:** PDF — `python tools/build_manual_pdf.py`; Notion — `python tools/notion_rebuild.py` (butuh token Notion, lewat env).
 
-Catatan keamanan: token `FIRMS_MAP_KEY` dan `TUNNEL_TOKEN` dibaca dari environment (file `.env` atau shell), jangan pernah di-commit ke GitHub. Gunakan GitHub Environment/Secrets bila CI/CD menyusul.
+Catatan keamanan: `FIRMS_MAP_KEY` dan `TUNNEL_TOKEN` dibaca dari environment (file `.env` atau shell). Jangan commit token ke repo — kalau pakai CI/CD, taruh di GitHub Actions Secrets/Environments.
 
 #### Kode Sumber (Source Code Listing): `docker-compose.yml`
 ```yaml
