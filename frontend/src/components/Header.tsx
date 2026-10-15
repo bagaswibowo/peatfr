@@ -1,5 +1,5 @@
 import React from 'react';
-import { Flame, BookOpen, Sun, Moon, Database } from 'lucide-react';
+import { Flame, BookOpen, Sun, Moon, RefreshCw, MapPin } from 'lucide-react';
 
 export interface Regency {
   id: string;
@@ -18,10 +18,14 @@ export interface Province {
 }
 
 interface HeaderProps {
+  provinces: Province[];
   selectedProvince: Province | null;
   selectedRegency: Regency | null;
   model: string;
   theme: 'dark' | 'light';
+  loadingRealtime: boolean;
+  onSelectRegion: (prov: Province, reg: Regency) => void;
+  onRefresh: () => void;
   onToggleTheme: () => void;
   onOpenPaperModal: () => void;
 }
@@ -36,65 +40,97 @@ export function getRegionNameFromCoords(lat: number, lon: number): string {
 }
 
 export const Header: React.FC<HeaderProps> = ({
+  provinces,
   selectedProvince,
   selectedRegency,
   model,
   theme,
+  loadingRealtime,
+  onSelectRegion,
+  onRefresh,
   onToggleTheme,
   onOpenPaperModal
 }) => {
   const modelName = model === 'arima' ? 'ARIMA + Box-Cox' : model === 'lstm' ? 'LSTM PyTorch' : 'GRU PyTorch';
-  
-  let locationName = 'Kab. Siak, Riau';
-  if (selectedRegency) {
-    if (selectedRegency.id.startsWith('CUSTOM-')) {
-      const region = getRegionNameFromCoords(selectedRegency.lat, selectedRegency.lon);
-      locationName = `${selectedRegency.name}, ${region}`;
-    } else {
-      locationName = `${selectedRegency.name}, ${selectedProvince?.name || 'Indonesia'}`;
-    }
-  }
+
+  const isCustomLocation = selectedRegency ? selectedRegency.id.startsWith('CUSTOM-') : false;
+
+  // Region selection is global state, so it lives in the top bar and is reachable
+  // from every tab instead of sitting inside the algorithm panel.
+  const allRegencies: { prov: Province; reg: Regency }[] = [];
+  provinces.forEach((prov) => {
+    (prov.regencies || []).forEach((reg) => allRegencies.push({ prov, reg }));
+  });
 
   const coords = selectedRegency
     ? `${selectedRegency.lat.toFixed(3)}, ${selectedRegency.lon.toFixed(3)}`
-    : '0.820, 102.050';
+    : '-';
 
   return (
     <header className="border-b border-[var(--line)] bg-[var(--surface)] sticky top-0 z-40 backdrop-blur-md">
-      <div className="max-w-[1440px] mx-auto px-4 lg:px-7 flex items-center justify-between h-[60px] gap-4">
+      <div className="max-w-[1440px] mx-auto px-4 lg:px-7 flex items-center justify-between h-[60px] gap-3">
         {/* Brand */}
-        <div className="flex items-center gap-3">
-          <div className="w-[30px] h-[30px] rounded-[var(--r-sm)] bg-[var(--accent)] flex items-center justify-center text-[#0a0c0a] flex-shrink-0 shadow-xs">
+        <div className="flex items-center gap-2.5 shrink-0">
+          <div className="w-[30px] h-[30px] rounded-[var(--r-sm)] bg-[var(--accent)] flex items-center justify-center text-[#0a0c0a] flex-shrink-0">
             <Flame className="w-[17px] h-[17px] stroke-[#0a0c0a] stroke-[2.2]" />
           </div>
-          <div className="flex flex-col leading-tight">
+          <div className="hidden sm:flex flex-col leading-tight">
             <b className="font-bold text-[15px] tracking-tight text-[var(--text)]">PeatFR</b>
-            <span className="text-[11px] text-[var(--text-dim)]">Fire Intelligence &amp; EWS / lahan gambut tropis</span>
+            <span className="text-[11px] text-[var(--text-dim)]">EWS kebakaran gambut</span>
           </div>
         </div>
 
-        {/* Topbar Mid Stats */}
-        <div className="hidden md:flex items-center gap-6 text-xs">
-          <div className="flex flex-col gap-0.5">
-            <span className="text-[10px] uppercase tracking-wider text-[var(--text-dim)] font-mono">Wilayah</span>
-            <span className="text-[12.5px] text-[var(--text)] font-medium">{locationName}</span>
-          </div>
+        {/* Region Selector (primary control, visible on every tab) */}
+        <div className="flex items-center gap-2 flex-1 min-w-0 max-w-[420px]">
+          <MapPin className="w-3.5 h-3.5 text-[var(--accent)] shrink-0" />
+          <select
+            value={isCustomLocation ? 'CUSTOM' : (selectedRegency?.id || '')}
+            onChange={(e) => {
+              const selectedId = e.target.value;
+              if (selectedId === 'CUSTOM') return;
+              const found = allRegencies.find((item) => item.reg.id === selectedId);
+              if (found) onSelectRegion(found.prov, found.reg);
+            }}
+            aria-label="Pilih wilayah target pemantauan"
+            className="w-full min-w-0 bg-[var(--surface-2)] border border-[var(--line)] rounded-[var(--r-sm)] px-2.5 py-1.5 text-[12.5px] font-medium text-[var(--text)] focus:outline-none focus:border-[var(--accent)] cursor-pointer"
+          >
+            {isCustomLocation && <option value="CUSTOM">{selectedRegency?.name}</option>}
+            {allRegencies.map(({ prov, reg }) => (
+              <option key={reg.id} value={reg.id}>
+                {prov.name} / {reg.name}{reg.peat ? ' (Gambut)' : ''}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={onRefresh}
+            disabled={loadingRealtime}
+            title="Tarik ulang telemetri satelit"
+            aria-label="Tarik ulang telemetri satelit"
+            className="shrink-0 p-1.5 border border-[var(--line)] rounded-[var(--r-sm)] text-[var(--text-mute)] hover:border-[var(--accent-line)] hover:text-[var(--accent)] disabled:opacity-50 cursor-pointer"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loadingRealtime ? 'animate-spin' : ''}`} />
+          </button>
+        </div>
+
+        {/* Secondary telemetry readout */}
+        <div className="hidden xl:flex items-center gap-5 text-xs shrink-0">
           <div className="flex flex-col gap-0.5">
             <span className="text-[10px] uppercase tracking-wider text-[var(--text-dim)] font-mono">Koordinat</span>
-            <span className="text-[12.5px] font-mono text-[var(--text)]">{coords}</span>
+            <span className="text-[12px] font-mono text-[var(--text)]">{coords}</span>
           </div>
           <div className="flex flex-col gap-0.5">
             <span className="text-[10px] uppercase tracking-wider text-[var(--text-dim)] font-mono">Model AI</span>
-            <span className="text-[12.5px] font-mono text-[var(--ok)] font-medium">{modelName}</span>
+            <span className="text-[12px] font-mono text-[var(--ok)] font-medium">{modelName}</span>
           </div>
         </div>
 
-        {/* Topbar Right Controls */}
-        <div className="flex items-center gap-2.5 flex-shrink-0">
+        {/* Right controls */}
+        <div className="flex items-center gap-2 shrink-0">
           <button
             type="button"
             onClick={onOpenPaperModal}
-            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 border border-[var(--line)] rounded-full text-[11px] font-mono text-[var(--text-mute)] hover:border-[var(--accent-line)] hover:text-[var(--text)] transition-colors cursor-pointer"
+            className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 border border-[var(--line)] rounded-full text-[11px] font-mono text-[var(--text-mute)] hover:border-[var(--accent-line)] hover:text-[var(--text)] transition-colors cursor-pointer"
           >
             <BookOpen className="w-3.5 h-3.5 text-[var(--accent)]" />
             <span>Spesifikasi Jurnal</span>
@@ -109,12 +145,12 @@ export const Header: React.FC<HeaderProps> = ({
             {theme === 'dark' ? (
               <>
                 <Sun className="w-3.5 h-3.5 text-[var(--accent)]" />
-                <span>Mode terang</span>
+                <span className="hidden sm:inline">Mode terang</span>
               </>
             ) : (
               <>
                 <Moon className="w-3.5 h-3.5 text-[var(--accent)]" />
-                <span>Mode gelap</span>
+                <span className="hidden sm:inline">Mode gelap</span>
               </>
             )}
           </button>

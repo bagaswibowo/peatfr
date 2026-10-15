@@ -11,21 +11,7 @@ import {
   ReferenceLine,
   ReferenceArea
 } from 'recharts';
-import { Activity, Layers, Droplets, CloudRain, Thermometer, Flame, ShieldAlert, AlertTriangle, ArrowUpRight } from 'lucide-react';
-
-interface SevereAlert {
-  id: string;
-  title: string;
-  location: string;
-  lat: number;
-  lon: number;
-  severity: string;
-  detection_count: number;
-  frp_max_mw: number;
-  estimated_burned_ha: number | null;
-  updated_ago: string;
-  satellite_sensor: string;
-}
+import { Layers, Droplets, CloudRain, Thermometer } from 'lucide-react';
 
 interface ForecastChartsProps {
   fullSeries: {
@@ -37,31 +23,11 @@ interface ForecastChartsProps {
     DI_obs: number[];
   };
   forecastHorizon: number;
-  severeAlerts?: SevereAlert[];
-  onFocusAlert?: (lat: number, lon: number, name: string) => void;
 }
-
-const ALERT_LABELS: Record<string, string> = {
-  CRITICAL: 'Kebakaran parah',
-  HIGH: 'Anomali termal tinggi',
-  WARNING: 'Waspada gambut'
-};
-
-const alertBorderClass = (severity: string) =>
-  severity === 'CRITICAL' ? 'border-l-[var(--danger)]'
-    : severity === 'HIGH' ? 'border-l-[var(--high)]'
-      : 'border-l-[var(--warn)]';
-
-const alertLabelClass = (severity: string) =>
-  severity === 'CRITICAL' ? 'text-[var(--danger)]'
-    : severity === 'HIGH' ? 'text-[var(--high)]'
-      : 'text-[var(--warn)]';
 
 export const ForecastCharts: React.FC<ForecastChartsProps> = ({
   fullSeries,
-  forecastHorizon,
-  severeAlerts = [],
-  onFocusAlert
+  forecastHorizon
 }) => {
   const totalPoints = fullSeries.PFVI.length;
   const historicalCount = totalPoints - forecastHorizon;
@@ -196,63 +162,7 @@ export const ForecastCharts: React.FC<ForecastChartsProps> = ({
         </div>
       </section>
 
-      {/* 2. SEVERE ALERTS TICKER CARDS — live NASA FIRMS peatland clusters */}
-      <section>
-        <div className="mb-3">
-          <h2 className="text-[15px] font-semibold tracking-tight text-[var(--text)]">Peringatan aktif</h2>
-          <p className="text-xs text-[var(--text-dim)] mt-0.5">
-            Klaster titik panas pada zona gambut, 24 jam terakhir
-            {severeAlerts[0]?.updated_ago ? ` (${severeAlerts[0].updated_ago.replace('Deteksi terbaru ', 'deteksi terbaru ')})` : ''}
-          </p>
-        </div>
-
-        {severeAlerts.length === 0 ? (
-          <div className="border border-[var(--line)] rounded-[var(--r-md)] bg-[var(--surface)] p-4 font-mono text-[11.5px] text-[var(--text-mute)]">
-            Tidak ada klaster hotspot pada zona gambut yang terdeteksi dalam 24 jam terakhir.
-          </div>
-        ) : (
-          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin">
-            {severeAlerts.slice(0, 4).map((alert) => (
-              <div
-                key={alert.id}
-                className={`bg-[var(--surface)] border border-[var(--line)] border-l-4 ${alertBorderClass(alert.severity)} min-w-[270px] flex-1 p-4 rounded-[var(--r-md)] flex flex-col gap-2 font-mono`}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className={`text-[10px] uppercase font-bold tracking-wider ${alertLabelClass(alert.severity)}`}>
-                    {ALERT_LABELS[alert.severity] || alert.severity}
-                  </span>
-                  <span className="text-[11px] text-[var(--text-dim)]">{alert.frp_max_mw} MW</span>
-                </div>
-                <h4 className="text-[13px] font-semibold text-[var(--text)] font-sans leading-snug">
-                  {alert.title} di {alert.location}
-                </h4>
-                <p className="text-[11.5px] text-[var(--text-mute)] font-sans flex items-center justify-between gap-2">
-                  <span className="font-mono text-[10.5px]">
-                    {alert.detection_count} deteksi
-                    {alert.estimated_burned_ha ? ` · ${alert.estimated_burned_ha} ha` : ''}
-                  </span>
-                  {onFocusAlert ? (
-                    <button
-                      type="button"
-                      onClick={() => onFocusAlert(alert.lat, alert.lon, alert.location)}
-                      className="text-[var(--accent)] font-mono font-semibold flex items-center gap-1 hover:underline cursor-pointer"
-                    >
-                      Fokus &rarr;
-                    </button>
-                  ) : null}
-                </p>
-              </div>
-            ))}
-            {severeAlerts.length > 4 && (
-              <div className="min-w-[180px] p-4 rounded-[var(--r-md)] border border-[var(--line)] bg-[var(--surface-2)] font-mono text-[11px] text-[var(--text-mute)] flex items-center justify-center text-center leading-relaxed">
-                +{severeAlerts.length - 4} klaster lain aktif, lihat inspektor peta
-              </div>
-            )}
-          </div>
-        )}
-      </section>
-
-      {/* 3. PRIMARY PFVI TREND CHART */}
+      {/* 2. PRIMARY PFVI TREND CHART */}
       <section>
         <div className="flex items-baseline justify-between gap-4 mb-3">
           <div>

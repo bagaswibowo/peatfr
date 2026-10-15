@@ -1,15 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Gauge, Map as MapIcon, Activity, Sliders } from 'lucide-react';
 import { Header, Province, Regency } from './components/Header';
 import { RiskStatusGauge } from './components/RiskStatusGauge';
 import { PeatlandMap } from './components/PeatlandMap';
 import { ForecastCharts } from './components/ForecastCharts';
 import { ScenarioSimulator } from './components/ScenarioSimulator';
 import { PipelineControls } from './components/PipelineControls';
+import { ActiveAlerts } from './components/ActiveAlerts';
 import { TheoreticalSpecsModal } from './components/TheoreticalSpecsModal';
 
 const API_BASE = '/api/v1';
+
+const TABS = [
+  { id: 'ringkasan', label: 'Ringkasan', Icon: Gauge },
+  { id: 'peta', label: 'Peta titik panas', Icon: MapIcon },
+  { id: 'tren', label: 'Tren & proyeksi', Icon: Activity },
+  { id: 'simulasi', label: 'Simulasi', Icon: Sliders }
+] as const;
+
+type TabId = typeof TABS[number]['id'];
 
 export function App() {
   const [provinces, setProvinces] = useState<Province[]>([]);
@@ -27,6 +37,7 @@ export function App() {
   const [model, setModel] = useState('arima');
   const [h, setH] = useState(4);
   const [epochs, setEpochs] = useState(50);
+  const [activeTab, setActiveTab] = useState<TabId>('ringkasan');
 
   // Data & Pipeline Result State
   const [sampleData, setSampleData] = useState<any>(null);
@@ -120,7 +131,8 @@ export function App() {
     }
   };
 
-  // Severe peat-fire clusters: fetched once, shared by the map inspector and the alert ticker.
+  // Severe peat-fire clusters (fetched here, shared by the map markers and the
+  // alert list so the warning text exists in exactly one place).
   useEffect(() => {
     axios.get(`${API_BASE}/fire-intelligence/severe-alerts`)
       .then((res) => setSevereAlerts(res.data?.alerts || []))
@@ -174,26 +186,60 @@ export function App() {
     ? { id: selectedRegency.id, name: `${selectedRegency.name}, ${selectedProvince?.name || 'Indonesia'}`, lat: selectedRegency.lat, lon: selectedRegency.lon }
     : { id: 'sabangau', name: 'Sabangau, Kalteng', lat: -2.321, lon: 113.901 };
 
+  const focusAlert = (alert: any) => {
+    setActiveTab('peta');
+    handleSelectCustomLocation(alert.lat, alert.lon, alert.location);
+  };
+
   return (
-    <div className="min-h-[100dvh] pb-16">
-      {/* Topbar Header */}
+    <div className="min-h-[100dvh] pb-12">
       <Header
+        provinces={provinces}
         selectedProvince={selectedProvince}
         selectedRegency={selectedRegency}
         model={model}
         theme={theme}
+        loadingRealtime={loadingRealtime}
+        onSelectRegion={handleSelectRegion}
+        onRefresh={() => fetchRealtimeData(selectedRegency)}
         onToggleTheme={toggleTheme}
         onOpenPaperModal={() => setIsPaperModalOpen(true)}
       />
 
-      {/* Main Page Layout Container */}
-      <main className="max-w-[1440px] mx-auto px-4 lg:px-7 pt-6 flex flex-col gap-[34px]">
-        {/* Upstream Failure Banner — data is never invented client-side */}
+      {/* Tab bar — one section per screen instead of one very long scroll */}
+      <nav className="border-b border-[var(--line)] bg-[var(--surface)] sticky top-[60px] z-30">
+        <div className="max-w-[1440px] mx-auto px-4 lg:px-7 flex gap-1 overflow-x-auto">
+          {TABS.map(({ id, label, Icon }) => {
+            const isActive = activeTab === id;
+            return (
+              <button
+                key={id}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                onClick={() => setActiveTab(id)}
+                className={`flex items-center gap-1.5 px-3.5 py-3 text-[12.5px] font-medium border-b-2 whitespace-nowrap transition-colors cursor-pointer ${
+                  isActive
+                    ? 'border-[var(--accent)] text-[var(--text)]'
+                    : 'border-transparent text-[var(--text-mute)] hover:text-[var(--text)]'
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                <span>{label}</span>
+                {id === 'ringkasan' && severeAlerts.length > 0 && (
+                  <span className="ml-0.5 min-w-[17px] h-[17px] px-1 rounded-full bg-[var(--danger)] text-[10px] font-mono font-bold text-white flex items-center justify-center">
+                    {severeAlerts.length}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+
+      <main className="max-w-[1440px] mx-auto px-4 lg:px-7 pt-6 flex flex-col gap-6">
         {dataError && (
-          <div
-            role="alert"
-            className="border border-[var(--danger)] bg-[#ff4d4d14] rounded-[var(--r-md)] p-4 flex items-start gap-3"
-          >
+          <div role="alert" className="border border-[var(--danger)] bg-[#ff4d4d14] rounded-[var(--r-md)] p-4 flex items-start gap-3">
             <AlertTriangle className="w-4 h-4 text-[var(--danger)] shrink-0 mt-0.5" />
             <div className="flex flex-col gap-2 min-w-0">
               <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-[var(--danger)]">
@@ -212,70 +258,67 @@ export function App() {
           </div>
         )}
 
-        {/* 1. HERO / RISK STATUS GAUGE SECTION */}
-        <RiskStatusGauge
-          hasData={hasData}
-          pfvi={currentPfvi}
-          status={currentStatus}
-          waterTable={currentWT}
-          soilMoisture={currentSM}
-          rainfall={currentRf}
-          temp={currentTemp}
-          forecastDays={h}
-          minPfvi={minForecastPfvi}
-          maxPfvi={maxForecastPfvi}
-          fireIntelligence={sampleData?.fire_intelligence}
-          optimizedParams={pipelineResult?.optimization}
-        />
+        {activeTab === 'ringkasan' && (
+          <>
+            <RiskStatusGauge
+              hasData={hasData}
+              pfvi={currentPfvi}
+              status={currentStatus}
+              waterTable={currentWT}
+              soilMoisture={currentSM}
+              rainfall={currentRf}
+              temp={currentTemp}
+              forecastDays={h}
+              minPfvi={minForecastPfvi}
+              maxPfvi={maxForecastPfvi}
+              fireIntelligence={sampleData?.fire_intelligence}
+              optimizedParams={pipelineResult?.optimization}
+            />
+            <ActiveAlerts alerts={severeAlerts} onFocus={focusAlert} />
+          </>
+        )}
 
-        {/* 2. REAL LIVE SATELLITE GIS MAP (POSISI DIPINDAHKAN KE ATAS!) */}
-        <PeatlandMap
-          currentPfvi={currentPfvi}
-          status={currentStatus}
-          location={locationPreset}
-          severeAlerts={severeAlerts}
-          onSelectCustomLocation={handleSelectCustomLocation}
-        />
-
-        {/* 3. PIPELINE CONTROLS & SELEKSI LOKASI */}
-        <PipelineControls
-          provinces={provinces}
-          selectedProvince={selectedProvince}
-          selectedRegency={selectedRegency}
-          soilType={soilType}
-          onSelectRegion={handleSelectRegion}
-          onLoadRealtimeData={() => fetchRealtimeData(selectedRegency)}
-          loadingRealtime={loadingRealtime}
-          imputation={imputation}
-          setImputation={setImputation}
-          model={model}
-          setModel={setModel}
-          h={h}
-          setH={setH}
-          epochs={epochs}
-          setEpochs={setEpochs}
-          onRunPipeline={() => executePipeline()}
-          isRunning={isRunningPipeline}
-        />
-
-        {/* 4. TIME SERIES CHARTS & SIGNAL STRIP */}
-        {pipelineResult && (
-          <ForecastCharts
-            fullSeries={pipelineResult.full_series}
-            forecastHorizon={h}
-            severeAlerts={severeAlerts}
-            onFocusAlert={handleSelectCustomLocation}
+        {activeTab === 'peta' && (
+          <PeatlandMap
+            currentPfvi={currentPfvi}
+            status={currentStatus}
+            location={locationPreset}
+            onSelectCustomLocation={handleSelectCustomLocation}
           />
         )}
 
-        {/* 5. WHAT-IF SCENARIO SIMULATOR */}
-        <ScenarioSimulator currentPfvi={currentPfvi} optimizedParams={pipelineResult?.optimization} />
+        {activeTab === 'tren' && (
+          <>
+            <PipelineControls
+              soilType={soilType}
+              imputation={imputation}
+              setImputation={setImputation}
+              model={model}
+              setModel={setModel}
+              h={h}
+              setH={setH}
+              onRunPipeline={() => executePipeline()}
+              isRunning={isRunningPipeline}
+            />
+            {pipelineResult ? (
+              <ForecastCharts fullSeries={pipelineResult.full_series} forecastHorizon={h} />
+            ) : (
+              <div className="border border-[var(--line)] rounded-[var(--r-md)] bg-[var(--surface)] p-6 text-center text-xs text-[var(--text-mute)]">
+                Grafik tren muncul setelah pipeline PFVI menghasilkan data.
+              </div>
+            )}
+          </>
+        )}
 
-        {/* FOOTER */}
-        <footer className="border-t border-[var(--line)] pt-5 mt-4 font-sans text-xs">
+        {activeTab === 'simulasi' && (
+          <ScenarioSimulator currentPfvi={currentPfvi} optimizedParams={pipelineResult?.optimization} />
+        )}
+
+        <footer className="border-t border-[var(--line)] pt-5 mt-2 font-sans text-xs">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 text-[var(--text-dim)]">
             <p className="max-w-[65ch] leading-relaxed">
-              Rancang ulang antarmuka PeatFR, sistem peringatan dini kebakaran lahan gambut tropis (mengacu pada Mahdiyasa dkk., 2025). Data terintegrasi langsung dengan API Open-Meteo ERA5 &amp; NASA FIRMS.
+              PeatFR, sistem peringatan dini kebakaran lahan gambut tropis (mengacu pada Mahdiyasa dkk., 2025).
+              Data terintegrasi langsung dengan API Open-Meteo ERA5 &amp; NASA FIRMS.
             </p>
             <div className="flex gap-4 text-[var(--text-mute)] font-mono text-[11px]">
               <button type="button" onClick={() => setIsPaperModalOpen(true)} className="hover:text-[var(--accent)] cursor-pointer">Spesifikasi teoretis</button>
@@ -286,7 +329,6 @@ export function App() {
         </footer>
       </main>
 
-      {/* Theoretical Specs Modal */}
       <TheoreticalSpecsModal
         isOpen={isPaperModalOpen}
         onClose={() => setIsPaperModalOpen(false)}

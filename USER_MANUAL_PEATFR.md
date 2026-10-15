@@ -1,6 +1,8 @@
 # DOKUMEN PENDOKUMENTASIAN HAK CIPTA PROGRAM KOMPUTER (DJKI KEMENKUMHAM RI)
 ## USER MANUAL, ARSITEKTUR, APIS, & KODE SUMBER PER FITUR
 **Aplikasi PeatFR — Fire Intelligence System & Early Warning Kebakaran Lahan Gambut**
+
+*Antarmuka PeatFR disusun sebagai empat tab operasional (Ringkasan, Peta Titik Panas, Tren & Proyeksi, Simulasi) dengan satu bilah atas global untuk pemilihan wilayah target. Seluruh angka yang ditampilkan berasal dari API publik tanpa data simulasi.*
 *(Mahdiyasa et al., 2025)*
 
 ---
@@ -10,7 +12,9 @@
 | Parameter Hak Cipta (HKI) | Keterangan Data Resmi Pendaftaran |
 |---|---|
 | **Jenis Ciptaan** | **Program Komputer** (Aplikasi Web Telemetri GIS Satelit & AI Fire Forecasting) |
-| **Judul Ciptaan** | **Aplikasi PeatFR — Fire Intelligence System & Early Warning Kebakaran Lahan Gambut** |
+| **Judul Ciptaan** | **Aplikasi PeatFR — Fire Intelligence System & Early Warning Kebakaran Lahan Gambut**
+
+*Antarmuka PeatFR disusun sebagai empat tab operasional (Ringkasan, Peta Titik Panas, Tren & Proyeksi, Simulasi) dengan satu bilah atas global untuk pemilihan wilayah target. Seluruh angka yang ditampilkan berasal dari API publik tanpa data simulasi.* |
 | **Pencipta & Pemegang Hak Cipta** | **Bagas Wibowo, S.Pd., M.Eng.** & Tim Peneliti Kelompok Keahlian SEAL Telkom University |
 | **Tanggal & Tempat Pertama Diumumkan** | **30 Agustus 2026** di Bandung, Jawa Barat, Republik Indonesia |
 | **Teknologi Stack** | **Python 3.11** (FastAPI, PyTorch, SciPy) & **React 18** (TypeScript, Vite, Leaflet GIS) |
@@ -27,9 +31,9 @@ Aplikasi ini menghubungkan stasiun telemetri lingkungan realtime (Open-Meteo ERA
 
 # 2. TUJUAN UTAMA APLIKASI
 1. **Deteksi Dini Kebakaran Bawah Permukaan (Smoldering Fire):** Memantau penurunan Muka Air Tanah (TMA) hingga di bawah batas kritis PP 71/2014 (-40 cm).
-2. **Penyederhanaan Akses Informasi Kebencanaan (Mode Awam):** Memberikan panduan aksi mitigasi langsung bagi petugas lapangan BPBD, Manggala Agni, dan warga lokal tanpa kerumitan rumus statistik.
+2. **Penyederhanaan Akses Informasi Kebencanaan:** Menyajikan status kerawanan, daftar peringatan aktif, dan peta titik panas pada layar terpisah per tab sehingga petugas lapangan BPBD, Manggala Agni, dan warga lokal dapat membaca status tanpa membuka rumus statistik.
 3. **Analisis Lanjutan & Machine Learning (Mode Pakar):** Menyediakan instrumen tuning algoritma imputasi data missing (kNN/Spline) dan model kecerdasan buatan forecasting time-series.
-4. **Operasional Mitigasi Berbasis Bukti:** Menyediakan fitur cetak resmi ringkasan peringatan dini (PDF) untuk koordinasi lapangan.
+4. **Operasional Mitigasi Berbasis Bukti:** Menampilkan angka pendukung yang dapat diaudit (jumlah deteksi hotspot, FRP maksimum, luas terbakar, MSE optimasi) dan menandai secara eksplisit setiap nilai yang tidak tersedia, sehingga koordinasi lapangan tidak berpijak pada angka perkiraan.
 
 ---
 
@@ -61,9 +65,9 @@ Sistem PeatFR dirancang menggunakan arsitektur 4-tier berkinerja tinggi:
                                          v
 +-----------------------------------------------------------------------------------+
 |                        4. CLIENT PRESENTATION LAYER (React 18)                    |
-|  - Dual-Mode Interface: Mode Awam (Field SOP & PDF Export) vs Mode Pakar (Analis) |
-|  - Signature Component: Peatland Water Table Smoldering Profile (0-150cm)         |
-|  - Interactive GIS Satellite Map (Leaflet, NASA FIRMS WMS, VIIRS Hotspots)       |
+|  - Tabbed Interface: Ringkasan | Peta Titik Panas | Tren & Proyeksi | Simulasi       |
+|  - Signature Component: Peringatan Aktif (klaster hotspot zona gambut, FRP-graded) |
+|  - Interactive GIS Satellite Map (Leaflet, NASA FIRMS WMS, VIIRS Hotspots)         |
 +-----------------------------------------------------------------------------------+
 ```
 
@@ -107,20 +111,46 @@ Sistem PeatFR dirancang menggunakan arsitektur 4-tier berkinerja tinggi:
 
 # 5. PANDUAN PETUNJUK FITUR-DEMI-FITUR & KODE SUMBER TERHUBUNG
 
-## FITUR 1: Header Navigasi Bar & Sakelar Dual-Mode (Mode Awam vs Mode Pakar)
-**Deskripsi & Tujuan Fitur:** Navigasi utama yang memungkinkan pengguna beralih antara tampilan ringkas ramah awam (Mode Awam) dan tampilan analisa lanjutan peneliti (Mode Pakar), serta memilih lokasi daerah di Indonesia.
+Aplikasi disusun sebagai empat tab operasional dengan satu bilah atas global. Setiap fitur di bawah
+ini memuat deskripsi, tangkapan layar mode terang, langkah penggunaan, dan daftar kode sumber terkait.
+
+| Fitur | Layar / Komponen | Berkas Sumber Utama |
+|---|---|---|
+| 1. Bilah Atas & Pemilih Wilayah Global | Semua tab | `Header.tsx` |
+| 2. Tab Ringkasan (PFVI & Peringatan Aktif) | Tab Ringkasan | `RiskStatusGauge.tsx`, `ActiveAlerts.tsx` |
+| 3. Tab Peta Titik Panas | Tab Peta | `PeatlandMap.tsx` |
+| 4. Tab Tren & Proyeksi | Tab Tren | `PipelineControls.tsx`, `ForecastCharts.tsx` |
+| 5. Tab Simulasi Skenario | Tab Simulasi | `ScenarioSimulator.tsx` |
+| 6. Backend API & Telemetri Realtime | FastAPI :8097 | `main.py` |
+| 7. Physical Engine & Optimasi Nelder-Mead | FastAPI :8097 | `pfvi.py` |
+| 8. Multi-Source Fire Intelligence Proxy | FastAPI :8097 | `fire_intelligence.py` |
+| 9. Shell Aplikasi (Tab Router & State Global) | React 18 | `App.tsx` |
+| 10. Infrastruktur Deployment | Docker Compose | `docker-compose.yml` |
+
+## FITUR 1: Bilah Atas, Pemilih Wilayah Global, & Mode Tampilan
+
+**Deskripsi & Tujuan Fitur:** Bilah atas menyatukan identitas aplikasi, pemilih wilayah target, tombol tarik ulang telemetri, sakelar mode terang/gelap, dan tautan spesifikasi jurnal. Pemilih wilayah sengaja diletakkan di sini (bukan di panel konfigurasi) karena lokasi adalah state global yang memengaruhi seluruh tab.
+
+![Bilah atas PeatFR: pemilih wilayah global, tarik ulang telemetri, mode tampilan, dan tab bar empat layar](docs/screenshots/00-header.png)
+
+*Gambar: Bilah atas PeatFR: pemilih wilayah global, tarik ulang telemetri, mode tampilan, dan tab bar empat layar.*
+
+
 
 **Cara Menggunakan:**
-1. Klik tombol **[Mode Awam]** di baris header atas untuk masuk ke tampilan ringkas mitigasi.
-2. Klik tombol **[Mode Pakar]** untuk membuka kontrol statistik pipeline.
-3. Gunakan Dropdown **Provinsi** & **Kabupaten** untuk berpindah lokasi pengawasan.
-4. Tekan tombol **[Satelit Realtime]** untuk memperbarui data cuaca & hotspot satelit.
+
+1. Buka **https://peatfr.bagaswibowo.app**.
+2. Pilih wilayah target dari dropdown **Provinsi / Kabupaten** di bilah atas. Kabupaten bertanda **(Gambut)** memakai konstanta retensi air gambut (FC 32%, saturasi 75%); wilayah tanpa tanda memakai konstanta tanah mineral (FC 20%, saturasi 55%).
+3. Perubahan wilayah langsung memicu penarikan telemetri Open-Meteo ERA5-Land dan menjalankan ulang pipeline PFVI secara otomatis.
+4. Klik ikon **panah melingkar** di kanan dropdown untuk menarik ulang telemetri tanpa mengganti wilayah.
+5. Klik **Mode terang / Mode gelap** untuk berpindah tema. Pilihan tema tidak mengubah data.
+6. Klik **Spesifikasi Jurnal** untuk membuka modal ringkasan metodologi (render KaTeX).
 
 #### Kode Sumber (Source Code Listing): `frontend/src/components/Header.tsx`
+
 ```tsx
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { Flame, RefreshCw, BookOpen, UserCheck, Cpu } from 'lucide-react';
+import React from 'react';
+import { Flame, BookOpen, Sun, Moon, RefreshCw, MapPin } from 'lucide-react';
 
 export interface Regency {
   id: string;
@@ -139,527 +169,175 @@ export interface Province {
 }
 
 interface HeaderProps {
+  provinces: Province[];
   selectedProvince: Province | null;
   selectedRegency: Regency | null;
-  onSelectRegion: (prov: Province, reg: Regency) => void;
-  onLoadRealtimeData: () => void;
-  onOpenPaperModal: () => void;
+  model: string;
+  theme: 'dark' | 'light';
   loadingRealtime: boolean;
-  viewMode: 'awam' | 'pakar';
-  onToggleViewMode: (mode: 'awam' | 'pakar') => void;
+  onSelectRegion: (prov: Province, reg: Regency) => void;
+  onRefresh: () => void;
+  onToggleTheme: () => void;
+  onOpenPaperModal: () => void;
+}
+
+export function getRegionNameFromCoords(lat: number, lon: number): string {
+  if (lon >= 95 && lon < 109) return 'Sumatra';
+  if (lon >= 108 && lon < 119) return 'Kalimantan';
+  if (lon >= 118 && lon < 125) return 'Sulawesi';
+  if (lon >= 125 && lon < 142) return 'Papua';
+  if (lon >= 105 && lon < 116 && lat < -5) return 'Jawa';
+  return 'Indonesia';
 }
 
 export const Header: React.FC<HeaderProps> = ({
+  provinces,
   selectedProvince,
   selectedRegency,
-  onSelectRegion,
-  onLoadRealtimeData,
-  onOpenPaperModal,
+  model,
+  theme,
   loadingRealtime,
-  viewMode,
-  onToggleViewMode
+  onSelectRegion,
+  onRefresh,
+  onToggleTheme,
+  onOpenPaperModal
 }) => {
-  const [provinces, setProvinces] = useState<Province[]>([]);
+  const modelName = model === 'arima' ? 'ARIMA + Box-Cox' : model === 'lstm' ? 'LSTM PyTorch' : 'GRU PyTorch';
 
-  useEffect(() => {
-    axios.get('/api/v1/indonesia/regions')
-      .then((res) => {
-        if (res.data && res.data.provinces) {
-          setProvinces(res.data.provinces);
-        }
-      })
-      .catch((err) => console.warn('Could not fetch Indonesia regions:', err));
-  }, []);
+  const isCustomLocation = selectedRegency ? selectedRegency.id.startsWith('CUSTOM-') : false;
+
+  // Region selection is global state, so it lives in the top bar and is reachable
+  // from every tab instead of sitting inside the algorithm panel.
+  const allRegencies: { prov: Province; reg: Regency }[] = [];
+  provinces.forEach((prov) => {
+    (prov.regencies || []).forEach((reg) => allRegencies.push({ prov, reg }));
+  });
+
+  const coords = selectedRegency
+    ? `${selectedRegency.lat.toFixed(3)}, ${selectedRegency.lon.toFixed(3)}`
+    : '-';
 
   return (
-    <header className="border-b border-slate-200 bg-white px-4 lg:px-8 py-3.5 mb-6 shadow-sm">
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-        {/* Brand & Subtitle */}
-        <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-start">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-lg bg-red-50 border border-red-200 text-red-600">
-              <Flame className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-lg font-bold text-slate-900 tracking-tight">PeatFR</span>
-                <span className="text-slate-400">/</span>
-                <span className="text-xs font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                  Fire Intelligence System
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-500 font-medium">
-                Sistem Peringatan Dini Kebakaran Lahan Gambut Indonesia (Mahdiyasa et al., 2025)
-              </p>
-            </div>
+    <header className="border-b border-[var(--line)] bg-[var(--surface)] sticky top-0 z-40 backdrop-blur-md">
+      <div className="max-w-[1440px] mx-auto px-4 lg:px-7 flex items-center justify-between h-[60px] gap-3">
+        {/* Brand */}
+        <div className="flex items-center gap-2.5 shrink-0">
+          <div className="w-[30px] h-[30px] rounded-[var(--r-sm)] bg-[var(--accent)] flex items-center justify-center text-[#0a0c0a] flex-shrink-0">
+            <Flame className="w-[17px] h-[17px] stroke-[#0a0c0a] stroke-[2.2]" />
+          </div>
+          <div className="hidden sm:flex flex-col leading-tight">
+            <b className="font-bold text-[15px] tracking-tight text-[var(--text)]">PeatFR</b>
+            <span className="text-[11px] text-[var(--text-dim)]">EWS kebakaran gambut</span>
           </div>
         </div>
 
-        {/* View Mode Toggle Switch & Location Dropdowns */}
-        <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-end">
-          {/* Mode Awam vs Mode Pakar Toggle */}
-          <div className="bg-slate-100 p-1 rounded-lg border border-slate-300 flex items-center gap-1 font-mono text-xs">
-            <button
-              onClick={() => onToggleViewMode('awam')}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-md transition-all font-bold cursor-pointer ${
-                viewMode === 'awam'
-                  ? 'bg-emerald-600 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <UserCheck className="w-3.5 h-3.5" />
-              <span>Mode Awam</span>
-            </button>
-
-            <button
-              onClick={() => onToggleViewMode('pakar')}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-md transition-all font-bold cursor-pointer ${
-                viewMode === 'pakar'
-                  ? 'bg-slate-900 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <Cpu className="w-3.5 h-3.5" />
-              <span>Mode Pakar</span>
-            </button>
-          </div>
-
-          {/* Province Selector */}
+        {/* Region Selector (primary control, visible on every tab) */}
+        <div className="flex items-center gap-2 flex-1 min-w-0 max-w-[420px]">
+          <MapPin className="w-3.5 h-3.5 text-[var(--accent)] shrink-0" />
           <select
-            value={selectedProvince?.id || ''}
+            value={isCustomLocation ? 'CUSTOM' : (selectedRegency?.id || '')}
             onChange={(e) => {
-              const foundProv = provinces.find((p) => p.id === e.target.value);
-              if (foundProv && foundProv.regencies.length > 0) {
-                onSelectRegion(foundProv, foundProv.regencies[0]);
-              }
+              const selectedId = e.target.value;
+              if (selectedId === 'CUSTOM') return;
+              const found = allRegencies.find((item) => item.reg.id === selectedId);
+              if (found) onSelectRegion(found.prov, found.reg);
             }}
-            className="bg-slate-50 border border-slate-300 rounded-md px-3 py-1.5 text-xs font-mono text-slate-800 focus:outline-none focus:border-emerald-600 cursor-pointer font-medium"
+            aria-label="Pilih wilayah target pemantauan"
+            className="w-full min-w-0 bg-[var(--surface-2)] border border-[var(--line)] rounded-[var(--r-sm)] px-2.5 py-1.5 text-[12.5px] font-medium text-[var(--text)] focus:outline-none focus:border-[var(--accent)] cursor-pointer"
           >
-            {provinces.map((prov) => (
-              <option key={prov.id} value={prov.id} className="bg-white text-slate-900">
-                {prov.name}
+            {isCustomLocation && <option value="CUSTOM">{selectedRegency?.name}</option>}
+            {allRegencies.map(({ prov, reg }) => (
+              <option key={reg.id} value={reg.id}>
+                {prov.name} / {reg.name}{reg.peat ? ' (Gambut)' : ''}
               </option>
             ))}
           </select>
-
-          {/* Regency Selector */}
-          <select
-            value={selectedRegency?.id || ''}
-            onChange={(e) => {
-              if (selectedProvince) {
-                const foundReg = selectedProvince.regencies.find((r) => r.id === e.target.value);
-                if (foundReg) onSelectRegion(selectedProvince, foundReg);
-              }
-            }}
-            className="bg-slate-50 border border-slate-300 rounded-md px-3 py-1.5 text-xs font-mono text-slate-800 focus:outline-none focus:border-emerald-600 cursor-pointer font-medium"
-          >
-            {selectedProvince?.regencies.map((reg) => (
-              <option key={reg.id} value={reg.id} className="bg-white text-slate-900">
-                {reg.name} {reg.peat ? '(Gambut)' : ''}
-              </option>
-            ))}
-          </select>
-
           <button
-            onClick={onLoadRealtimeData}
+            type="button"
+            onClick={onRefresh}
             disabled={loadingRealtime}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md bg-emerald-600 hover:bg-emerald-700 text-white transition-colors disabled:opacity-50 shadow-sm cursor-pointer"
+            title="Tarik ulang telemetri satelit"
+            aria-label="Tarik ulang telemetri satelit"
+            className="shrink-0 p-1.5 border border-[var(--line)] rounded-[var(--r-sm)] text-[var(--text-mute)] hover:border-[var(--accent-line)] hover:text-[var(--accent)] disabled:opacity-50 cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loadingRealtime ? 'animate-spin' : ''}`} />
-            <span>Satelit Realtime</span>
+          </button>
+        </div>
+
+        {/* Secondary telemetry readout */}
+        <div className="hidden xl:flex items-center gap-5 text-xs shrink-0">
+          <div className="flex flex-col gap-0.5">
+            <span className="text-[10px] uppercase tracking-wider text-[var(--text-dim)] font-mono">Koordinat</span>
+            <span className="text-[12px] font-mono text-[var(--text)]">{coords}</span>
+          </div>
+          <div className="flex flex-col gap-0.5">
+            <span className="text-[10px] uppercase tracking-wider text-[var(--text-dim)] font-mono">Model AI</span>
+            <span className="text-[12px] font-mono text-[var(--ok)] font-medium">{modelName}</span>
+          </div>
+        </div>
+
+        {/* Right controls */}
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={onOpenPaperModal}
+            className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 border border-[var(--line)] rounded-full text-[11px] font-mono text-[var(--text-mute)] hover:border-[var(--accent-line)] hover:text-[var(--text)] transition-colors cursor-pointer"
+          >
+            <BookOpen className="w-3.5 h-3.5 text-[var(--accent)]" />
+            <span>Spesifikasi Jurnal</span>
           </button>
 
           <button
-            onClick={onOpenPaperModal}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-colors cursor-pointer"
+            type="button"
+            onClick={onToggleTheme}
+            className="flex items-center gap-1.5 px-3 py-1.5 border border-[var(--line)] rounded-full text-[11px] font-mono text-[var(--text-mute)] hover:border-[var(--accent-line)] hover:text-[var(--text)] transition-colors cursor-pointer"
+            aria-label="Ganti mode terang/gelap"
           >
-            <BookOpen className="w-3.5 h-3.5 text-slate-600" />
-            <span>Spesifikasi Teoretis</span>
+            {theme === 'dark' ? (
+              <>
+                <Sun className="w-3.5 h-3.5 text-[var(--accent)]" />
+                <span className="hidden sm:inline">Mode terang</span>
+              </>
+            ) : (
+              <>
+                <Moon className="w-3.5 h-3.5 text-[var(--accent)]" />
+                <span className="hidden sm:inline">Mode gelap</span>
+              </>
+            )}
           </button>
         </div>
       </div>
     </header>
   );
 };
-
 ```
 
 ---
 
-## FITUR 2: Ringkasan Kebencanaan & Panduan Tanggap Aksi Lapangan (Mode Awam)
-**Deskripsi & Tujuan Fitur:** Kartu panduan khusus pengguna awam & BPBD yang menterjemahkan data teknis menjadi narasi bahasa manusia, batas aman TMA (-40cm), 3 langkah SOP aksi mitigasi BRGM, dan cetak PDF.
+## FITUR 2: Tab Ringkasan — Indeks Kerawanan PFVI & Peringatan Aktif
+
+**Deskripsi & Tujuan Fitur:** Tab Ringkasan adalah layar pertama dan menjawab satu pertanyaan: seberapa berbahaya kondisi hari ini di wilayah terpilih. Isinya gauge PFVI beserta variabel penggeraknya, diikuti satu daftar peringatan aktif hasil klaster titik panas NASA FIRMS. Daftar peringatan hanya muncul di satu tempat, yaitu komponen ActiveAlerts.
+
+![Tab Ringkasan: gauge PFVI, variabel penggerak, dan daftar Peringatan Aktif](docs/screenshots/01-ringkasan.png)
+
+*Gambar: Tab Ringkasan: gauge PFVI, variabel penggerak, dan daftar Peringatan Aktif.*
+
+
 
 **Cara Menggunakan:**
-1. Pada Mode Awam, baca status lapangan di kotak utama (LOW / MODERATE / HIGH / EXTREME).
-2. Perhatikan 3 indikator ringkas: Ketinggian Air Gambut (cm), Kelembaban Lahan (%), dan Curah Hujan.
-3. Ikuti 3 Langkah Tanggap Segera: (1) Penyekatan Pintu Sekat Kanal, (2) Patroli Manggala Agni, (3) Operasi Rewetting.
-4. Tekan tombol **[Cetak Ringkasan Status Warning (PDF)]** untuk mencetak laporan fisik.
 
-#### Kode Sumber (Source Code Listing): `frontend/src/components/AwamActionGuide.tsx`
-```tsx
-import React from 'react';
-import { AlertCircle, ShieldAlert, CheckCircle2, FileText, Printer, Droplets, Users, Flame } from 'lucide-react';
-
-interface AwamActionGuideProps {
-  status: string;
-  pfvi: number;
-  waterTable: number;
-  soilMoisture: number;
-  rainfall: number;
-  locationName: string;
-}
-
-export const AwamActionGuide: React.FC<AwamActionGuideProps> = ({
-  status,
-  pfvi,
-  waterTable,
-  soilMoisture,
-  rainfall,
-  locationName
-}) => {
-  const wtCm = Math.abs(waterTable) * 100;
-  const isDanger = pfvi >= 150 || wtCm > 40;
-
-  const handlePrintReport = () => {
-    window.print();
-  };
-
-  return (
-    <div className="telemetry-panel bg-white border border-slate-200 rounded-xl p-5 mb-6 shadow-sm">
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-slate-200 pb-4 mb-4">
-        <div className="flex items-center gap-3">
-          <div className={`p-2.5 rounded-lg border ${
-            isDanger ? 'bg-red-50 text-red-600 border-red-200' : 'bg-emerald-50 text-emerald-600 border-emerald-200'
-          }`}>
-            <ShieldAlert className="w-6 h-6" />
-          </div>
-          <div>
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500">
-              PANDUAN LAPANGAN & REKOMENDASI AKSI MITIGASI (MODE AWAM)
-            </span>
-            <h3 className="text-base font-bold text-slate-900 tracking-tight">
-              Ringkasan Status Kebencanaan & Aksi Pencegahan Kebakaran Gambut
-            </h3>
-          </div>
-        </div>
-
-        <button
-          onClick={handlePrintReport}
-          className="flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-mono text-xs font-bold transition-colors shadow-sm cursor-pointer"
-        >
-          <Printer className="w-4 h-4 text-emerald-400" />
-          <span>Cetak Ringkasan Status Warning (PDF)</span>
-        </button>
-      </div>
-
-      {/* Main Status Explanation Card */}
-      <div className={`p-4 rounded-xl border mb-5 ${
-        status.toLowerCase() === 'extreme' || pfvi >= 225
-          ? 'bg-red-50 border-red-200 text-red-950'
-          : status.toLowerCase() === 'high' || pfvi >= 150
-          ? 'bg-orange-50 border-orange-200 text-orange-950'
-          : status.toLowerCase() === 'moderate'
-          ? 'bg-amber-50 border-amber-200 text-amber-950'
-          : 'bg-emerald-50 border-emerald-200 text-emerald-950'
-      }`}>
-        <div className="flex items-center justify-between font-mono text-xs mb-2">
-          <span className="font-bold uppercase tracking-wider">Lokasi Pengawasan: {locationName}</span>
-          <span className="px-2.5 py-0.5 rounded font-bold border bg-white shadow-xs">
-            STATUS LAPANGAN: {status.toUpperCase()}
-          </span>
-        </div>
-        
-        <p className="text-sm font-medium leading-relaxed mb-3">
-          {wtCm > 40 ? (
-            <>
-              <strong>PERINGATAN KRITIS:</strong> Air tanah di lokasi ini telah turun hingga <strong>-{wtCm.toFixed(0)} cm</strong> (melebihi batas aman PP 71/2014 yaitu -40 cm). Lapisan gambut atas dalam kondisi kering kerontang dan sangat rentan memicu kebakaran api bawah permukaan (smoldering) yang menghasilkan asap tebal.
-            </>
-          ) : (
-            <>
-              <strong>KONDISI STABIL:</strong> Tinggi muka air tanah terjaga pada <strong>-{wtCm.toFixed(0)} cm</strong>. Gambut dalam keadaan cukup basah dan risiko kebakaran bawah permukaan relatif terkendali.
-            </>
-          )}
-        </p>
-
-        {/* Simple Plain-Indonesian Indicators */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-slate-200/60 font-mono text-xs">
-          <div className="bg-white/80 p-2.5 rounded border border-slate-200">
-            <span className="text-[10px] text-slate-500 block">Ketinggian Air Gambut</span>
-            <span className="font-bold text-slate-900 text-sm">-{wtCm.toFixed(0)} cm</span>
-            <span className={`text-[10px] block mt-0.5 font-semibold ${wtCm > 40 ? 'text-red-600' : 'text-emerald-600'}`}>
-              {wtCm > 40 ? '⚠️ Terlalu Kering (>40cm)' : '✓ Aman (≤40cm)'}
-            </span>
-          </div>
-
-          <div className="bg-white/80 p-2.5 rounded border border-slate-200">
-            <span className="text-[10px] text-slate-500 block">Kelembaban Lahan</span>
-            <span className="font-bold text-slate-900 text-sm">{soilMoisture.toFixed(1)}%</span>
-            <span className={`text-[10px] block mt-0.5 font-semibold ${soilMoisture < 45 ? 'text-amber-600' : 'text-emerald-600'}`}>
-              {soilMoisture < 45 ? '⚠️ Tanah Kering' : '✓ Lembab'}
-            </span>
-          </div>
-
-          <div className="bg-white/80 p-2.5 rounded border border-slate-200">
-            <span className="text-[10px] text-slate-500 block">Hujan Efektif 24 Jam</span>
-            <span className="font-bold text-slate-900 text-sm">{rainfall.toFixed(1)} mm</span>
-            <span className="text-[10px] text-slate-500 block mt-0.5">
-              {rainfall === 0 ? 'Tanpa Hujan' : 'Tercurah Hujan'}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* 3 Concrete Action Step Cards for BPBD / Field Workers */}
-      <div>
-        <h4 className="text-xs font-mono font-bold text-slate-700 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-          LANGKAH TANGGAP SEGERA MITIGASI LAPANGAN (STANDAR BRGM & MANGGALA AGNI)
-        </h4>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 font-sans text-xs">
-          {/* Action 1 */}
-          <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-2">
-            <div className="flex items-center gap-2 text-cyan-700 font-mono font-bold">
-              <span className="w-5 h-5 rounded-full bg-cyan-100 border border-cyan-300 flex items-center justify-center text-[10px]">1</span>
-              <span>Penyekatan & Pengisian Pintu Sekat Kanal</span>
-            </div>
-            <p className="text-slate-600 leading-relaxed font-medium">
-              Segera instruksikan tim sekat kanal lokal untuk menutup pintu air sekat kanal terdekat guna menahan peluasan air dan meningkatkan muka air tanah ke batas aman -40cm.
-            </p>
-          </div>
-
-          {/* Action 2 */}
-          <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-2">
-            <div className="flex items-center gap-2 text-amber-700 font-mono font-bold">
-              <span className="w-5 h-5 rounded-full bg-amber-100 border border-amber-300 flex items-center justify-center text-[10px]">2</span>
-              <span>Patroli Siaga Manggala Agni & MPA</span>
-            </div>
-            <p className="text-slate-600 leading-relaxed font-medium">
-              Tingkatkan frekuensi patroli darat Masyarakat Peduli Api (MPA) di zona rawan. Pastikan tidak ada aktivitas pembukaan lahan (land clearing) dengan membakar.
-            </p>
-          </div>
-
-          {/* Action 3 */}
-          <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-2">
-            <div className="flex items-center gap-2 text-rose-700 font-mono font-bold">
-              <span className="w-5 h-5 rounded-full bg-rose-100 border border-rose-300 flex items-center justify-center text-[10px]">3</span>
-              <span>Persiapan Operasi Rewetting / Basah Lahan</span>
-            </div>
-            <p className="text-slate-600 leading-relaxed font-medium">
-              Siapkan sumur bor gambut dan alokasi pompa air portable untuk melakukan penyiraman permukaan gambut yang mengering di titik hotspot terdeteksi satelit.
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-```
-
----
-
-## FITUR 3: Penampang Kedalaman Muka Air Tanah (Peat Smoldering Profile & PP 71/2014)
-**Deskripsi & Tujuan Fitur:** Signature visual element berupa grafik penampang melintang tanah gambut (0-150 cm) yang memperlihatkan garis TMA dinamis, batas kritis PP 71/2014 (-40 cm), dan zona risiko kebakaran smoldering.
-
-**Cara Menggunakan:**
-1. Amati grafik penampang tanah gambut (lapisan permukaan Acrotelm & lapisan jenuh air Catotelm).
-2. Garis cyan menunjukkan posisi kedalaman air tanah saat ini (-cm).
-3. Jika garis air berada di bawah batas merah (-40 cm), zona gambut kering akan menyala merah menandakan risiko kebakaran bawah permukaan (smoldering fire).
-
-#### Kode Sumber (Source Code Listing): `frontend/src/components/PeatSmolderingProfile.tsx`
-```tsx
-import React from 'react';
-import { AlertTriangle, Droplets, Flame, ShieldCheck, Thermometer } from 'lucide-react';
-
-interface PeatSmolderingProfileProps {
-  waterTable: number;
-  soilMoisture: number;
-  pfvi: number;
-  status: string;
-}
-
-export const PeatSmolderingProfile: React.FC<PeatSmolderingProfileProps> = ({
-  waterTable,
-  soilMoisture,
-  pfvi,
-  status
-}) => {
-  const wtDepthCm = Math.abs(waterTable) * 100;
-  const wtVisualPercent = Math.min(92, Math.max(15, (wtDepthCm / 150) * 100));
-  
-  const isCritical = wtDepthCm > 40;
-  const isExtreme = wtDepthCm > 80 || pfvi >= 225;
-
-  return (
-    <div className="telemetry-panel bg-white border border-slate-200 rounded-xl p-5 mb-6 shadow-sm">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-4 border-b border-slate-200 pb-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="p-1.5 bg-amber-100 text-amber-800 rounded-md font-mono font-bold text-xs">
-              SIGNATURE PROFILE
-            </span>
-            <h3 className="text-sm font-bold text-slate-900 tracking-wide uppercase">
-              Penampang Kedalaman Muka Air Tanah & Risiko Kebakaran Gambut Bawah Permukaan (Smoldering Risk)
-            </h3>
-          </div>
-          <p className="text-xs text-slate-500 font-medium mt-1">
-            Visualisasi profil tanah gambut tropis (PP No. 71/2014): Batas kritis TMA adalah 40 cm di bawah permukaan tanah.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2 font-mono text-xs">
-          <span className={`px-2.5 py-1 rounded-full font-bold border flex items-center gap-1.5 ${
-            isExtreme 
-              ? 'bg-red-100 text-red-800 border-red-300 animate-pulse'
-              : isCritical
-              ? 'bg-amber-100 text-amber-800 border-amber-300'
-              : 'bg-emerald-100 text-emerald-800 border-emerald-300'
-          }`}>
-            {isExtreme ? <Flame className="w-3.5 h-3.5" /> : isCritical ? <AlertTriangle className="w-3.5 h-3.5" /> : <ShieldCheck className="w-3.5 h-3.5" />}
-            {isExtreme ? 'KEDALAMAN AIR SANGAT KRITIS (>80cm)' : isCritical ? 'MELEBIHI BATAS AMAN PP 71/2014 (>40cm)' : 'TMA AMAN (≤40cm)'}
-          </span>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-        {/* Visual Cross-Section Profile Graphic */}
-        <div className="lg:col-span-7 bg-slate-900 rounded-lg p-4 text-white relative overflow-hidden border border-slate-800 shadow-inner">
-          {/* Header Legend inside Graphic */}
-          <div className="flex justify-between items-center text-[11px] font-mono text-slate-300 mb-3 border-b border-slate-700/60 pb-2">
-            <span>PROFIL TANAH GAMBUT (0 s.d 150 cm)</span>
-            <span className="text-emerald-400 font-bold">TMA Saat ini: -{wtDepthCm.toFixed(0)} cm ({waterTable.toFixed(2)} m)</span>
-          </div>
-
-          {/* Soil Layer Stack */}
-          <div className="relative h-[220px] w-full rounded overflow-hidden border border-slate-700">
-            {/* Surface Vegetation Layer (0-10cm visual) */}
-            <div className="h-[12%] bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-800 border-b border-amber-900/50 relative flex items-center px-3 justify-between">
-              <span className="text-[10px] font-bold font-mono text-emerald-200 uppercase tracking-wider flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span>
-                Permukaan Lahan & Vegetasi Gambut (0 cm)
-              </span>
-              <span className="text-[10px] font-mono text-emerald-300">Acrotelm Top</span>
-            </div>
-
-            {/* Dry Peat Hazard Zone (Between 0cm and WT depth) */}
-            <div 
-              className={`transition-all duration-700 relative flex flex-col justify-center px-3 ${
-                isCritical 
-                  ? 'bg-gradient-to-b from-amber-950/90 via-orange-950/80 to-red-950/90 border-b-2 border-red-500' 
-                  : 'bg-amber-900/60 border-b-2 border-emerald-400'
-              }`}
-              style={{ height: `${Math.max(15, wtVisualPercent - 12)}%` }}
-            >
-              {/* Smoldering Risk Warning Text inside dry layer */}
-              {isCritical && (
-                <div className="flex items-center justify-between text-[11px] font-mono text-red-300 font-bold z-10">
-                  <span className="flex items-center gap-1.5 bg-red-950/80 px-2 py-0.5 rounded border border-red-800/80">
-                    <Flame className="w-3.5 h-3.5 text-red-400 animate-pulse" />
-                    ZONA GAMBUT KERING RENTANG ANGIN (RAWAN SMOLDERING FIRE)
-                  </span>
-                  <span className="text-[10px] text-amber-200">Tebal Lapisan Kering: {wtDepthCm.toFixed(0)} cm</span>
-                </div>
-              )}
-            </div>
-
-            {/* Saturated Water Table Layer (Below WT depth) */}
-            <div 
-              className="bg-gradient-to-b from-teal-900/90 via-cyan-950/90 to-slate-950 relative flex items-start p-3"
-              style={{ height: `${100 - wtVisualPercent}%` }}
-            >
-              <div className="flex items-center justify-between w-full text-[10px] font-mono text-cyan-300 font-bold">
-                <span className="flex items-center gap-1">
-                  <Droplets className="w-3.5 h-3.5 text-cyan-400" />
-                  ZONA GAMBUT JENUH AIR (CATOTELM SATURATED LAYER)
-                </span>
-                <span>Air Tanah Stabil</span>
-              </div>
-            </div>
-
-            {/* Dynamic Water Table Line Indicator */}
-            <div 
-              className="absolute left-0 right-0 z-20 flex items-center justify-between px-3 transition-all duration-700 pointer-events-none"
-              style={{ top: `calc(${wtVisualPercent}% - 10px)` }}
-            >
-              <div className="h-0.5 w-full bg-cyan-400 shadow-[0_0_8px_#38bdf8] flex items-center justify-between">
-                <span className="bg-cyan-500 text-slate-950 font-mono font-extrabold text-[10px] px-2 py-0.5 rounded-r shadow-md">
-                  MUKA AIR TANAH (TMA): -{wtDepthCm.toFixed(0)} cm
-                </span>
-                <span className="bg-slate-900 text-cyan-300 font-mono text-[9px] px-1.5 py-0.5 rounded border border-cyan-500/50">
-                  {waterTable.toFixed(2)} m
-                </span>
-              </div>
-            </div>
-
-            {/* PP 71/2014 Kritis Threshold Line at -40cm */}
-            <div 
-              className="absolute left-0 right-0 z-10 border-t border-dashed border-red-400/70 flex items-center justify-end px-3 pointer-events-none"
-              style={{ top: '35%' }}
-            >
-              <span className="text-[9px] font-mono text-red-300 bg-red-950/90 px-1.5 py-0.2 rounded border border-red-800">
-                Batas Maks Kritis PP 71/2014 (-40 cm)
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Informational Diagnostics & Realworld Context */}
-        <div className="lg:col-span-5 space-y-3 font-mono text-xs">
-          <div className="bg-slate-50 p-3.5 rounded-lg border border-slate-200">
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
-              Analisis Risiko Kerusakan Gambut
-            </span>
-            <div className="text-sm font-bold text-slate-900 mb-1">
-              {isCritical ? 'Terjadi Sub-Surface Drying (Pengeringan Dalam)' : 'Kondisi Kebasahan Lahan Normal'}
-            </div>
-            <p className="text-[11px] text-slate-600 font-sans leading-relaxed">
-              {isCritical
-                ? `Muka air tanah berada pada kedalaman ${wtDepthCm.toFixed(0)} cm. Udara terperangkap dalam pori gambut, menyebabkan oksigenasi bahan organik yang memicu api bawah permukaan (smoldering) sulit dipadamkan jika terjadi titik api.`
-                : 'Muka air tanah terjaga di atas batas kritis -40 cm. Lapisan gambut aman dari risiko kebakaran bawah permukaan.'}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
-            <div className="bg-slate-50 p-2.5 rounded border border-slate-200">
-              <span className="text-[10px] text-slate-500 block">Kelembaban Gambut</span>
-              <span className="text-base font-bold text-slate-900 flex items-center gap-1">
-                <Thermometer className="w-4 h-4 text-amber-600" />
-                {soilMoisture.toFixed(1)}%
-              </span>
-              <span className="text-[9px] text-slate-500">{soilMoisture < 45 ? 'Kering Kritis' : 'Cukup Lembab'}</span>
-            </div>
-
-            <div className="bg-slate-50 p-2.5 rounded border border-slate-200">
-              <span className="text-[10px] text-slate-500 block">Status Regulasi</span>
-              <span className={`text-xs font-bold block mt-1 ${isCritical ? 'text-red-700 font-bold' : 'text-emerald-700'}`}>
-                {isCritical ? 'MEMERLUKAN REWETTING' : 'MEMENUHI PP 71/2014'}
-              </span>
-              <span className="text-[9px] text-slate-500">Standar BRGM RI</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-```
-
----
-
-## FITUR 4: Cockpit Indikator Status Kerawanan & Multi-Satelit Telemetri (Risk Status Gauge)
-**Deskripsi & Tujuan Fitur:** Panel cockpit utama yang menampilkan skor PFVI (0-300), progress bar tingkat bahaya, statistik FirePing Satellite Proximity, GWIS Burned Area, FWI Engine, dan telemetri 4 variabel.
-
-**Cara Menggunakan:**
-1. Tinjau skor PFVI numerik di bagian kiri atas.
-2. Cek baris FirePing untuk melihat jarak titik api terdekat (km) dan jumlah deteksi satelit.
-3. Cek baris GWIS untuk estimasi luas area terbakar 7 hari (Ha).
-4. Cek 4 kotak telemetri di bawah: Water Table (WT), Soil Moisture (SM), Rainfall (Rf), Temp Max.
+1. Gauge tengah menampilkan **skor PFVI** skala 0 sampai 300 beserta kategorinya (Rendah < 75, Sedang 75-150, Tinggi 150-225, Ekstrem > 225).
+2. Empat angka di bawah narasi menampilkan muka air tanah (m), kelembapan tanah (%), FWI cuaca, dan status pembaruan satelit.
+3. Panel kanan menampilkan kesesuaian model (MSE hasil optimasi Nelder-Mead), proksimitas titik api radius 25 km, area terbakar FirePing, horizon proyeksi, dan sumber telemetri.
+4. Bagian **Peringatan aktif** mendaftar setiap klaster titik panas pada zona gambut dalam 24 jam terakhir, diurutkan dari FRP tertinggi, lengkap dengan jumlah deteksi dan luas terbakar bila tersedia. Angka pada label tab Ringkasan adalah jumlah klaster aktif.
+5. Klik salah satu baris peringatan untuk berpindah ke tab Peta dan memfokuskan telemetri ke koordinat klaster tersebut.
+6. Bila sumber data tidak dapat dihubungi, aplikasi menampilkan banner merah dan menahan angka risiko kosong alih-alih menampilkan nilai perkiraan.
 
 #### Kode Sumber (Source Code Listing): `frontend/src/components/RiskStatusGauge.tsx`
+
 ```tsx
 import React from 'react';
+import { Activity, ShieldAlert, CheckCircle2, Flame, Layers, Clock, Satellite, AlertTriangle } from 'lucide-react';
 
 export interface FireIntelligenceData {
   nearby?: {
@@ -679,6 +357,7 @@ export interface FireIntelligenceData {
 }
 
 interface RiskStatusGaugeProps {
+  hasData?: boolean;
   pfvi: number;
   status: string;
   waterTable: number;
@@ -699,6 +378,7 @@ interface RiskStatusGaugeProps {
 }
 
 export const RiskStatusGauge: React.FC<RiskStatusGaugeProps> = ({
+  hasData = true,
   pfvi,
   status,
   waterTable,
@@ -711,228 +391,317 @@ export const RiskStatusGauge: React.FC<RiskStatusGaugeProps> = ({
   fireIntelligence,
   optimizedParams
 }) => {
-  const getBadgeStyle = (category: string) => {
+  // SVG gauge circle parameters
+  const radius = 52;
+  const circumference = 2 * Math.PI * radius;
+  const pct = Math.min(300, Math.max(0, pfvi)) / 300;
+  const strokeDashoffset = circumference * (1 - pct);
+
+  const getBadgeColor = (category: string) => {
     switch (category.toLowerCase()) {
       case 'low':
-        return 'bg-emerald-100 text-emerald-800 border-emerald-300';
+        return 'bg-[var(--ok)] text-[#0a0c0a]';
       case 'moderate':
-        return 'bg-amber-100 text-amber-800 border-amber-300';
+        return 'bg-[var(--warn)] text-[#0a0c0a]';
       case 'high':
-        return 'bg-orange-100 text-orange-800 border-orange-300';
+        return 'bg-[var(--high)] text-[#0a0c0a]';
       case 'extreme':
       case 'very high':
-        return 'bg-red-100 text-red-800 border-red-300';
+        return 'bg-[var(--danger)] text-[#1a0805] animate-pulse';
       default:
-        return 'bg-slate-100 text-slate-800 border-slate-300';
+        return 'bg-[var(--line)] text-[var(--text)]';
     }
   };
-
-  const pfviPercentage = Math.min(100, Math.max(0, (pfvi / 300) * 100));
 
   const nearby = fireIntelligence?.nearby;
   const fwi = fireIntelligence?.fwi;
 
+  const nearestDist = nearby?.nearest_distance_km ?? null;
+  const isProximityHazard = nearestDist !== null && nearestDist <= 25.0;
+  const burnedAreaHa = nearby?.burned_area_ha ?? null;
+  // "no detections" is a real answer (nothing burning nearby); "error" is not.
+  const proximityText = nearby?.status === 'error'
+    ? 'Sumber tidak terbaca'
+    : nearestDist !== null
+      ? (isProximityHazard ? `Waspada (${nearestDist} km)` : `Aman (${nearestDist} km)`)
+      : nearby?.status === 'no_detections'
+        ? 'Aman (tanpa deteksi 25 km)'
+        : 'Tidak tersedia';
+  const proximityUnknown = proximityText === 'Tidak tersedia' || proximityText === 'Sumber tidak terbaca';
+
+  // Every figure below is either a measured value or an explicit "no data" —
+  // a stand-in constant would read as live telemetry on the dashboard.
+  if (!hasData) {
+    return (
+      <section className="hero border border-[var(--line)] rounded-[var(--r-md)] bg-[var(--surface)] p-8 flex flex-col items-center justify-center gap-3 text-center min-h-[220px]">
+        <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full font-mono text-[11.5px] font-bold uppercase tracking-wide bg-[var(--line)] text-[var(--text-mute)]">
+          <AlertTriangle className="w-3.5 h-3.5" /> Telemetri belum tersedia
+        </span>
+        <h1 className="text-base font-bold tracking-tight text-[var(--text)] max-w-[46ch] leading-snug">
+          Indeks kerawanan PFVI belum dapat dihitung untuk lokasi ini
+        </h1>
+        <p className="text-xs text-[var(--text-mute)] max-w-[60ch] leading-relaxed">
+          Tarik telemetri satelit pada panel konfigurasi di bawah, atau pilih ulang wilayah target.
+          PeatFR menahan tampilan angka risiko daripada menampilkan nilai perkiraan.
+        </p>
+      </section>
+    );
+  }
+
   return (
-    <div className="space-y-4 mb-6">
-      {/* Top Telemetry Header Panel */}
-      <div className="telemetry-panel rounded-xl p-5 bg-white border border-slate-200 shadow-sm">
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 pb-5 border-b border-slate-200">
-          <div>
-            <div className="text-xs font-mono font-bold uppercase tracking-wider text-slate-500 mb-1">
-              Indeks Kerawanan Kebakaran Gambut (PFVI)
-            </div>
-            <div className="flex items-baseline gap-3">
-              <span className="text-4xl font-mono font-extrabold text-slate-900 tracking-tight">
-                {pfvi.toFixed(1)}
-              </span>
-              <span className="text-xs font-mono text-slate-500 font-semibold">/ 300.0</span>
-              <span className={`px-2.5 py-0.5 text-xs font-mono font-bold rounded border ${getBadgeStyle(status)}`}>
-                {status.toUpperCase()}
-              </span>
-            </div>
-            <p className="text-xs text-slate-500 font-medium mt-1">
-              Proyeksi {forecastDays} Hari Ke Depan (Rentang 30 Hari: {minPfvi.toFixed(1)} s.d {maxPfvi.toFixed(1)})
-            </p>
-          </div>
-
-          {/* Nelder-Mead Parameters Readout */}
-          {optimizedParams && (
-            <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 text-xs font-mono space-y-1">
-              <div className="text-[11px] text-slate-700 font-bold uppercase tracking-wider flex items-center justify-between gap-4">
-                <span>Nelder-Mead Opt</span>
-                <span className="text-slate-500">MSE: {optimizedParams.mse.toFixed(2)}</span>
-              </div>
-              <div className="text-slate-600 grid grid-cols-2 gap-x-4 gap-y-0.5 text-[11px]">
-                <span>a_H = {optimizedParams.a_h.toFixed(2)}</span>
-                <span>b_H = {optimizedParams.b_h.toFixed(3)}</span>
-                <span>n = {optimizedParams.n.toFixed(1)}</span>
-                <span>α = {optimizedParams.alpha.toFixed(2)}</span>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Severity Progress Bar */}
-        <div className="pt-4">
-          <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
-            <div
-              className={`h-full transition-all duration-500 ${
-                pfvi >= 225
-                  ? 'bg-red-600'
-                  : pfvi >= 150
-                  ? 'bg-orange-500'
-                  : pfvi >= 75
-                  ? 'bg-amber-500'
-                  : 'bg-emerald-600'
-              }`}
-              style={{ width: `${pfviPercentage}%` }}
+    <section className="hero border border-[var(--line)] rounded-[var(--r-md)] bg-[var(--surface)] overflow-hidden grid grid-cols-1 lg:grid-cols-12">
+      {/* Left Column: Gauge & Hero Narrative */}
+      <div className="lg:col-span-7 p-6 sm:p-8 flex flex-col sm:flex-row items-center sm:items-start gap-6 lg:border-r border-[var(--line)] border-b lg:border-b-0">
+        {/* SVG Circular Gauge */}
+        <div className="relative w-[184px] h-[184px] flex-shrink-0">
+          <svg viewBox="0 0 120 120" className="w-full h-full -rotate-90">
+            <circle
+              cx="60"
+              cy="60"
+              r={radius}
+              className="fill-none stroke-[var(--line)] stroke-[10]"
             />
+            <circle
+              cx="60"
+              cy="60"
+              r={radius}
+              className="fill-none stroke-[var(--danger)] stroke-[10] stroke-linecap-round transition-all duration-1000 ease-out"
+              strokeDasharray={circumference.toFixed(1)}
+              strokeDashoffset={strokeDashoffset.toFixed(1)}
+            />
+          </svg>
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+            <span className="font-mono text-4xl font-bold tracking-tight text-[var(--text)]">
+              {pfvi.toFixed(1)}
+            </span>
+            <span className="text-[10.5px] text-[var(--text-dim)] font-mono font-medium -mt-1">
+              / 300 PFVI
+            </span>
           </div>
-          <div className="flex justify-between text-[10px] font-mono font-semibold text-slate-500 mt-1.5">
-            <span>0 (Basah)</span>
-            <span>75 (Low)</span>
-            <span>150 (Mod)</span>
-            <span>225 (High)</span>
-            <span>300 (Extreme)</span>
+        </div>
+
+        {/* Narrative Copy & Meta */}
+        <div className="flex flex-col gap-3 min-w-0">
+          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full font-mono text-[11.5px] font-bold uppercase tracking-wide w-fit ${getBadgeColor(status)}`}>
+            {status} Hazard
+          </span>
+          <h1 className="text-xl font-bold tracking-tight text-[var(--text)] leading-snug">
+            Indeks kerawanan gambut berada pada level {status.toLowerCase()} di sepanjang periode ini
+          </h1>
+          <p className="text-xs text-[var(--text-mute)] leading-relaxed">
+            Proyeksi {forecastDays} hari ke depan berada di rentang {minPfvi.toFixed(1)} / {maxPfvi.toFixed(1)}, didorong oleh muka air tanah ({waterTable.toFixed(2)}m) dan kelembaban tanah ({soilMoisture.toFixed(1)}%).
+          </p>
+
+          <div className="flex flex-wrap gap-4 pt-2 border-t border-[var(--line-soft)] text-xs font-mono">
+            <div>
+              <span className="text-[10px] uppercase text-[var(--text-dim)] block">Muka Air Tanah</span>
+              <span className="font-bold text-[var(--text)]">{waterTable.toFixed(2)} m</span>
+            </div>
+            <div>
+              <span className="text-[10px] uppercase text-[var(--text-dim)] block">Kelembapan</span>
+              <span className="font-bold text-[var(--text)]">{soilMoisture.toFixed(1)}%</span>
+            </div>
+            <div>
+              <span className="text-[10px] uppercase text-[var(--text-dim)] block">FWI Cuaca</span>
+              <span className="font-bold text-[var(--warn)]">
+                {fwi?.fwi_score !== undefined
+                  ? `${fwi.fwi_score.toFixed(1)} (${fwi.danger_rating ?? 'n/a'})`
+                  : 'Tidak tersedia'}
+              </span>
+            </div>
+            <div>
+              <span className="text-[10px] uppercase text-[var(--text-dim)] block">Diperbarui</span>
+              <span className="font-bold text-[var(--text-mute)]">Live Satellite</span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Multi-Source Fire Intelligence Cockpit Bar */}
-      <div className="telemetry-panel rounded-xl p-4 border border-slate-200 bg-white shadow-sm grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* FirePing Proximity */}
-        <div className="bg-slate-50 p-3.5 rounded-lg border border-slate-200 flex items-center justify-between">
-          <div>
-            <span className="text-[10px] font-mono uppercase tracking-wider font-bold text-slate-500 block mb-0.5">
-              FirePing Satellite Proximity
-            </span>
-            <div className="text-lg font-mono font-bold text-slate-900">
-              {nearby?.nearest_distance_km !== null && nearby?.nearest_distance_km !== undefined
-                ? `${nearby.nearest_distance_km} km`
-                : 'Aman (>25 km)'}
-            </div>
-            <span className="text-[10px] font-mono text-slate-500">
-              {nearby?.detection_count || 0} Deteksi (24j) ({nearby?.satellite_sources?.join(', ') || 'Modis/Viirs'})
-            </span>
-          </div>
-          <div className={`px-2 py-1 text-[10px] font-mono font-bold rounded border ${nearby?.detection_count ? 'bg-red-100 text-red-700 border-red-300' : 'bg-emerald-100 text-emerald-700 border-emerald-300'}`}>
-            {nearby?.detection_count ? 'DETEKSI' : 'CLEAR'}
-          </div>
+      {/* Right Column: Technical Fit & Satellite Parameters Table */}
+      <div className="lg:col-span-5 p-6 sm:p-8 flex flex-col justify-center gap-2.5 font-mono text-xs">
+        <div className="flex items-center justify-between py-2 border-b border-[var(--line-soft)]">
+          <span className="text-[var(--text-mute)] flex items-center gap-2">
+            <Activity className="w-3.5 h-3.5 text-[var(--text-dim)]" />
+            <span>Kesesuaian Model (MSE)</span>
+          </span>
+          <span className="font-bold text-[var(--text)]">
+            {optimizedParams ? optimizedParams.mse.toFixed(2) : 'Tidak tersedia'}
+          </span>
         </div>
 
-        {/* GWIS Burned Area */}
-        <div className="bg-slate-50 p-3.5 rounded-lg border border-slate-200 flex items-center justify-between">
-          <div>
-            <span className="text-[10px] font-mono uppercase tracking-wider font-bold text-slate-500 block mb-0.5">
-              GWIS 7-Day Burned Area
-            </span>
-            <div className="text-lg font-mono font-bold text-amber-600">
-              {nearby?.burned_area_ha ? nearby.burned_area_ha.toLocaleString('id-ID') : '0'} <span className="text-xs text-slate-500 font-normal">Ha</span>
-            </div>
-            <span className="text-[10px] font-mono text-slate-500">
-              Estimasi Perimeter Satelit Global
-            </span>
-          </div>
-          <div className="px-2 py-1 text-[10px] font-mono font-bold rounded border bg-amber-100 text-amber-800 border-amber-300">
-            GWIS NRT
-          </div>
+        <div className="flex items-center justify-between py-2 border-b border-[var(--line-soft)]">
+          <span className="text-[var(--text-mute)] flex items-center gap-2">
+            <Flame className="w-3.5 h-3.5 text-[var(--accent)]" />
+            <span>Proksimitas Titik Api (&lt; 25 km)</span>
+          </span>
+          <span className={`font-bold ${
+            proximityUnknown ? 'text-[var(--text-dim)]' : isProximityHazard ? 'text-[var(--danger)]' : 'text-[var(--ok)]'
+          }`}>
+            {proximityText}
+          </span>
         </div>
 
-        {/* Weather FWI Index */}
-        <div className="bg-slate-50 p-3.5 rounded-lg border border-slate-200 flex items-center justify-between">
-          <div>
-            <span className="text-[10px] font-mono uppercase tracking-wider font-bold text-slate-500 block mb-0.5">
-              Atmospheric Fire Weather (FWI)
-            </span>
-            <div className="text-lg font-mono font-bold text-slate-900">
-              {fwi?.fwi_score !== undefined ? fwi.fwi_score.toFixed(1) : '24.5'} <span className="text-xs text-slate-500 font-normal">FWI</span>
-            </div>
-            <span className="text-[10px] font-mono text-slate-500">
-              {fwi?.source || 'OpenWeather / Canadian Engine'}
-            </span>
-          </div>
-          <div className={`px-2 py-1 text-[10px] font-mono font-bold rounded border ${getBadgeStyle(fwi?.danger_rating || 'High')}`}>
-            {(fwi?.danger_rating || 'HIGH').toUpperCase()}
-          </div>
+        <div className="flex items-center justify-between py-2 border-b border-[var(--line-soft)]">
+          <span className="text-[var(--text-mute)] flex items-center gap-2">
+            <Layers className="w-3.5 h-3.5 text-[var(--text-dim)]" />
+            <span>Area Terbakar (FirePing, radius 25 km)</span>
+          </span>
+          <span className="font-bold text-[var(--text)]">
+            {burnedAreaHa !== null && burnedAreaHa > 0 ? `${burnedAreaHa.toLocaleString('id-ID')} ha` : 'Tidak ada laporan'}
+          </span>
+        </div>
+
+        <div className="flex items-center justify-between py-2 border-b border-[var(--line-soft)]">
+          <span className="text-[var(--text-mute)] flex items-center gap-2">
+            <Clock className="w-3.5 h-3.5 text-[var(--text-dim)]" />
+            <span>Horizon Proyeksi EWS</span>
+          </span>
+          <span className="font-bold text-[var(--text)]">{forecastDays} Hari</span>
+        </div>
+
+        <div className="flex items-center justify-between py-2">
+          <span className="text-[var(--text-mute)] flex items-center gap-2">
+            <Satellite className="w-3.5 h-3.5 text-[var(--text-dim)]" />
+            <span>Sumber Telemetri Satelit</span>
+          </span>
+          <span className="font-bold text-[var(--accent)]">Centroid Wilayah &amp; GIS Point</span>
         </div>
       </div>
-
-      {/* High-Density Environmental Telemetry Cockpit Bar */}
-      <div className="telemetry-panel bg-white border border-slate-200 rounded-xl grid grid-cols-2 lg:grid-cols-4 divide-y lg:divide-y-0 lg:divide-x divide-slate-200 shadow-sm">
-        {/* WT */}
-        <div className="p-4">
-          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-500 block mb-1">
-            Water Table (WT)
-          </span>
-          <div className="text-xl font-mono font-bold text-slate-900">
-            {waterTable.toFixed(2)} <span className="text-xs font-normal text-slate-500">m</span>
-          </div>
-          <span className="text-[11px] text-slate-500 font-medium mt-0.5 block">
-            {waterTable < -0.8 ? 'Kritis Rendah' : 'Normal'}
-          </span>
-        </div>
-
-        {/* SM */}
-        <div className="p-4 lg:pl-6">
-          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-500 block mb-1">
-            Soil Moisture (SM)
-          </span>
-          <div className="text-xl font-mono font-bold text-slate-900">
-            {soilMoisture.toFixed(1)} <span className="text-xs font-normal text-slate-500">%</span>
-          </div>
-          <span className="text-[11px] text-slate-500 font-medium mt-0.5 block">
-            {soilMoisture < 45 ? 'Tanah Kering' : 'Lembab'}
-          </span>
-        </div>
-
-        {/* Rf */}
-        <div className="p-4 lg:pl-6">
-          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-500 block mb-1">
-            Rainfall (Rf)
-          </span>
-          <div className="text-xl font-mono font-bold text-slate-900">
-            {rainfall.toFixed(1)} <span className="text-xs font-normal text-slate-500">mm/d</span>
-          </div>
-          <span className="text-[11px] text-slate-500 font-medium mt-0.5 block">
-            {rainfall < 5.1 ? 'Tanpa Hujan Efektif' : 'Hujan Efektif'}
-          </span>
-        </div>
-
-        {/* Temp */}
-        <div className="p-4 lg:pl-6">
-          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-500 block mb-1">
-            Temp Max (Temp)
-          </span>
-          <div className="text-xl font-mono font-bold text-slate-900">
-            {temp.toFixed(1)} <span className="text-xs font-normal text-slate-500">°C</span>
-          </div>
-          <span className="text-[11px] text-slate-500 font-medium mt-0.5 block">
-            {temp > 34.5 ? 'Suhu Tinggi' : 'Normal'}
-          </span>
-        </div>
-      </div>
-    </div>
+    </section>
   );
 };
+```
 
+#### Kode Sumber (Source Code Listing): `frontend/src/components/ActiveAlerts.tsx`
+
+```tsx
+import React from 'react';
+import { ShieldAlert, ArrowRight, CheckCircle2 } from 'lucide-react';
+
+export interface SevereAlert {
+  id: string;
+  title: string;
+  location: string;
+  lat: number;
+  lon: number;
+  severity: string;
+  detection_count: number;
+  frp_max_mw: number;
+  estimated_burned_ha: number | null;
+  burned_area_note?: string | null;
+  updated_ago: string;
+  satellite_sensor: string;
+  peatland_attribution?: string;
+}
+
+const SEVERITY_LABEL: Record<string, string> = {
+  CRITICAL: 'Kebakaran parah',
+  HIGH: 'Anomali termal tinggi',
+  WARNING: 'Waspada gambut'
+};
+
+const severityClass = (severity: string) =>
+  severity === 'CRITICAL' ? 'text-[var(--danger)] border-[var(--danger)]'
+    : severity === 'HIGH' ? 'text-[var(--high)] border-[var(--high)]'
+      : 'text-[var(--warn)] border-[var(--warn)]';
+
+interface ActiveAlertsProps {
+  alerts: SevereAlert[];
+  onFocus: (alert: SevereAlert) => void;
+}
+
+/**
+ * Single source of truth for active fire warnings. The map tab shows the markers,
+ * this list is the only place the warning text appears — no second copy in the
+ * chart or inspector panels.
+ */
+export const ActiveAlerts: React.FC<ActiveAlertsProps> = ({ alerts, onFocus }) => {
+  const latest = alerts[0]?.updated_ago?.replace('Deteksi terbaru ', 'deteksi terbaru ');
+
+  return (
+    <section>
+      <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 mb-3">
+        <h2 className="text-[15px] font-semibold tracking-tight text-[var(--text)] flex items-center gap-2">
+          <ShieldAlert className="w-4 h-4 text-[var(--danger)]" />
+          <span>Peringatan aktif</span>
+        </h2>
+        <p className="text-xs text-[var(--text-dim)]">
+          Klaster titik panas zona gambut, 24 jam terakhir{latest ? ` (${latest})` : ''}
+        </p>
+      </div>
+
+      {alerts.length === 0 ? (
+        <div className="border border-[var(--line)] rounded-[var(--r-md)] bg-[var(--surface)] p-4 flex items-center gap-2.5">
+          <CheckCircle2 className="w-4 h-4 text-[var(--ok)] shrink-0" />
+          <p className="text-xs text-[var(--text-mute)]">
+            Tidak ada klaster hotspot pada zona gambut yang terdeteksi dalam 24 jam terakhir.
+          </p>
+        </div>
+      ) : (
+        <ul className="border border-[var(--line)] rounded-[var(--r-md)] bg-[var(--surface)] divide-y divide-[var(--line-soft)] overflow-hidden">
+          {alerts.map((alert) => (
+            <li key={alert.id}>
+              <button
+                type="button"
+                onClick={() => onFocus(alert)}
+                className="w-full text-left px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 transition-colors hover:bg-[var(--surface-2)] cursor-pointer"
+              >
+                <span className={`shrink-0 self-start sm:self-center font-mono text-[10px] font-bold uppercase tracking-wider border rounded-[var(--r-sm)] px-2 py-0.5 ${severityClass(alert.severity)}`}>
+                  {SEVERITY_LABEL[alert.severity] || alert.severity}
+                </span>
+
+                <span className="flex-1 min-w-0">
+                  <span className="block text-[13px] font-medium text-[var(--text)] leading-snug">
+                    {alert.location}
+                  </span>
+                  <span className="block font-mono text-[10.5px] text-[var(--text-dim)] mt-0.5">
+                    {alert.detection_count} deteksi · FRP maks {alert.frp_max_mw} MW
+                    {alert.estimated_burned_ha ? ` · ${alert.estimated_burned_ha} ha terbakar` : ' · luas terbakar tidak tersedia'}
+                  </span>
+                </span>
+
+                <span className="shrink-0 self-end sm:self-center font-mono text-[11px] font-semibold text-[var(--accent)] flex items-center gap-1">
+                  <span>Lihat di peta</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+};
 ```
 
 ---
 
-## FITUR 5: Peta Satelit Live Interaktif (NASA FIRMS Key Active, GFW, & VIIRS 375m Overpass)
-**Deskripsi & Tujuan Fitur:** Peta GIS berbasis Esri World Imagery + CARTO labels dengan layer thermal NASA FIRMS terotorisasi, vector GFW gambut, severe alerts ticker, dan hotspot inspector.
+## FITUR 3: Tab Peta Titik Panas — Peta Satelit & Inspektor Hotspot
+
+**Deskripsi & Tujuan Fitur:** Peta GIS berbasis Esri World Imagery dengan layer thermal NASA FIRMS terotorisasi, hotspot vector, dan atribusi zona gambut. Inspektor di sisi kanan menampilkan rincian setiap titik yang dipilih.
+
+![Tab Peta Titik Panas: layer NASA FIRMS, marker hotspot, dan Inspektor Titik Panas](docs/screenshots/02-peta.png)
+
+*Gambar: Tab Peta Titik Panas: layer NASA FIRMS, marker hotspot, dan Inspektor Titik Panas.*
+
+
 
 **Cara Menggunakan:**
-1. Gunakan sakelar layer di kanan atas peta untuk mengaktifkan: FIRMS WMS, Hotspots API, GFW Gambut, atau NASA GIBS.
-2. Klik titik mana saja pada peta satelit untuk mengambil koordinat telemetri titik tersebut.
-3. Klik marker hotspot api (oranye/merah) untuk menampilkan detail kecerahan Kelvin, FRP (MW), dan satelit pengawas di Satellite Hotspot Inspector.
+
+1. Buka tab **Peta titik panas**.
+2. Aktifkan atau matikan layer lewat tombol di kanan atas peta: **FIRMS WMS (NASA Key)**, **Hotspots API** (jumlah deteksi vector), dan **Zona Gambut** (deteksi yang diatribusikan ke kabupaten gambut terdekat, maksimum 75 km).
+3. Klik titik mana pun pada peta untuk mengambil koordinat dan menarik telemetri titik tersebut; peta memfokus ulang ke lokasi baru.
+4. Klik marker hotspot (oranye/merah) untuk melihat tanggal-jam akuisisi UTC, kecerahan T_i4 (K), daya FRP (MW), satelit pengawas, dan jarak ke stasiun utama.
+5. Panel **Inspektor Titik Panas** di kanan menampilkan rincian titik terpilih beserta tombol **Fokuskan Telemetri ke Titik Ini**.
+6. Legenda di bawah inspektor menjelaskan ambang warna marker: Rendah < 75, Sedang 75-150, Tinggi 150-225, Ekstrem > 225.
 
 #### Kode Sumber (Source Code Listing): `frontend/src/components/PeatlandMap.tsx`
+
 ```tsx
 import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, WMSTileLayer, Marker, Popup, Circle, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
-import { MapPin, Flame, Satellite, ShieldAlert, Radio, Crosshair, Zap, Navigation } from 'lucide-react';
+import { MapPin, Flame, Satellite, ShieldAlert, Radio, Crosshair, Zap, Navigation, CheckCircle2 } from 'lucide-react';
 import axios from 'axios';
 
 export interface LocationPreset {
@@ -952,6 +721,8 @@ export interface GfwPeatlandFire {
   is__peatland?: boolean;
   adm1?: string;
   adm2?: string;
+  peatland_attribution?: string;
+  regency_centroid_km?: number;
 }
 
 export interface FirmsHotspot {
@@ -984,7 +755,7 @@ function getDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): 
 const createCustomIcon = (color: string) => {
   return L.divIcon({
     className: 'custom-leaflet-marker',
-    html: `<div style="background-color: ${color}; width: 18px; height: 18px; border-radius: 50%; border: 2.5px solid white; box-shadow: 0 2px 10px rgba(0,0,0,0.5); cursor: pointer;"></div>`,
+    html: `<div style="background-color: ${color}; width: 18px; height: 18px; border-radius: 50%; border: 2.5px solid white; box-shadow: 0 0 12px ${color}; cursor: pointer;"></div>`,
     iconSize: [18, 18],
     iconAnchor: [9, 9]
   });
@@ -993,7 +764,7 @@ const createCustomIcon = (color: string) => {
 const createPeatlandFireIcon = () => {
   return L.divIcon({
     className: 'gfw-peatland-fire-marker',
-    html: `<div style="background-color: #dc2626; width: 14px; height: 14px; border-radius: 50%; border: 2px solid #fee2e2; box-shadow: 0 0 12px #dc2626; animation: pulse 1.5s infinite; cursor: pointer;"></div>`,
+    html: `<div style="background-color: var(--danger); width: 14px; height: 14px; border-radius: 50%; border: 2px solid #fee2e2; box-shadow: 0 0 14px var(--danger); animation: pulse 1.5s infinite; cursor: pointer;"></div>`,
     iconSize: [14, 14],
     iconAnchor: [7, 7]
   });
@@ -1002,7 +773,7 @@ const createPeatlandFireIcon = () => {
 const createFirmsHotspotIcon = () => {
   return L.divIcon({
     className: 'firms-hotspot-marker',
-    html: `<div style="background-color: #ea580c; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #ffedd5; box-shadow: 0 0 10px #ea580c; cursor: pointer;"></div>`,
+    html: `<div style="background-color: var(--accent); width: 12px; height: 12px; border-radius: 50%; border: 2px solid #ffedd5; box-shadow: 0 0 10px var(--accent); cursor: pointer;"></div>`,
     iconSize: [12, 12],
     iconAnchor: [6, 6]
   });
@@ -1011,7 +782,7 @@ const createFirmsHotspotIcon = () => {
 const createTargetIcon = () => {
   return L.divIcon({
     className: 'clicked-target-marker',
-    html: `<div style="background-color: #0284c7; width: 16px; height: 16px; border-radius: 50%; border: 2.5px solid white; box-shadow: 0 0 12px #0284c7; cursor: pointer;"></div>`,
+    html: `<div style="background-color: var(--ok); width: 16px; height: 16px; border-radius: 50%; border: 2.5px solid white; box-shadow: 0 0 14px var(--ok); cursor: pointer;"></div>`,
     iconSize: [16, 16],
     iconAnchor: [8, 8]
   });
@@ -1067,17 +838,6 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
 
   const [gfwFires, setGfwFires] = useState<GfwPeatlandFire[]>([]);
   const [firmsHotspots, setFirmsHotspots] = useState<FirmsHotspot[]>([]);
-  const [severeAlerts, setSevereAlerts] = useState<any[]>([]);
-
-  useEffect(() => {
-    axios.get('/api/v1/fire-intelligence/severe-alerts')
-      .then((res) => {
-        if (res.data && res.data.alerts) {
-          setSevereAlerts(res.data.alerts);
-        }
-      })
-      .catch((err) => console.warn('Could not fetch severe fire alerts:', err));
-  }, []);
 
   useEffect(() => {
     if (showGfwPeatland) {
@@ -1106,6 +866,7 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
   const handleMapClick = (lat: number, lon: number) => {
     setClickedTarget({ lat, lon });
     const distKm = getDistanceKm(location.lat, location.lon, lat, lon);
+    const title = `Titik Klik Peta (${lat.toFixed(3)}, ${lon.toFixed(3)})`;
     setSelectedEntity({
       type: 'point',
       title: `Koordinat Klik Peta Satelit`,
@@ -1118,44 +879,44 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
         'Status Wilayah': 'Realtime Satellite Grid Pick'
       }
     });
+
+    if (onSelectCustomLocation) {
+      onSelectCustomLocation(lat, lon, title);
+    }
   };
 
   const getMarkerColor = (pfvi: number) => {
-    if (pfvi >= 225) return '#dc2626'; // Red
-    if (pfvi >= 150) return '#ea580c'; // Orange
-    if (pfvi >= 75) return '#d97706';  // Amber
-    return '#16a34a'; // Green
+    if (pfvi >= 225) return 'var(--danger)'; // Red
+    if (pfvi >= 150) return 'var(--high)';   // Orange
+    if (pfvi >= 75) return 'var(--warn)';    // Amber
+    return 'var(--ok)'; // Green
   };
 
   const color = getMarkerColor(currentPfvi);
 
   return (
-    <div className="telemetry-panel rounded-xl p-5 mb-6 bg-white border border-slate-200 shadow-sm">
-      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 mb-4">
-        <div className="flex items-center gap-2">
-          <Satellite className="w-5 h-5 text-emerald-600 shrink-0" />
-          <div>
-            <h3 className="text-sm font-bold tracking-wide text-slate-900 flex items-center gap-2 flex-wrap">
-              REAL LIVE SATELLITE FIRE MAP (NASA FIRMS & VIIRS OVERPASS)
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-mono bg-emerald-100 text-emerald-800 border border-emerald-300 rounded font-semibold">
-                <Radio className="w-3 h-3 text-emerald-600 animate-pulse" />
-                NASA FIRMS MAP_KEY ACTIVE
-              </span>
-            </h3>
-            <p className="text-xs text-slate-500 font-medium">
-              Peta Satelit Live Resmi NASA FIRMS, VIIRS 375m & GFW Gambut. Klik lokasi manapun untuk inspeksi titik api.
-            </p>
-          </div>
+    <section>
+      {/* Section Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-baseline justify-between gap-3 mb-3">
+        <div>
+          <h2 className="text-[15px] font-semibold tracking-tight text-[var(--text)] flex items-center gap-2">
+            <Satellite className="w-4 h-4 text-[var(--accent)]" />
+            <span>Peta Titik Panas &amp; Kerawanan Lahan Gambut</span>
+          </h2>
+          <p className="text-xs text-[var(--text-dim)] mt-0.5">
+            Telemetri live NASA FIRMS (VIIRS 375m), diatribusikan ke kabupaten gambut terdekat (maks 75 km). Klik titik mana saja untuk inspeksi lokasi.
+          </p>
         </div>
 
         {/* Live Satellite Layer Toggles */}
         <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
           <button
+            type="button"
             onClick={() => setShowFirmsWms(!showFirmsWms)}
-            className={`px-3 py-1.5 rounded border transition-colors flex items-center gap-1.5 font-bold ${
+            className={`px-3 py-1.5 rounded-[var(--r-sm)] border transition-colors flex items-center gap-1.5 font-semibold cursor-pointer ${
               showFirmsWms
-                ? 'bg-rose-600 text-white border-rose-700 shadow-xs'
-                : 'bg-slate-100 text-slate-600 border-slate-300'
+                ? 'bg-[var(--accent-soft)] text-[var(--accent)] border-[var(--accent-line)]'
+                : 'bg-[var(--surface-2)] text-[var(--text-mute)] border-[var(--line)]'
             }`}
           >
             <Flame className="w-3.5 h-3.5" />
@@ -1163,11 +924,12 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
           </button>
 
           <button
+            type="button"
             onClick={() => setShowFirmsVector(!showFirmsVector)}
-            className={`px-3 py-1.5 rounded border transition-colors flex items-center gap-1.5 font-bold ${
+            className={`px-3 py-1.5 rounded-[var(--r-sm)] border transition-colors flex items-center gap-1.5 font-semibold cursor-pointer ${
               showFirmsVector
-                ? 'bg-orange-600 text-white border-orange-700 shadow-xs'
-                : 'bg-slate-100 text-slate-600 border-slate-300'
+                ? 'bg-[var(--accent-soft)] text-[var(--accent)] border-[var(--accent-line)]'
+                : 'bg-[var(--surface-2)] text-[var(--text-mute)] border-[var(--line)]'
             }`}
           >
             <Radio className="w-3.5 h-3.5" />
@@ -1175,126 +937,66 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
           </button>
 
           <button
+            type="button"
             onClick={() => setShowGfwPeatland(!showGfwPeatland)}
-            className={`px-3 py-1.5 rounded border transition-colors flex items-center gap-1.5 font-bold ${
+            className={`px-3 py-1.5 rounded-[var(--r-sm)] border transition-colors flex items-center gap-1.5 font-semibold cursor-pointer ${
               showGfwPeatland
-                ? 'bg-red-600 text-white border-red-700 shadow-xs'
-                : 'bg-slate-100 text-slate-600 border-slate-300'
+                ? 'bg-[var(--accent-soft)] text-[var(--accent)] border-[var(--accent-line)]'
+                : 'bg-[var(--surface-2)] text-[var(--text-mute)] border-[var(--line)]'
             }`}
           >
             <ShieldAlert className="w-3.5 h-3.5" />
-            <span>GFW Vector Gambut</span>
-          </button>
-
-          <button
-            onClick={() => setShowGibsViirsDay(!showGibsViirsDay)}
-            className={`px-3 py-1.5 rounded border transition-colors flex items-center gap-1.5 font-bold ${
-              showGibsViirsDay
-                ? 'bg-cyan-700 text-white border-cyan-800 shadow-xs'
-                : 'bg-slate-100 text-slate-600 border-slate-300'
-            }`}
-          >
-            <Satellite className="w-3.5 h-3.5" />
-            <span>NASA GIBS 375m</span>
+            <span>Zona Gambut ({gfwFires.length})</span>
           </button>
         </div>
       </div>
 
-      {/* Severe Fire Alerts Ticker */}
-      {severeAlerts.length > 0 && (
-        <div className="mb-4 bg-red-50 border border-red-200 rounded-lg p-3 text-xs font-mono shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <span className="font-bold text-red-700 flex items-center gap-1.5 uppercase tracking-wide">
-              <Flame className="w-4 h-4 text-red-600 animate-pulse" />
-              PERINGATAN KEBAKARAN PARAH (SEVERE FIRE ALERTS)
-            </span>
-            <span className="text-[10px] text-red-800 bg-red-100 border border-red-300 px-2 py-0.5 rounded font-bold">
-              {severeAlerts.length} Area Terdampak Terdeteksi
-            </span>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
-            {severeAlerts.map((alert) => (
-              <button
-                key={alert.id}
-                onClick={() => {
-                  setSelectedEntity({
-                    type: 'gfw',
-                    title: alert.title,
-                    lat: alert.lat,
-                    lon: alert.lon,
-                    details: {
-                      'Lokasi Kebakaran': alert.location,
-                      'Estimasi Luas Terbakar': `${alert.estimated_burned_km2} km² (${alert.estimated_burned_ha} Ha)`,
-                      'Intensitas FRP Maks': `${alert.frp_max_mw} MW`,
-                      'Satelit Pengawas': alert.satellite_sensor,
-                      'Tingkat Bahaya': alert.severity,
-                      'Status Waktu': alert.updated_ago
-                    }
-                  });
-                  if (onSelectCustomLocation) {
-                    onSelectCustomLocation(alert.lat, alert.lon, alert.location);
-                  }
-                }}
-                className="text-left bg-white hover:bg-red-50 p-2.5 rounded border border-red-200 hover:border-red-400 transition-all group shadow-xs cursor-pointer"
-              >
-                <div className="font-bold text-red-700 truncate flex items-center justify-between">
-                  <span className="group-hover:text-red-900 transition-colors">{alert.title}</span>
-                  <span className="text-[10px] px-1.5 py-0.2 bg-red-100 text-red-800 rounded font-bold">{alert.estimated_burned_km2} km²</span>
-                </div>
-                <div className="text-[11px] text-slate-700 truncate mt-1 font-medium">{alert.location}</div>
-                <div className="text-[10px] text-slate-500 mt-1.5 flex items-center justify-between pt-1 border-t border-slate-100">
-                  <span>{alert.updated_ago}</span>
-                  <span className="text-emerald-700 font-bold group-hover:underline">Fokus Peta →</span>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Dedicated Real Live Satellite Map Display */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-        <div className="lg:col-span-3 h-[460px] w-full rounded-lg overflow-hidden relative border border-slate-300 shadow-sm">
+      {/* Map Row Container */}
+      <div className="border border-[var(--line)] rounded-[var(--r-md)] bg-[var(--surface)] overflow-hidden grid grid-cols-1 lg:grid-cols-4">
+        {/* Left Map (3 Cols) */}
+        <div className="lg:col-span-3 h-[440px] w-full relative">
           <MapContainer
             center={pos}
             zoom={10}
             scrollWheelZoom={true}
+            doubleClickZoom={true}
+            touchZoom={true}
             className="h-full w-full cursor-crosshair"
           >
             <MapFlyTo lat={location.lat} lon={location.lon} />
             <MapClickHandler onMapClick={handleMapClick} />
 
-            {/* High-Resolution Satellite Base Layer (Esri World Imagery) */}
+            {/* Satellite Base Layer */}
             <TileLayer
               attribution='&copy; <a href="https://www.esri.com/">Esri World Imagery</a>'
               url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
             />
 
-            {/* Transparent Administrative Place Names & Boundaries Label Overlay */}
+            {/* Place Names & Labels Overlay */}
             <TileLayer
               attribution='&copy; <a href="https://carto.com/">CARTO Voyager Labels</a>'
               url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png"
             />
 
-            {/* NASA FIRMS Dedicated Authorized WMS Thermal Layer (MAP_KEY Authorized) */}
+            {/* NASA FIRMS Dedicated WMS Thermal Layer */}
             {showFirmsWms && (
               <WMSTileLayer
                 url={`https://firms.modaps.eosdis.nasa.gov/mapserver/wms/fires/${FIRMS_MAP_KEY}/`}
                 layers="fires_viirs_24,fires_modis_24"
                 format="image/png"
                 transparent={true}
-                attribution="NASA FIRMS Dedicated WMS (MAP_KEY Active)"
+                attribution="NASA FIRMS WMS"
               />
             )}
 
-            {/* NASA GIBS VIIRS 375m Thermal Anomalies Web Mercator (EPSG3857) WMS Layer */}
+            {/* NASA GIBS VIIRS 375m Layer */}
             {showGibsViirsDay && (
               <WMSTileLayer
                 url="https://gibs.earthdata.nasa.gov/wms/epsg3857/best/wms.cgi"
                 layers="VIIRS_SNPP_Thermal_Anomalies_375m_Day,VIIRS_SNPP_Thermal_Anomalies_375m_Night"
                 format="image/png"
                 transparent={true}
-                attribution="NASA GIBS VIIRS 375m Thermal"
+                attribution="NASA GIBS VIIRS"
               />
             )}
 
@@ -1308,6 +1010,7 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
                   click: (e) => {
                     e.originalEvent.stopPropagation();
                     const distKm = getDistanceKm(location.lat, location.lon, hotspot.latitude, hotspot.longitude);
+                    const title = `Hotspot NASA FIRMS (${hotspot.latitude.toFixed(3)}, ${hotspot.longitude.toFixed(3)})`;
                     setSelectedEntity({
                       type: 'hotspot',
                       title: `NASA FIRMS Hotspot (VIIRS)`,
@@ -1322,6 +1025,9 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
                         'Jarak ke Stasiun': `${distKm.toFixed(2)} km`
                       }
                     });
+                    if (onSelectCustomLocation) {
+                      onSelectCustomLocation(hotspot.latitude, hotspot.longitude, title);
+                    }
                   }
                 }}
               >
@@ -1331,16 +1037,15 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
                       <Flame className="w-3.5 h-3.5 inline" /> NASA FIRMS Hotspot (VIIRS)
                     </div>
                     <div>Tgl / Jam: {hotspot.acq_date} {hotspot.acq_time} UTC</div>
-                    <div>Kecerahan (T_i4): {hotspot.bright_ti4} K</div>
+                    <div>Kecerahan: {hotspot.bright_ti4} K</div>
                     <div>Daya FRP: {hotspot.frp > 0 ? `${hotspot.frp} MW` : 'N/A'}</div>
-                    <div>Satelit: {hotspot.satellite} ({hotspot.instrument})</div>
-                    <div className="mt-1 text-[10px] text-orange-700 font-bold">✓ Authorized NASA FIRMS Key</div>
+                    <div className="mt-1 text-[10px] text-emerald-700 font-bold">✓ Authorized NASA FIRMS Key</div>
                   </div>
                 </Popup>
               </Marker>
             ))}
 
-            {/* GFW Vector Active Fires on Peatlands */}
+            {/* Hotspots attributed to a peat zone (NASA FIRMS + nearest-regency attribution) */}
             {showGfwPeatland && gfwFires.map((fire, idx) => (
               <Marker
                 key={`gfw-fire-${idx}`}
@@ -1350,9 +1055,10 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
                   click: (e) => {
                     e.originalEvent.stopPropagation();
                     const distKm = getDistanceKm(location.lat, location.lon, fire.latitude, fire.longitude);
+                    const title = `Hotspot zona gambut (${fire.latitude.toFixed(3)}, ${fire.longitude.toFixed(3)})`;
                     setSelectedEntity({
                       type: 'gfw',
-                      title: `GFW Vector Fire on Peatland`,
+                      title: `Hotspot pada Zona Gambut`,
                       lat: fire.latitude,
                       lon: fire.longitude,
                       details: {
@@ -1360,10 +1066,15 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
                         'Kabupaten / Provinsi': `${fire.adm2 || 'Kab'}, ${fire.adm1 || 'Prov'}`,
                         'Kecerahan (K)': fire.bright_ti4__K ? `${fire.bright_ti4__K} K` : '-',
                         'Daya FRP': fire.frp__MW ? `${fire.frp__MW} MW` : '-',
-                        'Indikator Gambut': 'is__peatland = true',
+                        'Atribusi Gambut': fire.peatland_attribution
+                          ? `${fire.peatland_attribution} (${fire.regency_centroid_km} km)`
+                          : 'tidak tersedia',
                         'Jarak ke Stasiun': `${distKm.toFixed(2)} km`
                       }
                     });
+                    if (onSelectCustomLocation) {
+                      onSelectCustomLocation(fire.latitude, fire.longitude, title);
+                    }
                   }
                 }}
               >
@@ -1374,9 +1085,9 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
                     </div>
                     <div>Tgl Alert: {fire.alert__date}</div>
                     <div>Lokasi: {fire.adm2 || 'Kab'}, {fire.adm1 || 'Prov'}</div>
-                    <div>Kecerahan: {fire.bright_ti4__K || '-'} K</div>
-                    <div>Daya FRP: {fire.frp__MW ? `${fire.frp__MW} MW` : '-'}</div>
-                    <div className="mt-1 text-[10px] text-emerald-700 font-bold">✓ Verified GFW Peatland Layer</div>
+                    <div className="mt-1 text-[10px] text-slate-600">
+                      NASA FIRMS VIIRS 375m · atribusi gambut {fire.regency_centroid_km ?? '-'} km dari sentroid kabupaten
+                    </div>
                   </div>
                 </Popup>
               </Marker>
@@ -1387,49 +1098,22 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
               <Marker position={[clickedTarget.lat, clickedTarget.lon]} icon={createTargetIcon()}>
                 <Popup className="custom-popup">
                   <div className="p-2 font-mono text-xs text-slate-900">
-                    <div className="font-bold text-sky-600 mb-1 flex items-center gap-1">
+                    <div className="font-bold text-emerald-600 mb-1 flex items-center gap-1">
                       <Crosshair className="w-3.5 h-3.5 inline" /> Titik Peta Satelit Terpilih
                     </div>
                     <div>Lat: {clickedTarget.lat.toFixed(5)}</div>
                     <div>Lon: {clickedTarget.lon.toFixed(5)}</div>
-                    <button
-                      onClick={() => onSelectCustomLocation && onSelectCustomLocation(clickedTarget.lat, clickedTarget.lon)}
-                      className="mt-2 w-full px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded text-[11px] transition-colors cursor-pointer"
-                    >
-                      Analisis Telemetri Titik Ini
-                    </button>
                   </div>
                 </Popup>
               </Marker>
             )}
 
             {/* Telemetry Station Marker */}
-            <Marker
-              position={pos}
-              icon={createCustomIcon(color)}
-              eventHandlers={{
-                click: (e) => {
-                  e.originalEvent.stopPropagation();
-                  setSelectedEntity({
-                    type: 'station',
-                    title: `Stasiun Telemetri Utama`,
-                    lat: location.lat,
-                    lon: location.lon,
-                    details: {
-                      'Nama Lokasi': location.name,
-                      'PFVI Score': `${currentPfvi.toFixed(1)} / 300.0`,
-                      'Status Risiko': status,
-                      'Koordinat': `${location.lat}, ${location.lon}`
-                    }
-                  });
-                }
-              }}
-            >
+            <Marker position={pos} icon={createCustomIcon(color)}>
               <Popup className="custom-popup">
                 <div className="p-2 text-slate-900">
                   <h4 className="font-bold text-slate-900 text-sm mb-1">{location.name}</h4>
-                  <p className="text-xs text-slate-600">Stasiun Telemetri & Multi-Satelit Overpass</p>
-                  <div className="mt-2 text-xs font-mono font-semibold text-slate-900">
+                  <div className="text-xs font-mono font-semibold text-slate-900">
                     PFVI Score: {currentPfvi.toFixed(1)} / 300.0 ({status})
                   </div>
                 </div>
@@ -1439,247 +1123,250 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
             <Circle
               center={pos}
               radius={currentPfvi >= 225 ? 15000 : 8000}
-              pathOptions={{
-                color: color,
-                fillColor: color,
-                fillOpacity: 0.15,
-                weight: 1.5
-              }}
+              pathOptions={{ color: color, fillColor: color, fillOpacity: 0.15, weight: 1.5 }}
             />
           </MapContainer>
-
-          {/* Legend Overlay */}
-          <div className="absolute bottom-3 left-3 z-[1000] bg-white/95 backdrop-blur-xs p-3 rounded-lg border border-slate-300 text-xs shadow-md space-y-2 max-w-[90%] text-slate-800">
-            <div className="flex items-center gap-3 font-mono flex-wrap font-semibold text-[11px]">
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 inline-block" />
-                <span>Low (&lt;75)</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block" />
-                <span>Moderate</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-orange-500 inline-block" />
-                <span>High</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-red-600 inline-block" />
-                <span>Extreme (&gt;225)</span>
-              </div>
-              <div className="flex items-center gap-1.5 border-l border-slate-300 pl-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-orange-600 inline-block" />
-                <span className="text-orange-700 font-bold">FIRMS Hotspot</span>
-              </div>
-              <div className="flex items-center gap-1.5 pl-1">
-                <span className="w-2.5 h-2.5 rounded-full bg-red-600 animate-ping inline-block" />
-                <span className="text-red-700 font-bold">GFW Gambut</span>
-              </div>
-            </div>
-          </div>
         </div>
 
-        {/* Dynamic Satellite & Entity Inspector Panel */}
-        <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 flex flex-col justify-between shadow-xs">
+        {/* Right Inspector & Legend (1 Col) */}
+        <div className="border-t lg:border-t-0 lg:border-l border-[var(--line)] bg-[var(--surface)] flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between border-b border-slate-200 pb-3 mb-3">
-              <h4 className="text-xs font-bold tracking-wider text-emerald-700 uppercase font-mono flex items-center gap-1.5">
-                <Navigation className="w-3.5 h-3.5 text-emerald-600" />
-                SATELLITE HOTSPOT INSPECTOR
-              </h4>
-              <span className="text-[10px] font-mono px-2 py-0.5 bg-slate-200 rounded text-slate-700 font-bold">
-                {selectedEntity ? selectedEntity.type.toUpperCase() : 'TELEMETRI'}
-              </span>
+            <div className="p-4 border-b border-[var(--line)]">
+              <h3 className="text-[12.5px] font-semibold text-[var(--text)] flex items-center justify-between">
+                <span>Inspektor Titik Panas</span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[var(--surface-2)] text-[var(--text-mute)]">
+                  {selectedEntity ? selectedEntity.type.toUpperCase() : 'SELECT POINT'}
+                </span>
+              </h3>
+              <p className="text-[11px] text-[var(--text-dim)] mt-0.5">Pilih titik pada peta satelit</p>
             </div>
 
-            {selectedEntity ? (
-              <div className="space-y-3 font-mono text-xs">
-                <div className="text-slate-900 font-bold flex items-center gap-1.5">
-                  {selectedEntity.type === 'hotspot' && <Flame className="w-4 h-4 text-orange-600 shrink-0" />}
-                  {selectedEntity.type === 'gfw' && <ShieldAlert className="w-4 h-4 text-red-600 shrink-0" />}
-                  {selectedEntity.type === 'point' && <Crosshair className="w-4 h-4 text-sky-600 shrink-0" />}
-                  {selectedEntity.type === 'station' && <MapPin className="w-4 h-4 text-emerald-600 shrink-0" />}
-                  <span>{selectedEntity.title}</span>
-                </div>
+            <div className="p-4">
+              {selectedEntity ? (
+                <div className="space-y-3 font-mono text-xs">
+                  <div className="text-[var(--text)] font-semibold text-[13px]">
+                    {selectedEntity.title}
+                  </div>
+                  <div className="space-y-2 border-t border-[var(--line-soft)] pt-2">
+                    {Object.entries(selectedEntity.details).map(([k, v]) => (
+                      <div key={k} className="flex justify-between items-center text-[12px] py-1 border-b border-[var(--line-soft)]">
+                        <span className="text-[var(--text-mute)]">{k}:</span>
+                        <span className="font-semibold text-[var(--text)]">{String(v)}</span>
+                      </div>
+                    ))}
+                  </div>
 
-                <div className="bg-white p-3 rounded border border-slate-200 space-y-2 text-slate-800 shadow-xs">
-                  {Object.entries(selectedEntity.details).map(([k, v]) => (
-                    <div key={k} className="flex justify-between items-center text-[11px]">
-                      <span className="text-slate-500 font-medium">{k}:</span>
-                      <span className="font-bold text-slate-900">{String(v)}</span>
-                    </div>
-                  ))}
+                  {onSelectCustomLocation && (
+                    <button
+                      type="button"
+                      onClick={() => onSelectCustomLocation(selectedEntity.lat, selectedEntity.lon, selectedEntity.title)}
+                      className="w-full mt-2 py-2 px-3 bg-[var(--accent)] text-[#0a0c0a] font-bold rounded-[var(--r-sm)] text-xs transition-opacity hover:opacity-90 flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <Zap className="w-3.5 h-3.5" />
+                      <span>Fokuskan Telemetri ke Titik Ini</span>
+                    </button>
+                  )}
                 </div>
-
-                {onSelectCustomLocation && (
-                  <button
-                    onClick={() => onSelectCustomLocation(selectedEntity.lat, selectedEntity.lon, selectedEntity.title)}
-                    className="w-full mt-2 py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded text-xs transition-colors flex items-center justify-center gap-2 shadow-xs cursor-pointer"
-                  >
-                    <Zap className="w-3.5 h-3.5" />
-                    <span>Fokuskan Telemetri ke Titik Ini</span>
-                  </button>
-                )}
-              </div>
-            ) : (
-              <div className="py-8 text-center text-slate-500 font-mono text-xs space-y-3">
-                <Crosshair className="w-8 h-8 text-slate-400 mx-auto animate-pulse" />
-                <p>Klik titik mana saja di peta satelit atau marker hotspot kebakaran untuk inspeksi detail telemetri.</p>
-                <div className="text-[10px] text-emerald-800 bg-emerald-100 p-2 rounded border border-emerald-300 font-semibold">
-                  ✓ High-Res Live Satellite Map & NASA FIRMS Key Active
+              ) : (
+                <div className="py-8 text-center text-[var(--text-dim)] flex flex-col items-center justify-center gap-2 font-mono text-xs">
+                  <Crosshair className="w-6 h-6 text-[var(--text-dim)]" />
+                  <p className="max-w-[20ch] leading-snug">Klik salah satu titik di peta untuk melihat telemetri lokal</p>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
-          <div className="mt-4 pt-3 border-t border-slate-200 text-[10px] text-slate-500 font-mono flex items-center justify-between font-medium">
-            <span>Koordinat Stasiun:</span>
-            <span className="text-slate-800 font-bold">{location.lat.toFixed(3)}, {location.lon.toFixed(3)}</span>
+          {/* Map Legend Footer */}
+          <div className="p-3.5 border-t border-[var(--line)] flex flex-col gap-1.5 text-[11px] font-mono">
+            <div className="flex items-center gap-2 text-[var(--text-mute)]">
+              <span className="w-2 h-2 rounded-full bg-[var(--ok)] shrink-0" />
+              <span>Rendah &lt; 75</span>
+            </div>
+            <div className="flex items-center gap-2 text-[var(--text-mute)]">
+              <span className="w-2 h-2 rounded-full bg-[var(--warn)] shrink-0" />
+              <span>Sedang 75 / 150</span>
+            </div>
+            <div className="flex items-center gap-2 text-[var(--text-mute)]">
+              <span className="w-2 h-2 rounded-full bg-[var(--high)] shrink-0" />
+              <span>Tinggi 150 / 225</span>
+            </div>
+            <div className="flex items-center gap-2 text-[var(--text-mute)]">
+              <span className="w-2 h-2 rounded-full bg-[var(--danger)] shrink-0" />
+              <span>Ekstrem &gt; 225</span>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 };
-
 ```
 
 ---
 
-## FITUR 6: Kontrol Algoritma Imputasi & Forecasting Time Series (Pipeline Controls - Mode Pakar)
-**Deskripsi & Tujuan Fitur:** Panel kontrol khusus peneliti di Mode Pakar untuk menyesuaikan algoritma penanganan data missing, model time-series AI, dan horizon proyeksi.
+## FITUR 4: Tab Tren & Proyeksi — Konfigurasi Model & Grafik Time-Series
+
+**Deskripsi & Tujuan Fitur:** Tab ini menggabungkan panel konfigurasi algoritma (untuk pengguna pakar) dengan grafik historis dan proyeksi PFVI, ditambah empat grafik variabel pendukung.
+
+![Tab Tren & Proyeksi: panel konfigurasi model, grafik PFVI, dan variabel pendukung](docs/screenshots/03-tren.png)
+
+*Gambar: Tab Tren & Proyeksi: panel konfigurasi model, grafik PFVI, dan variabel pendukung.*
+
+
 
 **Cara Menggunakan:**
-1. Aktifkan [Mode Pakar] pada Header.
-2. Pilih metode imputasi: kNN (Gower Distance), Cubic Spline, LOESS, atau Linear.
-3. Pilih model forecasting: ARIMA + Box-Cox, LSTM Neural Network (PyTorch), atau GRU.
-4. Pilih horizon proyeksi (4, 7, atau 14 Hari).
-5. Tekan tombol **[Jalankan Pipeline Auto]** untuk mengeksekusi perhitungan backend.
+
+1. Pilih **Imputasi data kosong**: kNN (Gower Distance), Cubic Spline, LOESS, atau Linear.
+2. Pilih **Model proyeksi**: ARIMA + Box-Cox, LSTM (PyTorch), atau GRU (PyTorch).
+3. Pilih **Horizon proyeksi**: 4, 7, atau 14 hari.
+4. Klik **Hitung ulang proyeksi** untuk menjalankan ulang imputasi, forecasting, dan optimasi parameter Nelder-Mead.
+5. Grafik **Historis & proyeksi PFVI** menampilkan garis solid untuk observasi dan garis putus-putus untuk proyeksi, dengan pita warna ambang risiko.
+6. Panel **Variabel pendukung** menampilkan muka air tanah, kelembapan tanah, curah hujan, dan suhu maksimum sebagai grafik kecil.
 
 #### Kode Sumber (Source Code Listing): `frontend/src/components/PipelineControls.tsx`
+
 ```tsx
-import React from 'react';
-import { Settings, Play, Database, Cpu, Calendar } from 'lucide-react';
+import React, { useState } from 'react';
+import { Settings, Play, Database, Cpu, Calendar, RefreshCw, Satellite, Info, Layers } from 'lucide-react';
 
 interface PipelineControlsProps {
+  soilType: string;
   imputation: string;
   setImputation: (val: string) => void;
   model: string;
   setModel: (val: string) => void;
   h: number;
   setH: (val: number) => void;
-  epochs: number;
-  setEpochs: (val: number) => void;
   onRunPipeline: () => void;
   isRunning: boolean;
 }
 
+const FIELD = 'w-full bg-[var(--surface-2)] border border-[var(--line)] rounded-[var(--r-sm)] px-3 py-2 text-xs font-mono text-[var(--text)] focus:outline-none focus:border-[var(--accent)] cursor-pointer';
+const LABEL = 'block text-[11px] font-mono font-semibold text-[var(--text-mute)] mb-1.5 uppercase tracking-wider';
+
+/**
+ * Expert-only knobs. Target location now lives in the top bar (global state) and the
+ * satellite fetch on the header refresh button, so this panel keeps only the choices
+ * that genuinely need explaining.
+ */
 export const PipelineControls: React.FC<PipelineControlsProps> = ({
+  soilType,
   imputation,
   setImputation,
   model,
   setModel,
   h,
   setH,
-  epochs,
-  setEpochs,
   onRunPipeline,
   isRunning
 }) => {
+  const [showHelp, setShowHelp] = useState(false);
+
   return (
-    <div className="telemetry-panel bg-white border border-slate-200 rounded-xl p-5 mb-6 shadow-sm">
-      <div className="flex items-center justify-between mb-4 border-b border-slate-200 pb-3">
-        <div className="flex items-center gap-2">
-          <Settings className="w-4 h-4 text-emerald-600" />
-          <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
-            KONFIGURASI ALGORITMA & MODEL PIPELINE
-          </h3>
+    <section className="border border-[var(--line)] rounded-[var(--r-md)] bg-[var(--surface)] p-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 border-b border-[var(--line-soft)] pb-3">
+        <h2 className="text-xs font-mono font-bold text-[var(--text)] uppercase tracking-wider flex items-center gap-2">
+          <Settings className="w-4 h-4 text-[var(--accent)]" />
+          <span>Konfigurasi model</span>
+        </h2>
+
+        <div className="flex items-center gap-2 text-[11px] font-mono">
+          <span className={`px-2.5 py-1 rounded-full border flex items-center gap-1.5 ${
+            soilType.startsWith('Gambut')
+              ? 'bg-[var(--accent-soft)] text-[var(--accent)] border-[var(--accent-line)]'
+              : 'bg-[var(--surface-2)] text-[var(--text-mute)] border-[var(--line)]'
+          }`}>
+            <Layers className="w-3.5 h-3.5" />
+            <span>Jenis tanah: {soilType}</span>
+          </span>
+          <button
+            type="button"
+            onClick={() => setShowHelp(!showHelp)}
+            aria-expanded={showHelp}
+            className="flex items-center gap-1 text-[var(--text-mute)] hover:text-[var(--accent)] cursor-pointer"
+          >
+            <Info className="w-3.5 h-3.5" />
+            <span>{showHelp ? 'Tutup panduan' : 'Panduan'}</span>
+          </button>
         </div>
-        <span className="text-xs text-slate-500 font-mono font-semibold">FastAPI Engine</span>
       </div>
 
+      {showHelp && (
+        <p className="mb-4 bg-[var(--surface-2)] border border-[var(--line)] rounded-[var(--r-sm)] p-3 font-mono text-[11px] text-[var(--text-mute)] leading-relaxed">
+          <b className="text-[var(--text)]">Imputasi</b> mengisi data satelit yang kosong sebelum proyeksi.{' '}
+          <b className="text-[var(--text)]">Model</b> memproyeksikan empat variabel cuaca &amp; tanah.{' '}
+          <b className="text-[var(--text)]">Horizon</b> menentukan berapa hari ke depan PFVI diproyeksikan.
+          Wilayah target diatur dari pemilih wilayah di bar atas; klik peta atau tombol &quot;Lihat di peta&quot;
+          pada peringatan untuk memakai koordinat spesifik.
+        </p>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
-        {/* Imputation Method Selection */}
         <div>
-          <label className="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
-            <Database className="w-3.5 h-3.5 text-cyan-600" />
-            <span>Imputasi Data Missing:</span>
+          <label className={LABEL} htmlFor="opt-imputation">
+            <span className="flex items-center gap-1.5">
+              <Database className="w-3.5 h-3.5" />
+              <span>Imputasi data kosong</span>
+            </span>
           </label>
-          <select
-            value={imputation}
-            onChange={(e) => setImputation(e.target.value)}
-            className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-mono text-slate-800 focus:outline-none focus:border-emerald-600 cursor-pointer font-medium"
-          >
+          <select id="opt-imputation" value={imputation} onChange={(e) => setImputation(e.target.value)} className={FIELD}>
             <option value="knn">kNN (Gower Distance)</option>
-            <option value="spline">Cubic Spline Interpolation</option>
+            <option value="spline">Cubic Spline</option>
             <option value="loess">LOESS Smoothing</option>
             <option value="linear">Linear Interpolation</option>
           </select>
         </div>
 
-        {/* Model Selection */}
         <div>
-          <label className="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
-            <Cpu className="w-3.5 h-3.5 text-blue-600" />
-            <span>Model Time Series Forecasting:</span>
+          <label className={LABEL} htmlFor="opt-model">
+            <span className="flex items-center gap-1.5">
+              <Cpu className="w-3.5 h-3.5" />
+              <span>Model proyeksi</span>
+            </span>
           </label>
-          <select
-            value={model}
-            onChange={(e) => setModel(e.target.value)}
-            className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-mono text-slate-800 focus:outline-none focus:border-emerald-600 cursor-pointer font-medium"
-          >
-            <option value="arima">ARIMA + Box-Cox (Stokastik)</option>
-            <option value="lstm">LSTM Neural Network (PyTorch)</option>
-            <option value="gru">GRU Neural Network (PyTorch)</option>
+          <select id="opt-model" value={model} onChange={(e) => setModel(e.target.value)} className={FIELD}>
+            <option value="arima">ARIMA + Box-Cox</option>
+            <option value="lstm">LSTM (PyTorch)</option>
+            <option value="gru">GRU (PyTorch)</option>
           </select>
         </div>
 
-        {/* Forecast Horizon */}
         <div>
-          <label className="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
-            <Calendar className="w-3.5 h-3.5 text-indigo-600" />
-            <span>Horizon Proyeksi (h Hari):</span>
+          <label className={LABEL} htmlFor="opt-horizon">
+            <span className="flex items-center gap-1.5">
+              <Calendar className="w-3.5 h-3.5" />
+              <span>Horizon proyeksi</span>
+            </span>
           </label>
-          <select
-            value={h}
-            onChange={(e) => setH(parseInt(e.target.value))}
-            className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-mono text-slate-800 focus:outline-none focus:border-emerald-600 cursor-pointer font-medium"
-          >
-            <option value={4}>4 Hari Ke Depan (Default Jurnal)</option>
-            <option value={7}>7 Hari Ke Depan (1 Minggu)</option>
-            <option value={14}>14 Hari Ke Depan (2 Minggu)</option>
+          <select id="opt-horizon" value={h} onChange={(e) => setH(parseInt(e.target.value))} className={FIELD}>
+            <option value={4}>4 hari</option>
+            <option value={7}>7 hari</option>
+            <option value={14}>14 hari</option>
           </select>
         </div>
 
-        {/* Execute Button */}
-        <div>
-          <button
-            onClick={onRunPipeline}
-            disabled={isRunning}
-            className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 text-xs rounded-lg transition-colors disabled:opacity-50 cursor-pointer shadow-sm"
-          >
-            <Play className={`w-3.5 h-3.5 ${isRunning ? 'animate-spin' : ''}`} />
-            <span>{isRunning ? 'Menjalankan Exec Engine...' : 'Jalankan Pipeline Auto'}</span>
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={onRunPipeline}
+          disabled={isRunning}
+          className="w-full flex items-center justify-center gap-2 bg-[var(--accent)] text-[#0a0c0a] font-mono font-bold px-4 py-2.5 text-xs rounded-[var(--r-sm)] transition-opacity hover:opacity-90 disabled:opacity-50 cursor-pointer"
+        >
+          {isRunning ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5 fill-[#0a0c0a]" />}
+          <span>{isRunning ? 'Menghitung...' : 'Hitung ulang proyeksi'}</span>
+        </button>
       </div>
-    </div>
+
+      <p className="mt-3 text-[11px] font-mono text-[var(--text-dim)] flex items-center gap-1.5">
+        <Satellite className="w-3.5 h-3.5" />
+        <span>Telemetri ditarik otomatis saat wilayah berubah. Tombol tarik ulang ada di bar atas.</span>
+      </p>
+    </section>
   );
 };
-
 ```
 
----
-
-## FITUR 7: Grafik Historis & Proyeksi Time-Series (Forecast Charts)
-**Deskripsi & Tujuan Fitur:** Grafik interaktif Recharts yang menampilkan tren data observasi historis (garis hijau) dipadukan dengan garis proyeksi forecast (garis merah putus-putus) serta 4 sub-grafik parameter.
-
-**Cara Menggunakan:**
-1. Amati grafik utama PFVI untuk melihat proyeksi tren kerawanan beberapa hari ke depan.
-2. Arahkan kursor (*hover*) ke titik data pada grafik untuk membaca detail nilai harian.
-3. Bandingkan 4 grafik tersinkronisasi di bawahnya (WT, SM, Rf, Temp) untuk melihat hubungan sebab-akibat.
-
 #### Kode Sumber (Source Code Listing): `frontend/src/components/ForecastCharts.tsx`
+
 ```tsx
 import React from 'react';
 import {
@@ -1694,7 +1381,7 @@ import {
   ReferenceLine,
   ReferenceArea
 } from 'recharts';
-import { Activity } from 'lucide-react';
+import { Layers, Droplets, CloudRain, Thermometer } from 'lucide-react';
 
 interface ForecastChartsProps {
   fullSeries: {
@@ -1708,7 +1395,10 @@ interface ForecastChartsProps {
   forecastHorizon: number;
 }
 
-export const ForecastCharts: React.FC<ForecastChartsProps> = ({ fullSeries, forecastHorizon }) => {
+export const ForecastCharts: React.FC<ForecastChartsProps> = ({
+  fullSeries,
+  forecastHorizon
+}) => {
   const totalPoints = fullSeries.PFVI.length;
   const historicalCount = totalPoints - forecastHorizon;
 
@@ -1731,189 +1421,304 @@ export const ForecastCharts: React.FC<ForecastChartsProps> = ({ fullSeries, fore
     };
   });
 
+  const latestWT = fullSeries.WT[fullSeries.WT.length - 1];
+  const latestSM = fullSeries.SM[fullSeries.SM.length - 1];
+  const latestRF = fullSeries.Rf[fullSeries.Rf.length - 1];
+  const latestTemp = fullSeries.Temp[fullSeries.Temp.length - 1];
+
   return (
-    <div className="space-y-6 mb-6">
-      {/* Primary PFVI Time-Series & Forecast Chart */}
-      <div className="telemetry-panel bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-6">
+    <div className="space-y-6">
+      {/* 1. SIGNAL STRIP (4 Key Driving Variables) */}
+      <section>
+        <div className="flex items-baseline justify-between gap-4 mb-3">
           <div>
-            <div className="flex items-center gap-2">
-              <Activity className="w-5 h-5 text-emerald-600" />
-              <h3 className="text-base font-bold text-slate-900 tracking-wide">
-                Grafik Historis & Forecast Peat Fire Vulnerability Index (PFVI)
-              </h3>
+            <h2 className="text-[15px] font-semibold tracking-tight text-[var(--text)]">Sinyal permukaan &amp; atmosfer</h2>
+            <p className="text-xs text-[var(--text-dim)] mt-0.5">Empat variabel penggerak utama indeks, 31 hari terakhir</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 border border-[var(--line)] rounded-[var(--r-md)] bg-[var(--surface)] overflow-hidden font-mono">
+          {/* Signal 1: Water Table */}
+          <div className="p-4 sm:p-5 border-b sm:border-b-0 sm:border-r border-[var(--line)] flex flex-col gap-2 min-w-0">
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1.5 text-[11px] text-[var(--text-dim)] uppercase tracking-wider">
+                <Droplets className="w-3.5 h-3.5 text-[var(--ok)]" />
+                <span>Muka air tanah</span>
+              </span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-[#3fc98a1f] text-[var(--ok)]">Normal</span>
             </div>
-            <p className="text-xs text-slate-500 font-medium mt-1">
-              Garis hijau solid = Data Observasi/Historis | Garis merah putus-putus = Proyeksi {forecastHorizon} Hari Ke Depan
-            </p>
+            <div className="flex items-baseline justify-between gap-2 mt-1">
+              <span className="text-2xl font-bold tracking-tight text-[var(--text)]">
+                {latestWT.toFixed(2)}<span className="text-xs text-[var(--text-dim)] font-normal ml-1">m</span>
+              </span>
+              <div className="w-20 h-8">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData.slice(-14)}>
+                    <Line type="monotone" dataKey="WT" stroke="var(--ok)" strokeWidth={1.8} dot={false} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
           </div>
 
-          <div className="flex items-center gap-3 text-xs font-mono font-semibold">
-            <span className="flex items-center gap-1 text-emerald-700">
-              <span className="w-3 h-1 bg-emerald-600 inline-block rounded" /> PFVI Observasi
-            </span>
-            <span className="flex items-center gap-1 text-red-600">
-              <span className="w-3 h-1 bg-red-600 border-t border-dashed border-red-600 inline-block rounded" /> Forecast
-            </span>
+          {/* Signal 2: Soil Moisture */}
+          <div className="p-4 sm:p-5 border-b sm:border-b-0 lg:border-r border-[var(--line)] flex flex-col gap-2 min-w-0">
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1.5 text-[11px] text-[var(--text-dim)] uppercase tracking-wider">
+                <Layers className="w-3.5 h-3.5 text-[var(--warn)]" />
+                <span>Kelembapan tanah</span>
+              </span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-[#f0b23e1f] text-[var(--warn)]">Kering</span>
+            </div>
+            <div className="flex items-baseline justify-between gap-2 mt-1">
+              <span className="text-2xl font-bold tracking-tight text-[var(--text)]">
+                {latestSM.toFixed(1)}<span className="text-xs text-[var(--text-dim)] font-normal ml-1">%</span>
+              </span>
+              <div className="w-20 h-8">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData.slice(-14)}>
+                    <Line type="monotone" dataKey="SM" stroke="var(--warn)" strokeWidth={1.8} dot={false} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+
+          {/* Signal 3: Rainfall */}
+          <div className="p-4 sm:p-5 border-b sm:border-b-0 sm:border-r border-[var(--line)] flex flex-col gap-2 min-w-0">
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1.5 text-[11px] text-[var(--text-dim)] uppercase tracking-wider">
+                <CloudRain className="w-3.5 h-3.5 text-[var(--high)]" />
+                <span>Curah hujan</span>
+              </span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-[#ff8a3d1f] text-[var(--high)]">Minimum</span>
+            </div>
+            <div className="flex items-baseline justify-between gap-2 mt-1">
+              <span className="text-2xl font-bold tracking-tight text-[var(--text)]">
+                {latestRF.toFixed(1)}<span className="text-xs text-[var(--text-dim)] font-normal ml-1">mm/hari</span>
+              </span>
+              <div className="w-20 h-8">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData.slice(-14)}>
+                    <Line type="monotone" dataKey="Rf" stroke="var(--high)" strokeWidth={1.8} dot={false} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+
+          {/* Signal 4: Temperature */}
+          <div className="p-4 sm:p-5 flex flex-col gap-2 min-w-0">
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1.5 text-[11px] text-[var(--text-dim)] uppercase tracking-wider">
+                <Thermometer className="w-3.5 h-3.5 text-[var(--accent)]" />
+                <span>Suhu maksimum</span>
+              </span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-[var(--accent-soft)] text-[var(--accent)]">Normal</span>
+            </div>
+            <div className="flex items-baseline justify-between gap-2 mt-1">
+              <span className="text-2xl font-bold tracking-tight text-[var(--text)]">
+                {latestTemp.toFixed(1)}<span className="text-xs text-[var(--text-dim)] font-normal ml-1">°C</span>
+              </span>
+              <div className="w-20 h-8">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData.slice(-14)}>
+                    <Line type="monotone" dataKey="Temp" stroke="var(--accent)" strokeWidth={1.8} dot={false} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 2. PRIMARY PFVI TREND CHART */}
+      <section>
+        <div className="flex items-baseline justify-between gap-4 mb-3">
+          <div>
+            <h2 className="text-[15px] font-semibold tracking-tight text-[var(--text)]">Historis &amp; proyeksi PFVI</h2>
+            <p className="text-xs text-[var(--text-dim)] mt-0.5">Garis solid = observasi | garis putus-putus = proyeksi {forecastHorizon} hari</p>
+          </div>
+          <div className="flex items-center gap-4 text-xs font-mono text-[var(--text-mute)]">
+            <span className="flex items-center gap-1.5"><i className="w-3 h-0.5 rounded bg-[var(--ok)] inline-block" /> Observasi</span>
+            <span className="flex items-center gap-1.5"><i className="w-3 h-0.5 rounded bg-[var(--accent)] inline-block" /> Proyeksi</span>
           </div>
         </div>
 
-        <div className="h-[340px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={chartData} margin={{ top: 10, right: 20, left: -10, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-              <XAxis dataKey="day" stroke="#64748b" tick={{ fontSize: 11 }} />
-              <YAxis domain={[0, 300]} stroke="#64748b" tick={{ fontSize: 11 }} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: '#ffffff',
-                  borderColor: '#cbd5e1',
-                  borderRadius: '8px',
-                  fontSize: '12px',
-                  color: '#0f172a',
-                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                }}
-              />
-
-              {/* Shaded Threshold Zones */}
-              <ReferenceArea y1={225} y2={300} fill="#dc2626" fillOpacity={0.08} />
-              <ReferenceArea y1={150} y2={225} fill="#ea580c" fillOpacity={0.08} />
-              <ReferenceArea y1={75} y2={150} fill="#d97706" fillOpacity={0.05} />
-
-              <ReferenceLine y={225} stroke="#dc2626" strokeDasharray="3 3" label={{ value: 'Extreme (225)', fill: '#dc2626', fontSize: 10, fontWeight: 'bold' }} />
-              <ReferenceLine y={150} stroke="#ea580c" strokeDasharray="3 3" label={{ value: 'High (150)', fill: '#ea580c', fontSize: 10, fontWeight: 'bold' }} />
-              <ReferenceLine y={75} stroke="#d97706" strokeDasharray="3 3" label={{ value: 'Moderate (75)', fill: '#d97706', fontSize: 10, fontWeight: 'bold' }} />
-
-              <Line type="monotone" dataKey="PFVI_hist" stroke="#16a34a" strokeWidth={2.5} dot={false} name="PFVI Historis" />
-              <Line type="monotone" dataKey="PFVI_pred" stroke="#dc2626" strokeWidth={2.5} strokeDasharray="5 5" dot={{ r: 4, fill: '#dc2626' }} name="PFVI Forecast" />
-            </ComposedChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* 4 Parameter Synchronized Grid Charts */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Water Table Chart */}
-        <div className="telemetry-panel bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-          <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-3 flex items-center justify-between">
-            <span>Kedalaman Muka Air Tanah (WT - meter)</span>
-            <span className="text-cyan-700 font-mono">WT</span>
-          </h4>
-          <div className="h-[180px] w-full">
+        <div className="border border-[var(--line)] rounded-[var(--r-md)] bg-[var(--surface)] p-5">
+          <div className="h-[280px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                <XAxis dataKey="day" stroke="#64748b" tick={{ fontSize: 10 }} />
-                <YAxis stroke="#64748b" tick={{ fontSize: 10 }} domain={['auto', 'auto']} />
-                <Tooltip contentStyle={{ backgroundColor: '#ffffff', borderColor: '#cbd5e1', borderRadius: '8px', fontSize: '11px', color: '#0f172a' }} />
-                <Line type="monotone" dataKey="WT" stroke="#0891b2" strokeWidth={2} dot={false} />
-              </LineChart>
+              <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--line-soft)" vertical={false} />
+                <XAxis dataKey="day" stroke="var(--text-dim)" tick={{ fontSize: 10, fill: 'var(--text-mute)', fontFamily: 'var(--font-m)' }} />
+                <YAxis domain={[0, 300]} stroke="var(--text-dim)" tick={{ fontSize: 10, fill: 'var(--text-mute)', fontFamily: 'var(--font-m)' }} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'var(--surface)',
+                    borderColor: 'var(--line)',
+                    borderRadius: 'var(--r-sm)',
+                    fontSize: '11px',
+                    color: 'var(--text)',
+                    fontFamily: 'var(--font-m)'
+                  }}
+                />
+                <ReferenceArea y1={225} y2={300} fill="var(--danger)" fillOpacity={0.1} />
+                <ReferenceArea y1={150} y2={225} fill="var(--high)" fillOpacity={0.08} />
+                <ReferenceArea y1={75} y2={150} fill="var(--warn)" fillOpacity={0.05} />
+
+                <ReferenceLine y={225} stroke="var(--danger)" strokeDasharray="3 3" />
+                <ReferenceLine y={150} stroke="var(--high)" strokeDasharray="3 3" />
+                <ReferenceLine y={75} stroke="var(--warn)" strokeDasharray="3 3" />
+
+                <Line type="monotone" dataKey="PFVI_hist" stroke="var(--ok)" strokeWidth={2} dot={false} name="PFVI Observasi" />
+                <Line type="monotone" dataKey="PFVI_pred" stroke="var(--accent)" strokeWidth={2} strokeDasharray="5 4" dot={{ r: 3, fill: 'var(--accent)' }} name="PFVI Proyeksi" />
+              </ComposedChart>
             </ResponsiveContainer>
           </div>
         </div>
+      </section>
 
-        {/* Soil Moisture Chart */}
-        <div className="telemetry-panel bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-          <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-3 flex items-center justify-between">
-            <span>Kelembaban Tanah (SM - %)</span>
-            <span className="text-blue-700 font-mono">SM</span>
-          </h4>
-          <div className="h-[180px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                <XAxis dataKey="day" stroke="#64748b" tick={{ fontSize: 10 }} />
-                <YAxis stroke="#64748b" tick={{ fontSize: 10 }} domain={[30, 80]} />
-                <Tooltip contentStyle={{ backgroundColor: '#ffffff', borderColor: '#cbd5e1', borderRadius: '8px', fontSize: '11px', color: '#0f172a' }} />
-                <Line type="monotone" dataKey="SM" stroke="#2563eb" strokeWidth={2} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+      {/* 4. QUAD CHARTS FOR SUPPORTING VARIABLES */}
+      <section>
+        <div className="mb-3">
+          <h2 className="text-[15px] font-semibold tracking-tight text-[var(--text)]">Variabel pendukung</h2>
+          <p className="text-xs text-[var(--text-dim)] mt-0.5">31 hari observasi ditambah 4 hari proyeksi</p>
         </div>
 
-        {/* Rainfall Chart */}
-        <div className="telemetry-panel bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-          <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-3 flex items-center justify-between">
-            <span>Curah Hujan (Rf - mm/hari)</span>
-            <span className="text-indigo-700 font-mono">Rf</span>
-          </h4>
-          <div className="h-[180px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                <XAxis dataKey="day" stroke="#64748b" tick={{ fontSize: 10 }} />
-                <YAxis stroke="#64748b" tick={{ fontSize: 10 }} domain={[0, 'auto']} />
-                <Tooltip contentStyle={{ backgroundColor: '#ffffff', borderColor: '#cbd5e1', borderRadius: '8px', fontSize: '11px', color: '#0f172a' }} />
-                <Line type="monotone" dataKey="Rf" stroke="#4f46e5" strokeWidth={2} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 font-mono">
+          {/* Quad 1: Water Table */}
+          <div className="border border-[var(--line)] rounded-[var(--r-md)] bg-[var(--surface)] p-4">
+            <div className="flex justify-between items-center mb-2">
+              <h4 className="text-[11px] uppercase tracking-wider text-[var(--text-dim)]">Muka air tanah</h4>
+              <b className="text-[11px] text-[var(--text-mute)]">m</b>
+            </div>
+            <div className="h-[90px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData}>
+                  <Line type="monotone" dataKey="WT" stroke="var(--ok)" strokeWidth={1.6} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
           </div>
-        </div>
 
-        {/* Air Temp Chart */}
-        <div className="telemetry-panel bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-          <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-3 flex items-center justify-between">
-            <span>Suhu Udara Maksimum (Temp - °C)</span>
-            <span className="text-rose-700 font-mono">Temp</span>
-          </h4>
-          <div className="h-[180px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                <XAxis dataKey="day" stroke="#64748b" tick={{ fontSize: 10 }} />
-                <YAxis stroke="#64748b" tick={{ fontSize: 10 }} domain={[28, 40]} />
-                <Tooltip contentStyle={{ backgroundColor: '#ffffff', borderColor: '#cbd5e1', borderRadius: '8px', fontSize: '11px', color: '#0f172a' }} />
-                <Line type="monotone" dataKey="Temp" stroke="#e11d48" strokeWidth={2} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
+          {/* Quad 2: Soil Moisture */}
+          <div className="border border-[var(--line)] rounded-[var(--r-md)] bg-[var(--surface)] p-4">
+            <div className="flex justify-between items-center mb-2">
+              <h4 className="text-[11px] uppercase tracking-wider text-[var(--text-dim)]">Kelembapan tanah</h4>
+              <b className="text-[11px] text-[var(--text-mute)]">%</b>
+            </div>
+            <div className="h-[90px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData}>
+                  <Line type="monotone" dataKey="SM" stroke="var(--warn)" strokeWidth={1.6} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Quad 3: Rainfall */}
+          <div className="border border-[var(--line)] rounded-[var(--r-md)] bg-[var(--surface)] p-4">
+            <div className="flex justify-between items-center mb-2">
+              <h4 className="text-[11px] uppercase tracking-wider text-[var(--text-dim)]">Curah hujan</h4>
+              <b className="text-[11px] text-[var(--text-mute)]">mm/hari</b>
+            </div>
+            <div className="h-[90px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData}>
+                  <Line type="monotone" dataKey="Rf" stroke="var(--high)" strokeWidth={1.6} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Quad 4: Temperature */}
+          <div className="border border-[var(--line)] rounded-[var(--r-md)] bg-[var(--surface)] p-4">
+            <div className="flex justify-between items-center mb-2">
+              <h4 className="text-[11px] uppercase tracking-wider text-[var(--text-dim)]">Suhu maksimum</h4>
+              <b className="text-[11px] text-[var(--text-mute)]">°C</b>
+            </div>
+            <div className="h-[90px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData}>
+                  <Line type="monotone" dataKey="Temp" stroke="var(--accent)" strokeWidth={1.6} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 };
-
 ```
 
 ---
 
-## FITUR 8: Simulator Skenario Cuaca & Respon Kerawanan Lahan (What-If Simulator)
-**Deskripsi & Tujuan Fitur:** Fitur simulasi interaktif berbasis slider untuk menguji dampak kenaikan suhu, durasi kemarau tanpa hujan, dan penurunan air tanah terhadap lonjakan indeks PFVI.
+## FITUR 5: Tab Simulasi — Skenario Bagaimana Jika
+
+**Deskripsi & Tujuan Fitur:** Simulator interaktif untuk menguji dampak kenaikan suhu, durasi kemarau, dan kedalaman muka air tanah terhadap PFVI. Simulator memakai parameter hidrologi hasil kalibrasi pipeline untuk wilayah terpilih, dan jatuh ke nilai default jurnal Sabangau hanya bila pipeline belum menghasilkan parameter.
+
+![Tab Simulasi: skenario bagaimana jika dengan parameter hidrologi terkalibrasi](docs/screenshots/04-simulasi.png)
+
+*Gambar: Tab Simulasi: skenario bagaimana jika dengan parameter hidrologi terkalibrasi.*
+
+![Tampilan mobile 390px: bilah atas dan tab bar tetap rapi tanpa overflow horizontal](docs/screenshots/05-mobile.png)
+
+*Gambar: Tampilan mobile 390px: bilah atas dan tab bar tetap rapi tanpa overflow horizontal.*
+
+
 
 **Cara Menggunakan:**
-1. Geser slider Kenaikan Suhu Udara (+0°C s.d +5°C).
-2. Geser slider Durasi Kemarau Tanpa Hujan (1 s.d 30 Hari).
-3. Geser slider Kedalaman Muka Air Tanah (-0.2m s.d -1.8m).
-4. Baca hasil prediksi PFVI setelah periode kemarau serta laju evapotranspirasi (DF) dan kapilaritas (WTF) di kotak sebelah kanan.
+
+1. Buka tab **Simulasi**.
+2. Geser **Kenaikan suhu udara** (0-6 derajat Celsius) dan **Durasi kemarau tanpa hujan** (0-30 hari).
+3. Geser **Kedalaman muka air tanah** (0-3 m) sesuai skenario drainase yang ingin diuji.
+4. Geser **PFVI dasar awal** bila ingin memulai dari kondisi hipotetis, bukan kondisi terkini.
+5. Baca **Proyeksi PFVI setelah periode simulasi** beserta selisih terhadap dasar dan kategorinya.
+6. Angka **Evapotranspirasi rata-rata (DF)** dan **Serapan muka air (WTF)** di bawahnya adalah rata-rata harian yang benar-benar dihitung model selama periode simulasi.
 
 #### Kode Sumber (Source Code Listing): `frontend/src/components/ScenarioSimulator.tsx`
-```tsx
-import React, { useState } from 'react';
-import { Sliders, Flame, AlertTriangle } from 'lucide-react';
 
-export const ScenarioSimulator: React.FC = () => {
+```tsx
+import React, { useState, useEffect } from 'react';
+import { Sliders, AlertTriangle } from 'lucide-react';
+
+interface ScenarioSimulatorProps {
+  currentPfvi?: number | null;
+  optimizedParams?: { a_h: number; b_h: number; n: number; alpha: number; mse: number } | null;
+}
+
+// Paper defaults (Mahdiyasa et al., 2025) used only when the pipeline has not
+// returned calibrated parameters for the selected location yet.
+const PAPER_DEFAULTS = { a_h: 6.5, b_h: 0.02, n: 18.2, alpha: 0.9 };
+
+export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({ currentPfvi, optimizedParams }) => {
   const [tempDelta, setTempDelta] = useState<number>(2.0);
   const [dryDays, setDryDays] = useState<number>(10);
   const [wtDepth, setWtDepth] = useState<number>(1.1); // meters below surface
-  const [initialPfvi, setInitialPfvi] = useState<number>(180.0);
+
+  const hasBaseline = typeof currentPfvi === 'number' && Number.isFinite(currentPfvi) && currentPfvi > 0;
+  const [initialPfvi, setInitialPfvi] = useState<number>(hasBaseline ? (currentPfvi as number) : 120);
+
+  useEffect(() => {
+    if (hasBaseline) {
+      setInitialPfvi(currentPfvi as number);
+    }
+  }, [currentPfvi, hasBaseline]);
 
   // Simulates hypothetical scenario
   const simulateScenario = () => {
     let current = initialPfvi;
     const baseTemp = 33.5 + tempDelta;
     const wtCm = wtDepth * 100.0;
-    
-    // Calibration parameters (typical Sabangau calibrated values)
-    const aH = 6.5;
-    const bH = 0.02;
-    const n = 18.2;
-    const alpha = 0.9;
+
+    const { a_h: aH, b_h: bH, n, alpha } = optimizedParams || PAPER_DEFAULTS;
 
     const timeline = [];
     for (let day = 1; day <= dryDays; day++) {
       const df = (300.0 - current) * (0.4982 * Math.exp(0.0905 * baseTemp + 1.6096) - 4.268) * 1e-3 / (1.0 + 10.88 * Math.exp(-0.0017358 * 3000));
       const rf = 0.0; // 0 mm rain during dry spell
-      
+
       const m = 1.0 - 1.0 / n;
       const theta = Math.pow(1.0 + Math.pow(wtCm / alpha, n), -m);
       const wtf = aH - bH * (1.0 - theta) * 300.0;
@@ -1921,143 +1726,136 @@ export const ScenarioSimulator: React.FC = () => {
       current = Math.min(300.0, Math.max(0.0, current + df - rf - wtf));
       timeline.push({ day, pfvi: current, df, wtf });
     }
-    return { finalPfvi: current, timeline };
+
+    const mean = (pick: (row: { df: number; wtf: number }) => number) =>
+      timeline.length ? timeline.reduce((s, row) => s + pick(row), 0) / timeline.length : 0;
+
+    return { finalPfvi: current, timeline, meanDf: mean((r) => r.df), meanWtf: mean((r) => r.wtf) };
   };
 
   const simResult = simulateScenario();
+  const delta = simResult.finalPfvi - initialPfvi;
+  const category = simResult.finalPfvi >= 225 ? 'ekstrem' : simResult.finalPfvi >= 150 ? 'tinggi' : simResult.finalPfvi >= 75 ? 'sedang' : 'rendah';
 
   return (
-    <div className="telemetry-panel bg-white border border-slate-200 rounded-xl p-6 mb-6 shadow-sm">
-      <div className="flex items-center justify-between mb-6 border-b border-slate-200 pb-4">
-        <div className="flex items-center gap-2">
-          <Sliders className="w-5 h-5 text-amber-600" />
-          <div>
-            <h3 className="text-base font-bold text-slate-900 tracking-wide">
-              Simulasi Skenario Cuaca & Respon Kerawanan Lahan ("What-If Scenario")
-            </h3>
-            <p className="text-xs text-slate-500 font-medium">
-              Uji dampak kenaikan suhu, periode kemarau, dan penurunan muka air tanah terhadap indeks PFVI
-            </p>
-          </div>
-        </div>
+    <section className="mb-8">
+      <div className="mb-3">
+        <h2 className="text-[15px] font-semibold tracking-tight text-[var(--text)]">Simulasi skenario "bagaimana jika"</h2>
+        <p className="text-xs text-[var(--text-dim)] mt-0.5">
+          Uji dampak cuaca dan muka air tanah terhadap PFVI · parameter hidrologi{' '}
+          {optimizedParams
+            ? `terkalibrasi pipeline (aH ${optimizedParams.a_h.toFixed(2)}, bH ${optimizedParams.b_h.toFixed(3)}, n ${optimizedParams.n.toFixed(1)}, α ${optimizedParams.alpha.toFixed(2)})`
+            : 'default jurnal Sabangau (Mahdiyasa dkk., 2025)'}
+          {!hasBaseline ? ' · PFVI dasar belum tersedia untuk lokasi ini' : ''}
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Sliders Input Controls */}
-        <div className="lg:col-span-7 space-y-5">
-          {/* Temp Delta Slider */}
-          <div>
-            <div className="flex justify-between text-xs font-mono font-semibold text-slate-700 mb-1.5">
-              <span>Kenaikan Suhu Udara (Temp Delta):</span>
-              <span className="text-rose-600 font-bold">+{tempDelta.toFixed(1)} °C</span>
+      <div className="border border-[var(--line)] rounded-[var(--r-md)] bg-[var(--surface)] overflow-hidden grid grid-cols-1 lg:grid-cols-12">
+        {/* Left Sliders Controls (7 Cols) */}
+        <div className="lg:col-span-7 p-6 sm:p-7 flex flex-col gap-5 border-b lg:border-b-0 lg:border-r border-[var(--line)]">
+          {/* Slider 1: Temperature */}
+          <div className="flex flex-col gap-2 font-mono">
+            <div className="flex justify-between items-baseline font-sans text-xs">
+              <span className="text-[var(--text-mute)]">Kenaikan suhu udara</span>
+              <span className="font-mono text-[13px] font-bold text-[var(--accent)]">+{tempDelta.toFixed(1)} °C</span>
             </div>
             <input
               type="range"
               min="0"
-              max="5"
+              max="6"
               step="0.5"
               value={tempDelta}
               onChange={(e) => setTempDelta(parseFloat(e.target.value))}
-              className="w-full accent-rose-600 cursor-pointer"
+              className="w-full h-[3px] bg-[var(--line)] rounded-full outline-none accent-[var(--accent)] cursor-pointer"
             />
           </div>
 
-          {/* Dry Spell Slider */}
-          <div>
-            <div className="flex justify-between text-xs font-mono font-semibold text-slate-700 mb-1.5">
-              <span>Durasi Kemarau Tanpa Hujan (Hari):</span>
-              <span className="text-amber-600 font-bold">{dryDays} Hari</span>
+          {/* Slider 2: Dry Days */}
+          <div className="flex flex-col gap-2 font-mono">
+            <div className="flex justify-between items-baseline font-sans text-xs">
+              <span className="text-[var(--text-mute)]">Durasi kemarau tanpa hujan</span>
+              <span className="font-mono text-[13px] font-bold text-[var(--accent)]">{dryDays} hari</span>
             </div>
             <input
               type="range"
-              min="1"
+              min="0"
               max="30"
               step="1"
               value={dryDays}
               onChange={(e) => setDryDays(parseInt(e.target.value))}
-              className="w-full accent-amber-600 cursor-pointer"
+              className="w-full h-[3px] bg-[var(--line)] rounded-full outline-none accent-[var(--accent)] cursor-pointer"
             />
           </div>
 
-          {/* Water Table Depth Slider */}
-          <div>
-            <div className="flex justify-between text-xs font-mono font-semibold text-slate-700 mb-1.5">
-              <span>Kedalaman Muka Air Tanah (WT Depth Below Surface):</span>
-              <span className="text-cyan-700 font-bold">-{wtDepth.toFixed(2)} m</span>
+          {/* Slider 3: Water Table */}
+          <div className="flex flex-col gap-2 font-mono">
+            <div className="flex justify-between items-baseline font-sans text-xs">
+              <span className="text-[var(--text-mute)]">Kedalaman muka air tanah</span>
+              <span className="font-mono text-[13px] font-bold text-[var(--accent)]">-{wtDepth.toFixed(2)} m</span>
             </div>
             <input
               type="range"
-              min="0.2"
-              max="1.8"
+              min="0"
+              max="3"
               step="0.05"
               value={wtDepth}
               onChange={(e) => setWtDepth(parseFloat(e.target.value))}
-              className="w-full accent-cyan-600 cursor-pointer"
+              className="w-full h-[3px] bg-[var(--line)] rounded-full outline-none accent-[var(--accent)] cursor-pointer"
             />
           </div>
 
-          {/* Initial PFVI */}
-          <div>
-            <div className="flex justify-between text-xs font-mono font-semibold text-slate-700 mb-1.5">
-              <span>PFVI Baseline Awal:</span>
-              <span className="text-slate-900 font-bold">{initialPfvi.toFixed(1)}</span>
+          {/* Slider 4: Initial PFVI Baseline */}
+          <div className="flex flex-col gap-2 font-mono">
+            <div className="flex justify-between items-baseline font-sans text-xs">
+              <span className="text-[var(--text-mute)]">PFVI dasar awal</span>
+              <span className="font-mono text-[13px] font-bold text-[var(--text)]">{initialPfvi.toFixed(1)}</span>
             </div>
             <input
               type="range"
               min="20"
-              max="250"
-              step="5"
+              max="280"
+              step="1"
               value={initialPfvi}
               onChange={(e) => setInitialPfvi(parseFloat(e.target.value))}
-              className="w-full accent-slate-600 cursor-pointer"
+              className="w-full h-[3px] bg-[var(--line)] rounded-full outline-none accent-[var(--accent)] cursor-pointer"
             />
           </div>
         </div>
 
-        {/* Simulation Result Readout Box */}
-        <div className="lg:col-span-5 bg-slate-50 p-5 rounded-xl border border-slate-200 flex flex-col justify-between">
-          <div>
-            <div className="text-xs font-mono font-bold uppercase tracking-wider text-slate-500 mb-2 flex items-center justify-between">
-              <span>Hasil Proyeksi Skenario</span>
-              <AlertTriangle className="w-4 h-4 text-amber-600" />
-            </div>
-
-            <div className="space-y-4 my-3">
-              <div>
-                <div className="text-xs text-slate-500 font-medium">PFVI Awal:</div>
-                <div className="text-xl font-mono font-bold text-slate-800">{initialPfvi.toFixed(1)} / 300.0</div>
-              </div>
-
-              <div>
-                <div className="text-xs text-slate-500 font-medium">PFVI Prediksi Setelah {dryDays} Hari:</div>
-                <div className="text-3xl font-mono font-extrabold text-red-600">
-                  {simResult.finalPfvi.toFixed(1)} <span className="text-xs text-slate-500 font-normal">/ 300.0</span>
-                </div>
-              </div>
-            </div>
+        {/* Right Result Readout (5 Cols) */}
+        <div className="lg:col-span-5 p-6 sm:p-7 flex flex-col justify-center gap-5">
+          <div className="flex flex-col gap-1 font-mono">
+            <span className="text-[11px] uppercase tracking-wider text-[var(--text-dim)] font-sans">
+              Proyeksi PFVI setelah periode simulasi
+            </span>
+            <span className="text-4xl font-bold tracking-tight text-[var(--accent)] my-1">
+              {simResult.finalPfvi.toFixed(1)}
+            </span>
+            <span className="text-xs text-[var(--text-mute)] font-sans">
+              {delta >= 0 ? '+' : ''}{delta.toFixed(1)} dari dasar · kategori {category}
+            </span>
           </div>
 
-          <div className="pt-3 border-t border-slate-200 text-[11px] text-slate-600 font-medium space-y-1">
-            <div className="flex justify-between">
-              <span>Laju Evapotranspirasi (DF):</span>
-              <span className="font-mono font-bold text-slate-800">+{simResult.timeline[0]?.df.toFixed(2)} /hr</span>
+          <div className="flex gap-6 pt-4 border-t border-[var(--line-soft)] font-mono text-xs">
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[10.5px] text-[var(--text-dim)] font-sans">Evapotranspirasi rata-rata (DF)</span>
+              <span className="text-[13px] font-medium text-[var(--text)]">{simResult.meanDf.toFixed(2)} PFVI/hari</span>
             </div>
-            <div className="flex justify-between">
-              <span>Kapilaritas Air Tanah (WTF):</span>
-              <span className="font-mono font-bold text-slate-800">-{simResult.timeline[0]?.wtf.toFixed(2)} /hr</span>
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[10.5px] text-[var(--text-dim)] font-sans">Serapan muka air (WTF)</span>
+              <span className="text-[13px] font-medium text-[var(--text)]">{simResult.meanWtf.toFixed(2)} PFVI/hari</span>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 };
-
 ```
 
 ---
 
-## FITUR 9: Backend API Routing & Telemetri Satelit Realtime (Backend Core Server)
+## FITUR 6: Backend API Routing & Telemetri Satelit Realtime (Backend Core Server)
 **Deskripsi & Tujuan Fitur:** API Server FastAPI yang bertugas memproses request HTTP, mengambil data satelit Open-Meteo ERA5-Land, mengolah hotspot NASA FIRMS, dan menjalankan pipeline otomatis.
 
 **Cara Menggunakan:**
@@ -2075,12 +1873,13 @@ import pandas as pd
 from typing import List, Optional
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from peatfr_engine.pfvi import simulate_pfvi, optimize_pfvi_parameters, calculate_di_obs
 from peatfr_engine.imputation import impute_peatfr_data
 from peatfr_engine.forecasting import forecast_peatfr_variables
-from peatfr_engine.fire_intelligence import fire_engine
+from peatfr_engine.fire_intelligence import fire_engine, attribute_peatland, PEAT_ATTRIBUTION_MAX_KM
 
 app = FastAPI(
     title="PeatFR EWS Engine API",
@@ -2095,6 +1894,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+os.makedirs("/app/screenshots", exist_ok=True)
+app.mount("/api/v1/screenshots", StaticFiles(directory="/app/screenshots"), name="screenshots")
 
 # Load Indonesia Administrative Regions
 ADMIN_FILE = os.path.join(os.path.dirname(__file__), "peatfr_engine", "indonesia_admin.json")
@@ -2135,7 +1937,7 @@ class AutoPipelineRequest(BaseModel):
     look_back: int = Field(12)
     hidden_units: int = Field(32)
     epochs: int = Field(50)
-    is_peat: bool = Field(True, description="Whether location is peatland")
+    is_peat: bool = Field(True, description="peatland (32/75%) vs mineral soil (20/55%) field capacity & saturation")
 
 @app.get("/")
 @app.head("/")
@@ -2161,9 +1963,19 @@ def get_indonesia_regions():
 def get_realtime_openmeteo_data(
     lat: float = Query(-2.321, description="Latitude coordinate"),
     lon: float = Query(113.901, description="Longitude coordinate"),
-    days: int = Query(30, description="Past days of historical open satellite data")
+    days: int = Query(30, description="Past days of historical open satellite data"),
+    is_peat: Optional[bool] = Query(None, description="Override soil type; default derived from nearest peat regency")
 ):
     try:
+        # Soil type drives the volumetric-moisture -> percent mapping AND the PFVI soil
+        # retention constants downstream, so both must come from the same decision.
+        peat_attr = attribute_peatland(lat, lon)
+        is_peat_eff = bool(peat_attr["is_peatland"] if is_peat is None else is_peat)
+        if is_peat_eff:
+            fc_pct, sat_pct, sm_lo, sm_hi = 32.0, 75.0, 0.08, 0.42
+        else:
+            fc_pct, sat_pct, sm_lo, sm_hi = 20.0, 55.0, 0.05, 0.35
+
         url = (
             f"https://api.open-meteo.com/v1/forecast?"
             f"latitude={lat}&longitude={lon}&"
@@ -2174,23 +1986,26 @@ def get_realtime_openmeteo_data(
         req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (PeatFR-EWS/1.0)"})
         res = urllib.request.urlopen(req, timeout=10)
         data = json.loads(res.read().decode())
-        
+
         daily = data["daily"]
         hourly = data["hourly"]
-        
+
         dates = daily["time"]
         temp_max = daily["temperature_2m_max"]
         precip = daily["precipitation_sum"]
-        
+
         sm_0_7 = np.array(hourly["soil_moisture_0_to_7cm"])
         sm_7_28 = np.array(hourly["soil_moisture_7_to_28cm"])
         sm_combined = (sm_0_7 * 0.4 + sm_7_28 * 0.6)
-        
+
         n_days = len(dates)
         sm_raw = sm_combined[:n_days * 24].reshape(n_days, 24).mean(axis=1)
-        
-        sm_pct = np.clip(32.0 + ((sm_raw - 0.08) / (0.42 - 0.08)) * 43.0, 30.0, 75.0)
-        wt_est = -0.30 - 0.012 * (65.0 - sm_pct) - 0.004 * np.maximum(0, 5.0 - np.array(precip))
+
+        sm_pct = np.clip(
+            fc_pct + ((sm_raw - sm_lo) / (sm_hi - sm_lo)) * (sat_pct - fc_pct),
+            fc_pct - 2.0, sat_pct
+        )
+        wt_est = -0.30 - 0.012 * ((sat_pct - 10.0) - sm_pct) - 0.004 * np.maximum(0, 5.0 - np.array(precip))
         wt_est = np.clip(wt_est, -1.8, -0.1)
 
         # Multi-Source Fire Intelligence
@@ -2199,12 +2014,16 @@ def get_realtime_openmeteo_data(
         latest_rf = float(precip[-1]) if precip else 0.0
         latest_sm = float(sm_pct[-1]) if len(sm_pct) > 0 else 40.0
         fwi_intel = fire_engine.fetch_owm_fwi(lat, lon, temp=latest_temp, rf=latest_rf, sm=latest_sm)
-        
+
         return {
             "source": "Open-Meteo / ERA5-Land Realtime Satellite Data",
             "lat": lat,
             "lon": lon,
             "dates": dates,
+            "is_peat": is_peat_eff,
+            "soil_type": "Gambut (Peatland)" if is_peat_eff else "Tanah Mineral",
+            "soil_calibration": {"field_capacity_pct": fc_pct, "saturation_pct": sat_pct},
+            "peat_attribution": {**peat_attr, "max_km": PEAT_ATTRIBUTION_MAX_KM},
             "WT": np.round(wt_est, 3).tolist(),
             "SM": np.round(sm_pct, 2).tolist(),
             "Rf": np.round(precip, 2).tolist(),
@@ -2223,12 +2042,14 @@ def get_nearby_fires(
     lon: float = Query(113.901, description="Longitude"),
     radius_m: int = Query(25000, description="Radius in meters")
 ):
+    """Fetch nearby satellite fire detection & GWIS 7-day burned area (FirePing Public API)."""
     return fire_engine.fetch_fireping_nearby(lat, lon, radius_m=radius_m)
 
 @app.get("/api/v1/fire-intelligence/gfw-peatland-fires")
 def get_gfw_peatland_fires(
     limit: int = Query(100, description="Maximum fire alerts")
 ):
+    """Fetch vector NASA VIIRS active fire alerts specifically on Indonesian peatlands (is__peatland = true)."""
     return fire_engine.fetch_gfw_peatland_fires(limit=limit)
 
 @app.get("/api/v1/fire-intelligence/firms-hotspots")
@@ -2237,10 +2058,12 @@ def get_firms_hotspots(
     source: str = Query("VIIRS_SNPP_NRT", description="Satellite sensor: VIIRS_SNPP_NRT, MODIS_NRT, VIIRS_NOAA20_NRT, VIIRS_NOAA21_NRT"),
     day_range: int = Query(1, ge=1, le=10, description="Range of days back (1-10)")
 ):
+    """Fetch live NASA FIRMS active fire hotspots via authorized MAP_KEY."""
     return fire_engine.fetch_firms_hotspots(bbox=bbox, source=source, day_range=day_range)
 
 @app.get("/api/v1/fire-intelligence/severe-alerts")
 def get_severe_fire_alerts():
+    """Fetch active severe fire alerts (Kebakaran Parah) across Indonesian Peatlands."""
     return fire_engine.fetch_severe_fire_alerts()
 
 @app.get("/api/v1/fire-intelligence/fwi")
@@ -2248,6 +2071,7 @@ def get_fwi_forecast(
     lat: float = Query(-2.321, description="Latitude"),
     lon: float = Query(113.901, description="Longitude")
 ):
+    """Fetch Fire Weather Index (FWI) forecast (OpenWeatherMap / Canadian FWI Engine)."""
     return fire_engine.fetch_owm_fwi(lat, lon)
 
 @app.get("/api/v1/sabangau-sample")
@@ -2363,7 +2187,7 @@ def run_auto_pipeline(req: AutoPipelineRequest):
         
         opt_params, opt_mse = optimize_pfvi_parameters(wt_clean, sm_clean, rf_clean, temp_clean, r0=req.r0, is_peat=req.is_peat)
         a_h, b_h, n, alpha = opt_params
-        
+
         pfvi_sim = simulate_pfvi(wt_full, sm_full, rf_full, temp_full, a_h, b_h, n, alpha, r0=req.r0, is_peat=req.is_peat)
         
         pfvi_series = pfvi_sim["pfvi"].tolist()
@@ -2388,6 +2212,7 @@ def run_auto_pipeline(req: AutoPipelineRequest):
             "imputation_method": req.imputation,
             "forecasting_model": req.model,
             "is_peat": req.is_peat,
+            "soil_type": "Gambut (Peatland)" if req.is_peat else "Tanah Mineral",
             "optimization": {
                 "a_h": float(a_h),
                 "b_h": float(b_h),
@@ -2420,12 +2245,11 @@ def run_auto_pipeline(req: AutoPipelineRequest):
         }
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
-
 ```
 
 ---
 
-## FITUR 10: PeatFR Mathematical Engine & Optimasi Nelder-Mead (Physical Core)
+## FITUR 7: PeatFR Mathematical Engine & Optimasi Nelder-Mead (Physical Core)
 **Deskripsi & Tujuan Fitur:** Modul backend terinti yang menghitung formula fisik PFVI, evapotranspirasi (DF), rain factor (RF), water table factor (WTF van Genuchten), dan optimasi Nelder-Mead ber-constraint fisik.
 
 **Cara Menggunakan:**
@@ -2585,12 +2409,11 @@ def optimize_pfvi_parameters(
                         
     res = minimize(objective, best_params, method='Nelder-Mead', options={'maxiter': 2000, 'xatol': 1e-4, 'fatol': 1e-4})
     return res.x, float(res.fun)
-
 ```
 
 ---
 
-## FITUR 11: Multi-Source Fire Intelligence Proxy (Satellite Aggregator)
+## FITUR 8: Multi-Source Fire Intelligence Proxy (Satellite Aggregator)
 **Deskripsi & Tujuan Fitur:** Modul backend yang mengagregasi data thermal anomaly dari NASA FIRMS API (MAP_KEY authorized), GWIS burned area, dan FirePing public API.
 
 **Cara Menggunakan:**
@@ -2601,6 +2424,7 @@ Pemanggilan Aggregator Satelit:
 
 #### Kode Sumber (Source Code Listing): `backend/peatfr_engine/fire_intelligence.py`
 ```python
+import math
 import os
 import json
 import time
@@ -2625,9 +2449,103 @@ class SimpleTTLCache:
     def set(self, key: str, data: Any):
         self._cache[key] = (time.time(), data)
 
+
+def haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    r = 6371.0088
+    p1, p2 = math.radians(lat1), math.radians(lat2)
+    dp = math.radians(lat2 - lat1)
+    dl = math.radians(lon2 - lon1)
+    a = math.sin(dp / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
+    return 2 * r * math.asin(math.sqrt(min(1.0, a)))
+
+
+# --- Peatland attribution -----------------------------------------------------
+# GFW's nasa_viirs_fire_alerts vector layer (is__peatland = true) now answers 403:
+# the data API requires a registered API key. Instead of shipping a fake fallback we
+# attribute each live NASA FIRMS hotspot to the nearest administrative centroid that
+# peatfr_engine/indonesia_admin.json flags as peat, and expose the distance so the UI
+# can state how strong the attribution is.
+# ponytail: centroid radius heuristic (< = 75 km), swap for a licensed peat polygon
+# raster/vector layer when one is available — the call site stays identical.
+PEAT_ATTRIBUTION_MAX_KM = 75.0
+
+_ATTRIBUTION_NOTE = "nearest peat-regency centroid"
+
+
+_SAT_FRIENDLY = {
+    "N": "NOAA-20",
+    "1": "NOAA-21",
+    "T": "Terra",
+    "A": "Aqua",
+    "SNPP": "Suomi NPP",
+}
+
+
+def friendly_sensor(name: str) -> str:
+    key = (name or "").strip().upper()
+    return _SAT_FRIENDLY.get(key, key or "tidak diketahui")
+
+
+def _load_peat_regencies() -> list:
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "indonesia_admin.json")
+    out = []
+    try:
+        with open(path) as f:
+            provinces = json.load(f)
+    except Exception:
+        return out
+    for prov in provinces:
+        for reg in prov.get("regencies", []):
+            try:
+                out.append({
+                    "adm1": prov.get("name"),
+                    "adm2": reg.get("name"),
+                    "lat": float(reg["lat"]),
+                    "lon": float(reg["lon"]),
+                    "peat": bool(reg.get("peat")),
+                })
+            except (KeyError, TypeError, ValueError):
+                continue
+    return out
+
+
+PEAT_REGENCIES = _load_peat_regencies()
+
+
+def attribute_peatland(lat: float, lon: float) -> Dict[str, Any]:
+    """Nearest-regency peat attribution for a coordinate. Pure, offline, deterministic."""
+    best = None
+    for reg in PEAT_REGENCIES:
+        d = haversine_km(lat, lon, reg["lat"], reg["lon"])
+        if best is None or d < best["distance_km"]:
+            best = {
+                "adm1": reg["adm1"],
+                "adm2": reg["adm2"],
+                "peat": reg["peat"],
+                "distance_km": round(d, 1),
+            }
+    if best is None:
+        return {"is_peatland": False, "adm1": None, "adm2": None,
+                "distance_km": None, "attribution": "unavailable"}
+
+    within = best["distance_km"] <= PEAT_ATTRIBUTION_MAX_KM
+    return {
+        "is_peatland": bool(best["peat"] and within),
+        "adm1": best["adm1"],
+        "adm2": best["adm2"],
+        "distance_km": best["distance_km"],
+        "attribution": f"{_ATTRIBUTION_NOTE} <= {PEAT_ATTRIBUTION_MAX_KM:.0f} km",
+    }
+
+
 class FireIntelligenceEngine:
-    def __init__(self, gfw_api_key: Optional[str] = None, owm_api_key: Optional[str] = None, firms_map_key: Optional[str] = None):
-        self.gfw_api_key = gfw_api_key or os.getenv("GFW_API_KEY")
+    # FRP thresholds (MW, VIIRS 375 m) used to grade a cluster of peat hotspots.
+    FRP_CRITICAL = 50.0
+    FRP_HIGH = 20.0
+    CLUSTER_DEG = 0.15  # ~16 km grid cell
+    BURNED_AREA_RADIUS_M = 10000
+
+    def __init__(self, owm_api_key: Optional[str] = None, firms_map_key: Optional[str] = None):
         self.owm_api_key = owm_api_key or os.getenv("OPENWEATHER_API_KEY")
         self.firms_map_key = firms_map_key or os.getenv("FIRMS_MAP_KEY", "aa16407e5eb11df46b09cafc085fe020")
         self.headers = {"User-Agent": "Mozilla/5.0 (PeatFR-EWS/1.0; https://peatfr.bagaswibowo.app)"}
@@ -2638,6 +2556,7 @@ class FireIntelligenceEngine:
         Fetch real-time active fire hotspots directly from NASA FIRMS Area API using MAP_KEY.
         Uses in-memory 180s TTL cache to optimize performance & NASA transaction quota.
         """
+        day_range = max(1, min(10, int(day_range)))
         cache_key = f"firms:{source}:{bbox}:{day_range}"
         cached_res = self.cache.get(cache_key)
         if cached_res:
@@ -2651,7 +2570,7 @@ class FireIntelligenceEngine:
                 lines = csv_text.splitlines()
                 if not lines or lines[0].startswith("Invalid") or lines[0].startswith("Error"):
                     return {"status": "error", "message": csv_text, "count": 0, "hotspots": []}
-                
+
                 header = [h.strip() for h in lines[0].split(",")]
                 hotspots = []
                 for line in lines[1:]:
@@ -2665,8 +2584,8 @@ class FireIntelligenceEngine:
                                 "bright_ti4": float(row.get("bright_ti4", row.get("brightness", 0))),
                                 "frp": float(row.get("frp", 0)),
                                 "acq_date": row.get("acq_date", ""),
-                                "acq_time": row.get("acq_time", ""),
-                                "satellite": row.get("satellite", ""),
+                                "acq_time": str(row.get("acq_time", "")).zfill(4),
+                                "satellite": friendly_sensor(row.get("satellite", "")),
                                 "instrument": row.get("instrument", "VIIRS/MODIS"),
                                 "confidence": row.get("confidence", "n/a"),
                                 "daynight": row.get("daynight", "D")
@@ -2691,85 +2610,181 @@ class FireIntelligenceEngine:
                 "hotspots": []
             }
 
-    def fetch_severe_fire_alerts(self) -> Dict[str, Any]:
-        """
-        Returns structured severe fire alerts (Kebakaran Parah) across Indonesian Peatlands
-        with estimated burned areas (km² / ha), location details, and coordinates.
-        """
-        gfw_res = self.fetch_gfw_peatland_fires(limit=50)
-        gfw_count = gfw_res.get("count", 0)
-        
-        alerts = [
-            {
-                "id": "ALERT-KATINGAN-01",
-                "title": "Kebakaran Parah Lahan Gambut",
-                "location": "Kec. Kamipang, Kab. Katingan, Kalimantan Tengah",
-                "lat": -2.350,
-                "lon": 113.450,
-                "severity": "CRITICAL",
-                "estimated_burned_km2": 6.2,
-                "estimated_burned_ha": 620,
-                "updated_ago": "Diperbarui 3 jam lalu",
-                "peatland_verified": True,
-                "frp_max_mw": 84.5,
-                "satellite_sensor": "NASA VIIRS 375m & GFW Vector"
-            },
-            {
-                "id": "ALERT-KOTIM-02",
-                "title": "Anomali Termal Tinggi & Asap",
-                "location": "Rubung Buyung, Kec. Cempaga, Kab. Kotawaringin Timur, Kalteng",
-                "lat": -2.250,
-                "lon": 112.980,
-                "severity": "HIGH",
-                "estimated_burned_km2": 3.8,
-                "estimated_burned_ha": 380,
-                "updated_ago": "Diperbarui 5 jam lalu",
-                "peatland_verified": True,
-                "frp_max_mw": 42.1,
-                "satellite_sensor": "NASA FIRMS (MAP_KEY Authorized)"
-            },
-            {
-                "id": "ALERT-SABANGAU-03",
-                "title": "Potensi Karhutla Gambut Dalam",
-                "location": "Taman Nasional Sabangau, Kota Palangka Raya, Kalteng",
-                "lat": -2.321,
-                "lon": 113.901,
-                "severity": "WARNING",
-                "estimated_burned_km2": 1.5,
-                "estimated_burned_ha": 150,
-                "updated_ago": "Diperbarui 1 jam lalu",
-                "peatland_verified": True,
-                "frp_max_mw": 28.3,
-                "satellite_sensor": "Open-Meteo & NASA GIBS WMS"
-            },
-            {
-                "id": "ALERT-SIAK-04",
-                "title": "Defisit Muka Air Tanah (WT <-0.8m)",
-                "location": "Kec. Mempura, Kab. Siak, Riau",
-                "lat": 0.820,
-                "lon": 102.050,
-                "severity": "HIGH",
-                "estimated_burned_km2": 2.1,
-                "estimated_burned_ha": 210,
-                "updated_ago": "Diperbarui 8 jam lalu",
-                "peatland_verified": True,
-                "frp_max_mw": 35.0,
-                "satellite_sensor": "NASA FIRMS & ERA5-Land"
-            }
-        ]
+    def _peatland_hotspots(self, day_range: int = 1) -> Dict[str, Any]:
+        """Live FIRMS hotspots inside Indonesia, each tagged with peat attribution."""
+        day_range = max(1, min(10, int(day_range)))
+        cache_key = f"peat-attr:{day_range}"
+        cached_res = self.cache.get(cache_key)
+        if cached_res:
+            return cached_res
 
-        return {
-            "status": "success",
-            "active_severe_alerts": len(alerts),
-            "gfw_peatland_alerts_count": gfw_count,
-            "alerts": alerts
+        firms = self.fetch_firms_hotspots(bbox="95,-11,141,6", source="VIIRS_SNPP_NRT", day_range=day_range)
+        tagged = []
+        for h in firms.get("hotspots", []):
+            a = attribute_peatland(h["latitude"], h["longitude"])
+            tagged.append({**h, "peat": a})
+        tagged.sort(key=lambda f: f["frp"], reverse=True)
+
+        result = {
+            "status": firms.get("status", "error"),
+            "total_firms_hotspots": firms.get("count", 0),
+            "peatland_hotspots": tagged,
+            "attribution_max_km": PEAT_ATTRIBUTION_MAX_KM,
+            "attribution_note": _ATTRIBUTION_NOTE,
         }
+        if firms.get("status") == "success":
+            self.cache.set(cache_key, result)
+        return result
+
+    def fetch_gfw_peatland_fires(self, days_back: int = 1, limit: int = 100) -> Dict[str, Any]:
+        """
+        Active fire detections on Indonesian peatland, sourced live from NASA FIRMS and
+        filtered by nearest-regency peat attribution. Field names follow the GFW vector
+        layer (`is__peatland`, `adm1`, `adm2`, `frp__MW`) so map consumers stay unchanged.
+        """
+        src = self._peatland_hotspots(days_back)
+        fires = []
+        for h in src.get("peatland_hotspots", []):
+            a = h["peat"]
+            if not a["is_peatland"]:
+                continue
+            fires.append({
+                "latitude": h["latitude"],
+                "longitude": h["longitude"],
+                "alert__date": h["acq_date"],
+                "alert__time_utc": h["acq_time"],
+                "confidence__cat": h["confidence"],
+                "bright_ti4__K": h["bright_ti4"],
+                "frp__MW": h["frp"],
+                "is__peatland": True,
+                "adm1": a["adm1"],
+                "adm2": a["adm2"],
+                "peatland_attribution": a["attribution"],
+                "regency_centroid_km": a["distance_km"],
+                "satellite": h["satellite"],
+            })
+        fires = fires[:limit]
+        return {
+            "status": src.get("status"),
+            "source": "NASA FIRMS VIIRS 375m + nearest-regency peatland attribution",
+            "count": len(fires),
+            "total_firms_hotspots": src.get("total_firms_hotspots", 0),
+            "attribution_max_km": PEAT_ATTRIBUTION_MAX_KM,
+            "fires": fires,
+        }
+
+    def fetch_severe_fire_alerts(self, max_alerts: int = 8) -> Dict[str, Any]:
+        """
+        Severe peat-fire clusters (Kebakaran Parah) derived from live FIRMS detections:
+        hotspots are grouped into ~16 km grid cells, graded by max FRP, enriched with the
+        burned area reported by FirePing for the cluster centroid. No static alert list.
+        """
+        cache_key = f"severe:{max_alerts}"
+        cached_res = self.cache.get(cache_key)
+        if cached_res:
+            return cached_res
+
+        src = self._peatland_hotspots(1)
+        if src.get("status") != "success":
+            return {
+                "status": "unavailable",
+                "message": "NASA FIRMS tidak dapat dihubungi, data peringatan tidak tersedia",
+                "active_severe_alerts": 0,
+                "peatland_hotspot_count": 0,
+                "alerts": [],
+            }
+
+        clusters: Dict[tuple, Dict[str, Any]] = {}
+        for h in src.get("peatland_hotspots", []):
+            if not h["peat"]["is_peatland"]:
+                continue
+            key = (round(h["latitude"] / self.CLUSTER_DEG), round(h["longitude"] / self.CLUSTER_DEG))
+            c = clusters.setdefault(key, {
+                "count": 0, "frp_max": 0.0, "lat_sum": 0.0, "lon_sum": 0.0,
+                "latest": "", "adm1": h["peat"]["adm1"], "adm2": h["peat"]["adm2"],
+                "regency_km": h["peat"]["distance_km"], "sensors": set(),
+            })
+            c["count"] += 1
+            c["frp_max"] = max(c["frp_max"], h["frp"])
+            c["lat_sum"] += h["latitude"]
+            c["lon_sum"] += h["longitude"]
+            stamp = f"{h['acq_date']} {h['acq_time']}"
+            if stamp > c["latest"]:
+                c["latest"] = stamp
+            c["sensors"].add(h["satellite"])
+
+        ranked = sorted(clusters.items(), key=lambda kv: (kv[1]["frp_max"], kv[1]["count"]), reverse=True)
+
+        alerts = []
+        for key, c in ranked:
+            if len(alerts) >= max_alerts:
+                break
+            # A single weak detection is a hotspot, not a "severe fire".
+            if c["count"] < 2 and c["frp_max"] < self.FRP_HIGH:
+                continue
+
+            lat = c["lat_sum"] / c["count"]
+            lon = c["lon_sum"] / c["count"]
+            severity = ("CRITICAL" if c["frp_max"] >= self.FRP_CRITICAL
+                        else "HIGH" if c["frp_max"] >= self.FRP_HIGH
+                        else "WARNING")
+
+            fp = self.fetch_fireping_nearby(lat, lon, radius_m=self.BURNED_AREA_RADIUS_M)
+            reported_ha = float(fp.get("burned_area_ha") or 0.0)
+            # FirePing reports the burned polygons intersecting the search circle, which can
+            # cover far more ground than the circle itself. Only keep the figure when it
+            # physically fits inside the queried radius; otherwise report it as unavailable
+            # rather than labelling a region-wide total as this cluster's burn scar.
+            circle_ha = math.pi * (self.BURNED_AREA_RADIUS_M / 1000.0) ** 2 * 100.0
+            if reported_ha and reported_ha <= circle_ha:
+                burned_ha, burned_note = reported_ha, None
+            else:
+                burned_ha, burned_note = None, (
+                    f"laporan FirePing ({reported_ha:,.0f} ha) melebihi luas radius "
+                    f"{self.BURNED_AREA_RADIUS_M // 1000} km, tidak dapat diatribusikan ke klaster ini"
+                    if reported_ha else "tidak ada laporan area terbakar"
+                )
+
+            alerts.append({
+                "id": f"FIRMS-{key[0]}-{key[1]}",
+                "title": f"{c['count']} deteksi titik panas pada zona gambut",
+                "location": f"{c['adm2'] or 'Kab. tidak diketahui'}, {c['adm1'] or 'Indonesia'}",
+                "lat": round(lat, 4),
+                "lon": round(lon, 4),
+                "severity": severity,
+                "detection_count": c["count"],
+                "estimated_burned_ha": round(burned_ha, 1) if burned_ha else None,
+                "estimated_burned_km2": round(burned_ha / 100.0, 2) if burned_ha else None,
+                "burned_area_note": burned_note,
+                "burned_area_source": f"FirePing (radius {self.BURNED_AREA_RADIUS_M // 1000} km)" if burned_ha else "unavailable",
+                "updated_ago": f"Deteksi terbaru {c['latest']} UTC",
+                "peatland_verified": True,
+                "peatland_attribution": f"{_ATTRIBUTION_NOTE} ({c['regency_km']} km dari sentroid {c['adm2']})",
+                "frp_max_mw": round(c["frp_max"], 1),
+                "satellite_sensor": "NASA FIRMS " + "/".join(sorted(s for s in c["sensors"] if s)),
+            })
+
+        result = {
+            "status": "success",
+            "source": "NASA FIRMS VIIRS 375m NRT (klaster ~16 km) + FirePing burned area",
+            "active_severe_alerts": len(alerts),
+            "peatland_hotspot_count": sum(1 for h in src.get("peatland_hotspots", []) if h["peat"]["is_peatland"]),
+            "gfw_peatland_alerts_count": 0,
+            "alerts": alerts,
+        }
+        self.cache.set(cache_key, result)
+        return result
 
     def fetch_fireping_nearby(self, lat: float, lon: float, radius_m: int = 25000) -> Dict[str, Any]:
         """
         Fetch real-time aggregated fire proximity & burned area from FirePing API (Public, Zero-Key).
         Endpoint: /api/public/v1/fires/near
         """
+        cache_key = f"fireping:{round(lat, 2)}:{round(lon, 2)}:{radius_m}"
+        cached_res = self.cache.get(cache_key)
+        if cached_res:
+            return cached_res
+
         url = f"https://fireping.net/api/public/v1/fires/near?latitude={lat}&longitude={lon}&radius={radius_m}"
         req = urllib.request.Request(url, headers=self.headers)
         try:
@@ -2777,7 +2792,7 @@ class FireIntelligenceEngine:
                 data = json.loads(resp.read().decode('utf-8'))
                 summary = data.get("summary", {})
                 burned = data.get("burned_area", {})
-                return {
+                result = {
                     "status": data.get("status", "unknown"),
                     "detection_count": summary.get("detection_count", 0),
                     "nearest_distance_km": summary.get("nearest_distance_km"),
@@ -2786,6 +2801,8 @@ class FireIntelligenceEngine:
                     "satellite_sources": summary.get("detection_sources", []),
                     "updated_at": data.get("data", {}).get("updated_at")
                 }
+                self.cache.set(cache_key, result)
+                return result
         except Exception as e:
             return {
                 "status": "error",
@@ -2794,41 +2811,6 @@ class FireIntelligenceEngine:
                 "nearest_distance_km": None,
                 "burned_area_ha": 0.0,
                 "satellite_sources": []
-            }
-
-    def fetch_gfw_peatland_fires(self, days_back: int = 30, limit: int = 100) -> Dict[str, Any]:
-        """
-        Fetch vector active fires specifically on Indonesian peatlands via Global Forest Watch (GFW) API.
-        Filter: iso = 'IDN' AND is__peatland = true
-        """
-        url = "https://data-api.globalforestwatch.org/dataset/nasa_viirs_fire_alerts/latest/query"
-        sql = f"""
-            SELECT latitude, longitude, alert__date, alert__time_utc, confidence__cat, 
-                   bright_ti4__K, frp__MW, is__peatland, adm1, adm2
-            FROM results
-            WHERE iso = 'IDN' AND is__peatland = true
-            ORDER BY alert__date DESC
-            LIMIT {limit}
-        """
-        headers = dict(self.headers)
-        if self.gfw_api_key:
-            headers["x-api-key"] = self.gfw_api_key
-
-        req = urllib.request.Request(f"{url}?sql={urllib.parse.quote(sql)}", headers=headers)
-        try:
-            with urllib.request.urlopen(req, timeout=10) as resp:
-                data = json.loads(resp.read().decode('utf-8'))
-                return {
-                    "status": "success",
-                    "count": len(data.get("data", [])),
-                    "fires": data.get("data", [])
-                }
-        except Exception as e:
-            return {
-                "status": "fallback",
-                "message": f"GFW API query fallback: {str(e)}",
-                "count": 0,
-                "fires": []
             }
 
     def fetch_owm_fwi(self, lat: float, lon: float, temp: float = 34.0, rf: float = 0.0, sm: float = 40.0) -> Dict[str, Any]:
@@ -2847,7 +2829,7 @@ class FireIntelligenceEngine:
                         "source": "OpenWeatherMap FWI API",
                         "data": data
                     }
-            except Exception as e:
+            except Exception:
                 pass
 
         # Meteorological FWI Estimation (Standard Mark-5 / Canadian FWI Approximation)
@@ -2855,9 +2837,9 @@ class FireIntelligenceEngine:
         dryness_factor = max(0.0, 70.0 - sm)
         heat_factor = max(0.0, temp - 25.0) * 1.5
         rain_mitigation = max(0.0, rf * 2.0)
-        
+
         fwi_score = max(0.0, min(80.0, (dryness_factor * 0.4 + heat_factor * 1.2) - rain_mitigation))
-        
+
         if fwi_score < 10.0:
             rating = "Low"
         elif fwi_score < 20.0:
@@ -2876,53 +2858,73 @@ class FireIntelligenceEngine:
             "danger_rating": rating
         }
 
-fire_engine = FireIntelligenceEngine()
 
+fire_engine = FireIntelligenceEngine()
 ```
 
 ---
 
-## FITUR 12: Main Application Layout & State Management (App Core)
-**Deskripsi & Tujuan Fitur:** Komponen utama React App yang mengelola state lokasi terverifikasi, penanganan wilayah non-gambut (misal Kota Medan), pemicukan pipeline, dan kalkulasi fallback.
+## FITUR 9: Main Application Layout & State Management (App Core)
+**Deskripsi & Tujuan Fitur:** Shell aplikasi yang mengelola state global (wilayah target, hasil telemetri, hasil pipeline, daftar peringatan aktif) dan merutekannya ke empat tab. Lokasi dan atribusi jenis tanah menjadi state bersama antara bilah atas, peta, dan panel konfigurasi.
 
 **Cara Menggunakan:**
-Komponen induk layout yang memuat Header, AwamActionGuide, RiskStatusGauge, PeatSmolderingProfile, PeatlandMap, PipelineControls, ForecastCharts, dan ScenarioSimulator.
+Tab **Ringkasan** memuat RiskStatusGauge dan ActiveAlerts; tab **Peta titik panas** memuat PeatlandMap; tab **Tren & proyeksi** memuat PipelineControls dan ForecastCharts; tab **Simulasi** memuat ScenarioSimulator. Bilah atas (Header) memuat pemilih wilayah dan kontrol tema, sedangkan TheoreticalSpecsModal terbuka dari bilah atas maupun footer.
 
 #### Kode Sumber (Source Code Listing): `frontend/src/App.tsx`
 ```tsx
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { AlertTriangle, Gauge, Map as MapIcon, Activity, Sliders } from 'lucide-react';
 import { Header, Province, Regency } from './components/Header';
 import { RiskStatusGauge } from './components/RiskStatusGauge';
 import { PeatlandMap } from './components/PeatlandMap';
 import { ForecastCharts } from './components/ForecastCharts';
 import { ScenarioSimulator } from './components/ScenarioSimulator';
 import { PipelineControls } from './components/PipelineControls';
+import { ActiveAlerts } from './components/ActiveAlerts';
 import { TheoreticalSpecsModal } from './components/TheoreticalSpecsModal';
-import { PeatSmolderingProfile } from './components/PeatSmolderingProfile';
-import { AwamActionGuide } from './components/AwamActionGuide';
 
 const API_BASE = '/api/v1';
 
+const TABS = [
+  { id: 'ringkasan', label: 'Ringkasan', Icon: Gauge },
+  { id: 'peta', label: 'Peta titik panas', Icon: MapIcon },
+  { id: 'tren', label: 'Tren & proyeksi', Icon: Activity },
+  { id: 'simulasi', label: 'Simulasi', Icon: Sliders }
+] as const;
+
+type TabId = typeof TABS[number]['id'];
+
 export function App() {
+  const [provinces, setProvinces] = useState<Province[]>([]);
   const [selectedProvince, setSelectedProvince] = useState<Province | null>(null);
   const [selectedRegency, setSelectedRegency] = useState<Regency | null>(null);
   const [loadingRealtime, setLoadingRealtime] = useState(false);
   const [isRunningPipeline, setIsRunningPipeline] = useState(false);
   const [isPaperModalOpen, setIsPaperModalOpen] = useState(false);
 
-  // View Mode: 'awam' (Default - simplified for non-experts) vs 'pakar' (Full technical controls & formulas)
-  const [viewMode, setViewMode] = useState<'awam' | 'pakar'>('awam');
+  // Theme state ('dark' | 'light')
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
 
   // Configuration State
   const [imputation, setImputation] = useState('knn');
   const [model, setModel] = useState('arima');
   const [h, setH] = useState(4);
   const [epochs, setEpochs] = useState(50);
+  const [activeTab, setActiveTab] = useState<TabId>('ringkasan');
 
   // Data & Pipeline Result State
   const [sampleData, setSampleData] = useState<any>(null);
   const [pipelineResult, setPipelineResult] = useState<any>(null);
+  const [dataError, setDataError] = useState<string | null>(null);
+  const [soilType, setSoilType] = useState<string>('Tidak diketahui');
+  const [severeAlerts, setSevereAlerts] = useState<any[]>([]);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(nextTheme);
+    document.documentElement.setAttribute('data-theme', nextTheme);
+  };
 
   // Fetch Realtime Open Satellite Data
   const fetchRealtimeData = async (reg: Regency | null = selectedRegency) => {
@@ -2931,12 +2933,18 @@ export function App() {
     try {
       const res = await axios.get(`${API_BASE}/realtime-peatland-data?lat=${reg.lat}&lon=${reg.lon}&days=30`);
       setSampleData(res.data);
-      executePipeline(res.data, reg);
-    } catch (err) {
-      console.warn('Realtime API error, falling back to dataset:', err);
-      const mockData = generateMockDataForRegency(reg);
-      setSampleData(mockData);
-      executePipeline(mockData, reg);
+      setSoilType(res.data.soil_type || 'Tidak diketahui');
+      setDataError(null);
+      executePipeline(res.data, res.data.is_peat !== false);
+    } catch (err: any) {
+      // No simulated numbers: an unavailable upstream is reported, not invented.
+      setSampleData(null);
+      setPipelineResult(null);
+      setDataError(
+        `Telemetri satelit Open-Meteo/ERA5 tidak dapat dimuat untuk ${reg.name} ` +
+        `(${err?.response?.status ?? 'jaringan'} ${err?.message ?? ''}). ` +
+        `PeatFR tidak menampilkan nilai proyeksi sampai sumber data pulih.`
+      );
     } finally {
       setLoadingRealtime(false);
     }
@@ -2955,17 +2963,17 @@ export function App() {
       name: customName,
       lat: Number(lat.toFixed(3)),
       lon: Number(lon.toFixed(3)),
+      // Backend attributes soil type from the nearest peat regency; this is only the
+      // pre-fetch placeholder used for the dropdown label.
       peat: true
     };
     setSelectedRegency(customReg);
     fetchRealtimeData(customReg);
   };
 
-  const executePipeline = async (inputData: any = sampleData, reg: Regency | null = selectedRegency) => {
+  const executePipeline = async (inputData: any = sampleData, isPeatFlag: boolean = sampleData?.is_peat !== false) => {
     if (!inputData) return;
     setIsRunningPipeline(true);
-
-    const isPeatLocation = reg ? reg.peat : true;
 
     try {
       const payload = {
@@ -2980,25 +2988,40 @@ export function App() {
         look_back: 12,
         hidden_units: 32,
         epochs,
-        is_peat: isPeatLocation
+        is_peat: isPeatFlag
       };
 
       const res = await axios.post(`${API_BASE}/pipeline/auto`, payload);
       setPipelineResult(res.data);
-    } catch (err) {
-      console.warn('Backend execution error, calculating client-side fallback:', err);
-      const fallbackResult = calculateClientFallback(inputData, h, imputation, model, isPeatLocation);
-      setPipelineResult(fallbackResult);
+      setDataError(null);
+    } catch (err: any) {
+      setPipelineResult(null);
+      setDataError(
+        `Pipeline PFVI gagal dijalankan (${err?.response?.status ?? 'jaringan'} ${err?.message ?? ''}). ` +
+        `Nilai risiko ditahan kosong alih-alih diperkirakan di sisi browser.`
+      );
     } finally {
       setIsRunningPipeline(false);
     }
   };
+
+  // Severe peat-fire clusters (fetched here, shared by the map markers and the
+  // alert list so the warning text exists in exactly one place).
+  useEffect(() => {
+    axios.get(`${API_BASE}/fire-intelligence/severe-alerts`)
+      .then((res) => setSevereAlerts(res.data?.alerts || []))
+      .catch((err) => {
+        console.warn('Peringatan kebakaran parah tidak tersedia:', err);
+        setSevereAlerts([]);
+      });
+  }, []);
 
   // On mount, load Indonesia regions and pick Riau - Kab. Siak as default
   useEffect(() => {
     axios.get(`${API_BASE}/indonesia/regions`)
       .then((res) => {
         if (res.data && res.data.provinces && res.data.provinces.length > 0) {
+          setProvinces(res.data.provinces);
           const defaultProv = res.data.provinces[0]; // Riau
           const defaultReg = defaultProv.regencies[0]; // Kab. Siak
           setSelectedProvince(defaultProv);
@@ -3014,134 +3037,172 @@ export function App() {
       });
   }, []);
 
-  const pfviList = pipelineResult ? pipelineResult.full_series.PFVI : [185.0];
-  const currentPfvi = pfviList[pfviList.length - 1];
-  const minPfvi = Math.min(...pfviList);
-  const maxPfvi = Math.max(...pfviList);
+  const hasData = Boolean(pipelineResult) && !dataError;
 
-  const currentStatus = pipelineResult ? pipelineResult.forecast.Current_Status : 'High';
+  const pfviList = pipelineResult ? pipelineResult.full_series.PFVI : [];
+  const currentPfvi = pfviList.length ? pfviList[pfviList.length - 1] : 0;
 
-  const currentWT = pipelineResult
-    ? pipelineResult.full_series.WT[pipelineResult.full_series.WT.length - 1]
-    : -0.95;
+  const forecastPfviList = pfviList.slice(-h);
+  const minForecastPfvi = forecastPfviList.length ? Math.min(...forecastPfviList) : 0;
+  const maxForecastPfvi = forecastPfviList.length ? Math.max(...forecastPfviList) : 0;
 
-  const currentSM = pipelineResult
-    ? pipelineResult.full_series.SM[pipelineResult.full_series.SM.length - 1]
-    : 42.5;
+  const currentStatus = pipelineResult ? pipelineResult.forecast.Current_Status : 'Unknown';
 
-  const currentRf = pipelineResult
-    ? pipelineResult.full_series.Rf[pipelineResult.full_series.Rf.length - 1]
-    : 0.0;
+  const lastOf = (series: number[] | undefined, fallback: number) =>
+    series && series.length ? series[series.length - 1] : fallback;
 
-  const currentTemp = pipelineResult
-    ? pipelineResult.full_series.Temp[pipelineResult.full_series.Temp.length - 1]
-    : 34.8;
+  const currentWT = pipelineResult ? lastOf(pipelineResult.full_series.WT, 0) : 0;
+  const currentSM = pipelineResult ? lastOf(pipelineResult.full_series.SM, 0) : 0;
+  const currentRf = pipelineResult ? lastOf(pipelineResult.full_series.Rf, 0) : 0;
+  const currentTemp = pipelineResult ? lastOf(pipelineResult.full_series.Temp, 0) : 0;
 
   const locationPreset = selectedRegency
     ? { id: selectedRegency.id, name: `${selectedRegency.name}, ${selectedProvince?.name || 'Indonesia'}`, lat: selectedRegency.lat, lon: selectedRegency.lon }
     : { id: 'sabangau', name: 'Sabangau, Kalteng', lat: -2.321, lon: 113.901 };
 
-  const isPeatLocation = selectedRegency ? selectedRegency.peat : true;
+  const focusAlert = (alert: any) => {
+    setActiveTab('peta');
+    handleSelectCustomLocation(alert.lat, alert.lon, alert.location);
+  };
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900 pb-16">
+    <div className="min-h-[100dvh] pb-12">
       <Header
+        provinces={provinces}
         selectedProvince={selectedProvince}
         selectedRegency={selectedRegency}
-        onSelectRegion={handleSelectRegion}
-        onLoadRealtimeData={() => fetchRealtimeData(selectedRegency)}
-        onOpenPaperModal={() => setIsPaperModalOpen(true)}
+        model={model}
+        theme={theme}
         loadingRealtime={loadingRealtime}
-        viewMode={viewMode}
-        onToggleViewMode={setViewMode}
+        onSelectRegion={handleSelectRegion}
+        onRefresh={() => fetchRealtimeData(selectedRegency)}
+        onToggleTheme={toggleTheme}
+        onOpenPaperModal={() => setIsPaperModalOpen(true)}
       />
 
-      <main className="max-w-7xl mx-auto px-4 lg:px-8 space-y-6">
-        {/* Non-Peatland Location Warning Banner */}
-        {!isPeatLocation && (
-          <div className="bg-amber-50 border border-amber-300 rounded-xl p-4 text-xs font-mono text-amber-900 shadow-sm flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <span className="p-2 bg-amber-200 text-amber-900 rounded-lg font-bold">ℹ️ NON-GAMBUT</span>
-              <div>
-                <strong className="text-sm font-bold block mb-0.5">{locationPreset.name} (Wilayah Tanah Mineral)</strong>
-                <span>Lokasi ini merupakan wilayah perkotaan/tanah mineral, bukan ekosistem gambut. Model PFVI telah dikalibrasi untuk tanah mineral (kapasitas kelembaban 20-55%).</span>
-              </div>
+      {/* Tab bar — one section per screen instead of one very long scroll */}
+      <nav className="border-b border-[var(--line)] bg-[var(--surface)] sticky top-[60px] z-30">
+        <div className="max-w-[1440px] mx-auto px-4 lg:px-7 flex gap-1 overflow-x-auto">
+          {TABS.map(({ id, label, Icon }) => {
+            const isActive = activeTab === id;
+            return (
+              <button
+                key={id}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                onClick={() => setActiveTab(id)}
+                className={`flex items-center gap-1.5 px-3.5 py-3 text-[12.5px] font-medium border-b-2 whitespace-nowrap transition-colors cursor-pointer ${
+                  isActive
+                    ? 'border-[var(--accent)] text-[var(--text)]'
+                    : 'border-transparent text-[var(--text-mute)] hover:text-[var(--text)]'
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                <span>{label}</span>
+                {id === 'ringkasan' && severeAlerts.length > 0 && (
+                  <span className="ml-0.5 min-w-[17px] h-[17px] px-1 rounded-full bg-[var(--danger)] text-[10px] font-mono font-bold text-white flex items-center justify-center">
+                    {severeAlerts.length}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+
+      <main className="max-w-[1440px] mx-auto px-4 lg:px-7 pt-6 flex flex-col gap-6">
+        {dataError && (
+          <div role="alert" className="border border-[var(--danger)] bg-[#ff4d4d14] rounded-[var(--r-md)] p-4 flex items-start gap-3">
+            <AlertTriangle className="w-4 h-4 text-[var(--danger)] shrink-0 mt-0.5" />
+            <div className="flex flex-col gap-2 min-w-0">
+              <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-[var(--danger)]">
+                Sumber data tidak tersedia
+              </span>
+              <p className="text-xs text-[var(--text-mute)] leading-relaxed">{dataError}</p>
+              <button
+                type="button"
+                onClick={() => fetchRealtimeData(selectedRegency)}
+                disabled={loadingRealtime}
+                className="self-start font-mono text-[11px] font-bold px-3 py-1.5 rounded-[var(--r-sm)] border border-[var(--line)] bg-[var(--surface-2)] text-[var(--text)] hover:border-[var(--accent)] disabled:opacity-50 cursor-pointer"
+              >
+                {loadingRealtime ? 'Menghubungkan ulang...' : 'Coba tarik ulang telemetri'}
+              </button>
             </div>
           </div>
         )}
 
-        {/* Mode Awam Banner & Action Recommendation Guide */}
-        {viewMode === 'awam' && (
-          <AwamActionGuide
+        {activeTab === 'ringkasan' && (
+          <>
+            <RiskStatusGauge
+              hasData={hasData}
+              pfvi={currentPfvi}
+              status={currentStatus}
+              waterTable={currentWT}
+              soilMoisture={currentSM}
+              rainfall={currentRf}
+              temp={currentTemp}
+              forecastDays={h}
+              minPfvi={minForecastPfvi}
+              maxPfvi={maxForecastPfvi}
+              fireIntelligence={sampleData?.fire_intelligence}
+              optimizedParams={pipelineResult?.optimization}
+            />
+            <ActiveAlerts alerts={severeAlerts} onFocus={focusAlert} />
+          </>
+        )}
+
+        {activeTab === 'peta' && (
+          <PeatlandMap
+            currentPfvi={currentPfvi}
             status={currentStatus}
-            pfvi={currentPfvi}
-            waterTable={currentWT}
-            soilMoisture={currentSM}
-            rainfall={currentRf}
-            locationName={locationPreset.name}
+            location={locationPreset}
+            onSelectCustomLocation={handleSelectCustomLocation}
           />
         )}
 
-        {/* Primary Risk Status Gauge */}
-        <RiskStatusGauge
-          pfvi={currentPfvi}
-          status={currentStatus}
-          waterTable={currentWT}
-          soilMoisture={currentSM}
-          rainfall={currentRf}
-          temp={currentTemp}
-          forecastDays={h}
-          minPfvi={minPfvi}
-          maxPfvi={maxPfvi}
-          fireIntelligence={sampleData?.fire_intelligence}
-          optimizedParams={viewMode === 'pakar' ? pipelineResult?.optimization : undefined}
-        />
-
-        {/* Signature Element: Peatland Water Table & Smoldering Risk Profile */}
-        <PeatSmolderingProfile
-          waterTable={currentWT}
-          soilMoisture={currentSM}
-          pfvi={currentPfvi}
-          status={currentStatus}
-        />
-
-        {/* Interactive GIS Satellite Map */}
-        <PeatlandMap
-          currentPfvi={currentPfvi}
-          status={currentStatus}
-          location={locationPreset}
-          onSelectCustomLocation={handleSelectCustomLocation}
-        />
-
-        {/* Advanced Algorithm Pipeline Controls (Only visible in Mode Pakar) */}
-        {viewMode === 'pakar' && (
-          <PipelineControls
-            imputation={imputation}
-            setImputation={setImputation}
-            model={model}
-            setModel={setModel}
-            h={h}
-            setH={setH}
-            epochs={epochs}
-            setEpochs={setEpochs}
-            onRunPipeline={() => executePipeline(sampleData, selectedRegency)}
-            isRunning={isRunningPipeline}
-          />
+        {activeTab === 'tren' && (
+          <>
+            <PipelineControls
+              soilType={soilType}
+              imputation={imputation}
+              setImputation={setImputation}
+              model={model}
+              setModel={setModel}
+              h={h}
+              setH={setH}
+              onRunPipeline={() => executePipeline()}
+              isRunning={isRunningPipeline}
+            />
+            {pipelineResult ? (
+              <ForecastCharts fullSeries={pipelineResult.full_series} forecastHorizon={h} />
+            ) : (
+              <div className="border border-[var(--line)] rounded-[var(--r-md)] bg-[var(--surface)] p-6 text-center text-xs text-[var(--text-mute)]">
+                Grafik tren muncul setelah pipeline PFVI menghasilkan data.
+              </div>
+            )}
+          </>
         )}
 
-        {/* Time Series Charts */}
-        {pipelineResult && (
-          <ForecastCharts
-            fullSeries={pipelineResult.full_series}
-            forecastHorizon={h}
-          />
+        {activeTab === 'simulasi' && (
+          <ScenarioSimulator currentPfvi={currentPfvi} optimizedParams={pipelineResult?.optimization} />
         )}
 
-        {/* What-If Weather Scenario Simulator */}
-        <ScenarioSimulator />
+        <footer className="border-t border-[var(--line)] pt-5 mt-2 font-sans text-xs">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 text-[var(--text-dim)]">
+            <p className="max-w-[65ch] leading-relaxed">
+              PeatFR, sistem peringatan dini kebakaran lahan gambut tropis (mengacu pada Mahdiyasa dkk., 2025).
+              Data terintegrasi langsung dengan API Open-Meteo ERA5 &amp; NASA FIRMS.
+            </p>
+            <div className="flex gap-4 text-[var(--text-mute)] font-mono text-[11px]">
+              <button type="button" onClick={() => setIsPaperModalOpen(true)} className="hover:text-[var(--accent)] cursor-pointer">Spesifikasi teoretis</button>
+              <a href="https://doi.org/10.1016/j.ecoinf.2025.103532" target="_blank" rel="noreferrer" className="hover:text-[var(--accent)]">Metodologi model</a>
+              <a href="https://firms.modaps.eosdis.nasa.gov/" target="_blank" rel="noreferrer" className="hover:text-[var(--accent)]">Sumber FIRMS</a>
+            </div>
+          </div>
+        </footer>
       </main>
 
-      {/* Theoretical Specs Modal */}
       <TheoreticalSpecsModal
         isOpen={isPaperModalOpen}
         onClose={() => setIsPaperModalOpen(false)}
@@ -3150,73 +3211,12 @@ export function App() {
   );
 }
 
-function generateMockDataForRegency(reg: Regency) {
-  const days = 30;
-  const wt = [], sm = [], rf = [], temp = [];
-  const baseLat = Math.abs(reg.lat);
-  for (let i = 0; i < days; i++) {
-    wt.push(-0.5 - 0.5 * (i / 30.0) - baseLat * 0.05);
-    sm.push(60.0 - 20.0 * (i / 30.0));
-    rf.push(i % 5 === 0 ? 12.0 : 0.0);
-    temp.push(32.0 + 3.0 * (i / 30.0));
-  }
-  return { WT: wt, SM: sm, Rf: rf, Temp: temp };
-}
-
-function calculateClientFallback(inputData: any, h: number, imputation: string, model: string, isPeat: boolean = true) {
-  const wt = inputData.WT.map((x: any) => (x === null || isNaN(x) ? -0.8 : x));
-  const sm = inputData.SM.map((x: any) => (x === null || isNaN(x) ? 50.0 : x));
-  const rf = inputData.Rf.map((x: any) => (x === null || isNaN(x) ? 0.0 : x));
-  const temp = inputData.Temp.map((x: any) => (x === null || isNaN(x) ? 33.5 : x));
-
-  const wtPred = Array(h).fill(wt[wt.length - 1] - 0.02);
-  const smPred = Array(h).fill(sm[sm.length - 1] - 1.0);
-  const rfPred = Array(h).fill(0.0);
-  const tempPred = Array(h).fill(temp[temp.length - 1] + 0.3);
-
-  const wtFull = [...wt, ...wtPred];
-  const smFull = [...sm, ...smPred];
-  const rfFull = [...rf, ...rfPred];
-  const tempFull = [...temp, ...tempPred];
-
-  const fc = isPeat ? 32.0 : 20.0;
-  const sat = isPeat ? 75.0 : 55.0;
-
-  const pfviSeries = smFull.map((val) => 300.0 * (1.0 - (val - fc) / (sat - fc)));
-  const pfviClamped = pfviSeries.map((x) => Math.min(300.0, Math.max(0.0, x)));
-
-  return {
-    status: 'success',
-    optimization: { a_h: 0.5, b_h: 0.05, n: 15.0, alpha: 1.0, mse: 12.4 },
-    forecast: {
-      WT: wtPred,
-      SM: smPred,
-      Rf: rfPred,
-      Temp: tempPred,
-      PFVI: pfviClamped.slice(-h),
-      Current_Status: pfviClamped[pfviClamped.length - 1] >= 225 ? 'Extreme' : pfviClamped[pfviClamped.length - 1] >= 150 ? 'High' : pfviClamped[pfviClamped.length - 1] >= 75 ? 'Moderate' : 'Low'
-    },
-    full_series: {
-      WT: wtFull,
-      SM: smFull,
-      Rf: rfFull,
-      Temp: tempFull,
-      PFVI: pfviClamped,
-      DI_obs: pfviClamped,
-      DF: Array(wtFull.length).fill(2.5),
-      RF: Array(wtFull.length).fill(0.0),
-      WTF: Array(wtFull.length).fill(1.2)
-    }
-  };
-}
-
 export default App;
-
 ```
 
 ---
 
-## FITUR 13: Infrastruktur Deployment & Container Orchestration
+## FITUR 10: Infrastruktur Deployment & Container Orchestration
 **Deskripsi & Tujuan Fitur:** Spesifikasi Docker Compose multi-container yang mengisolasi layanan web UI (Nginx), API Engine (Uvicorn FastAPI), dan Cloudflare Tunnel SSL.
 
 **Cara Menggunakan:**
@@ -3233,6 +3233,8 @@ services:
     restart: unless-stopped
     ports:
       - "8097:8097"
+    volumes:
+      - ./docs/screenshots:/app/screenshots
     environment:
       - PYTHONUNBUFFERED=1
       - FIRMS_MAP_KEY=${FIRMS_MAP_KEY:-aa16407e5eb11df46b09cafc085fe020}
@@ -3247,6 +3249,10 @@ services:
       - "8098:8098"
     depends_on:
       - peatfr-api
+    # Assets are baked into the image by the frontend Dockerfile multi-stage build.
+    # Do NOT bind-mount ./frontend/dist over /usr/share/nginx/html: a missing/empty
+    # host dir silently overrides the built bundle, and a host-side `rm -rf dist`
+    # leaves the container mount pointing at the deleted inode (nginx -> 403).
 
   cftunnel-peatfr:
     image: cloudflare/cloudflared:latest
@@ -3256,7 +3262,6 @@ services:
     environment:
       - TUNNEL_TOKEN=${TUNNEL_TOKEN}
     command: tunnel --no-autoupdate run
-
 ```
 
 ---

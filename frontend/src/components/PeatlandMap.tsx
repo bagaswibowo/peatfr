@@ -88,15 +88,6 @@ const createTargetIcon = () => {
   });
 };
 
-const severityTextClass = (severity: string) => {
-  switch ((severity || '').toUpperCase()) {
-    case 'CRITICAL': return 'text-[var(--danger)]';
-    case 'HIGH': return 'text-[var(--high)]';
-    case 'WARNING': return 'text-[var(--warn)]';
-    default: return 'text-[var(--text-mute)]';
-  }
-};
-
 function MapFlyTo({ lat, lon }: { lat: number; lon: number }) {
   const map = useMap();
   useEffect(() => {
@@ -118,7 +109,6 @@ interface PeatlandMapProps {
   currentPfvi: number;
   status: string;
   location: LocationPreset;
-  severeAlerts?: any[];
   onSelectCustomLocation?: (lat: number, lon: number, name?: string) => void;
 }
 
@@ -126,7 +116,6 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
   currentPfvi,
   status,
   location,
-  severeAlerts = [],
   onSelectCustomLocation
 }) => {
   const pos: [number, number] = [location.lat, location.lon];
@@ -356,7 +345,7 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
               </Marker>
             ))}
 
-            {/* GFW Vector Active Fires on Peatlands */}
+            {/* Hotspots attributed to a peat zone (NASA FIRMS + nearest-regency attribution) */}
             {showGfwPeatland && gfwFires.map((fire, idx) => (
               <Marker
                 key={`gfw-fire-${idx}`}
@@ -366,7 +355,7 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
                   click: (e) => {
                     e.originalEvent.stopPropagation();
                     const distKm = getDistanceKm(location.lat, location.lon, fire.latitude, fire.longitude);
-                    const title = `GFW Peatland Fire (${fire.latitude.toFixed(3)}, ${fire.longitude.toFixed(3)})`;
+                    const title = `Hotspot zona gambut (${fire.latitude.toFixed(3)}, ${fire.longitude.toFixed(3)})`;
                     setSelectedEntity({
                       type: 'gfw',
                       title: `Hotspot pada Zona Gambut`,
@@ -485,62 +474,6 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
                 </div>
               )}
             </div>
-          </div>
-
-          {/* Severe peat-fire clusters (NASA FIRMS + nearest-regency peat attribution) */}
-          <div className="p-3.5 border-t border-[var(--line)]">
-            <h4 className="text-[11px] font-mono font-bold uppercase tracking-wider text-[var(--text-mute)] flex items-center gap-1.5">
-              <ShieldAlert className="w-3.5 h-3.5 text-[var(--danger)]" />
-              <span>Kebakaran Parah ({severeAlerts.length})</span>
-            </h4>
-            {severeAlerts.length === 0 ? (
-              <p className="text-[11px] text-[var(--text-dim)] mt-2 font-mono leading-relaxed">
-                Tidak ada klaster hotspot pada zona gambut dalam 24 jam terakhir.
-              </p>
-            ) : (
-              <ul className="mt-2 flex flex-col gap-1.5">
-                {severeAlerts.slice(0, 5).map((a) => (
-                  <li key={a.id}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedEntity({
-                          type: 'gfw',
-                          title: a.title,
-                          lat: a.lat,
-                          lon: a.lon,
-                          details: {
-                            'Tingkat Bahaya': a.severity,
-                            'Wilayah': a.location,
-                            'Deteksi Hotspot': `${a.detection_count} titik`,
-                            'FRP Maksimum': `${a.frp_max_mw} MW`,
-                            'Area Terbakar': a.estimated_burned_ha
-                              ? `${a.estimated_burned_ha} ha (${a.burned_area_source})`
-                              : 'Tidak tersedia',
-                            'Atribusi Gambut': a.peatland_attribution,
-                            'Satelit': a.satellite_sensor,
-                            'Waktu': a.updated_ago
-                          }
-                        });
-                        if (onSelectCustomLocation) {
-                          onSelectCustomLocation(a.lat, a.lon, a.location);
-                        }
-                      }}
-                      className="w-full text-left border border-[var(--line)] rounded-[var(--r-sm)] px-2.5 py-2 transition-colors hover:border-[var(--danger)] cursor-pointer"
-                    >
-                      <span className={`font-mono text-[10px] font-bold ${severityTextClass(a.severity)}`}>
-                        {a.severity}
-                      </span>
-                      <span className="block text-[11px] text-[var(--text)] mt-0.5 leading-snug">{a.location}</span>
-                      <span className="block font-mono text-[10px] text-[var(--text-dim)] mt-0.5">
-                        FRP maks {a.frp_max_mw} MW · {a.detection_count} deteksi
-                        {a.estimated_burned_ha ? ` · ${a.estimated_burned_ha} ha` : ' · area terbakar n/a'}
-                      </span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
           </div>
 
           {/* Map Legend Footer */}
