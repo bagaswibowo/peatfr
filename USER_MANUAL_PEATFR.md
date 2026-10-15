@@ -2,7 +2,7 @@
 ## USER MANUAL, ARSITEKTUR, APIS, & KODE SUMBER PER FITUR
 **Aplikasi PeatFR — Fire Intelligence System & Early Warning Kebakaran Lahan Gambut**
 
-*Antarmuka PeatFR disusun sebagai empat tab operasional (Ringkasan, Peta Titik Panas, Tren & Proyeksi, Simulasi) dengan satu bilah atas global untuk pemilihan wilayah target. Seluruh angka yang ditampilkan berasal dari API publik tanpa data simulasi.*
+*Antarmuka PeatFR disusun sebagai dua tab operasional (Pemantauan dan Simulasi) dengan satu bilah atas global untuk pemilihan wilayah target. Seluruh angka yang ditampilkan berasal dari API publik tanpa data simulasi.*
 *(Mahdiyasa et al., 2025)*
 
 ---
@@ -14,7 +14,7 @@
 | **Jenis Ciptaan** | **Program Komputer** (Aplikasi Web Telemetri GIS Satelit & AI Fire Forecasting) |
 | **Judul Ciptaan** | **Aplikasi PeatFR — Fire Intelligence System & Early Warning Kebakaran Lahan Gambut**
 
-*Antarmuka PeatFR disusun sebagai empat tab operasional (Ringkasan, Peta Titik Panas, Tren & Proyeksi, Simulasi) dengan satu bilah atas global untuk pemilihan wilayah target. Seluruh angka yang ditampilkan berasal dari API publik tanpa data simulasi.* |
+*Antarmuka PeatFR disusun sebagai dua tab operasional (Pemantauan dan Simulasi) dengan satu bilah atas global untuk pemilihan wilayah target. Seluruh angka yang ditampilkan berasal dari API publik tanpa data simulasi.* |
 | **Pencipta & Pemegang Hak Cipta** | **Bagas Wibowo, S.Pd., M.Eng.** & Tim Peneliti Kelompok Keahlian SEAL Telkom University |
 | **Tanggal & Tempat Pertama Diumumkan** | **30 Agustus 2026** di Bandung, Jawa Barat, Republik Indonesia |
 | **Teknologi Stack** | **Python 3.11** (FastAPI, PyTorch, SciPy) & **React 18** (TypeScript, Vite, Leaflet GIS) |
@@ -65,7 +65,7 @@ Sistem PeatFR dirancang menggunakan arsitektur 4-tier berkinerja tinggi:
                                          v
 +-----------------------------------------------------------------------------------+
 |                        4. CLIENT PRESENTATION LAYER (React 18)                    |
-|  - Tabbed Interface: Ringkasan | Peta Titik Panas | Tren & Proyeksi | Simulasi       |
+|  - Tabbed Interface: Pemantauan (Status | Peringatan | Peta | Proyeksi) + Simulasi   |
 |  - Signature Component: Peringatan Aktif (klaster hotspot zona gambut, FRP-graded) |
 |  - Interactive GIS Satellite Map (Leaflet, NASA FIRMS WMS, VIIRS Hotspots)         |
 +-----------------------------------------------------------------------------------+
@@ -111,31 +111,36 @@ Sistem PeatFR dirancang menggunakan arsitektur 4-tier berkinerja tinggi:
 
 # 5. PANDUAN PETUNJUK FITUR-DEMI-FITUR & KODE SUMBER TERHUBUNG
 
-Aplikasi disusun sebagai empat tab operasional dengan satu bilah atas global. Setiap fitur di bawah
+Aplikasi disusun sebagai dua tab operasional dengan satu bilah atas global. Tab **Pemantauan** memuat
+seluruh alur pemantauan (status, peringatan, peta, proyeksi) dan menyediakan chip navigasi bagian agar
+pengguna tidak perlu menggulir panjang; tab **Simulasi** memuat simulator skenario. Setiap fitur di bawah
 ini memuat deskripsi, tangkapan layar mode terang, langkah penggunaan, dan daftar kode sumber terkait.
 
 | Fitur | Layar / Komponen | Berkas Sumber Utama |
 |---|---|---|
-| 1. Bilah Atas & Pemilih Wilayah Global | Semua tab | `Header.tsx` |
-| 2. Tab Ringkasan (PFVI & Peringatan Aktif) | Tab Ringkasan | `RiskStatusGauge.tsx`, `ActiveAlerts.tsx` |
-| 3. Tab Peta Titik Panas | Tab Peta | `PeatlandMap.tsx` |
-| 4. Tab Tren & Proyeksi | Tab Tren | `PipelineControls.tsx`, `ForecastCharts.tsx` |
-| 5. Tab Simulasi Skenario | Tab Simulasi | `ScenarioSimulator.tsx` |
-| 6. Backend API & Telemetri Realtime | FastAPI :8097 | `main.py` |
-| 7. Physical Engine & Optimasi Nelder-Mead | FastAPI :8097 | `pfvi.py` |
-| 8. Multi-Source Fire Intelligence Proxy | FastAPI :8097 | `fire_intelligence.py` |
-| 9. Shell Aplikasi (Tab Router & State Global) | React 18 | `App.tsx` |
-| 10. Infrastruktur Deployment | Docker Compose | `docker-compose.yml` |
+| 1. Bilah Atas & Pemilih Wilayah Global | Kedua tab | `Header.tsx` |
+| 2. Status Kerawanan PFVI | Tab Pemantauan (bagian Status) | `RiskStatusGauge.tsx` |
+| 3. Peringatan Aktif Klaster Hotspot | Tab Pemantauan (bagian Peringatan) | `ActiveAlerts.tsx` |
+| 4. Peta Titik Panas & Inspektor | Tab Pemantauan (bagian Peta) | `PeatlandMap.tsx` |
+| 5. Konfigurasi Model & Grafik Proyeksi | Tab Pemantauan (bagian Proyeksi) | `PipelineControls.tsx`, `ForecastCharts.tsx` |
+| 6. Simulasi Skenario | Tab Simulasi | `ScenarioSimulator.tsx` |
+| 7. Backend API & Telemetri Realtime | FastAPI :8097 | `main.py` |
+| 8. Physical Engine & Optimasi Nelder-Mead | FastAPI :8097 | `pfvi.py` |
+| 9. Multi-Source Fire Intelligence Proxy | FastAPI :8097 | `fire_intelligence.py` |
+| 10. Shell Aplikasi (Tab Router & State Global) | React 18 | `App.tsx` |
+| 11. Infrastruktur Deployment | Docker Compose | `docker-compose.yml` |
 
 ## FITUR 1: Bilah Atas, Pemilih Wilayah Global, & Mode Tampilan
 
-**Deskripsi & Tujuan Fitur:** Bilah atas menyatukan identitas aplikasi, pemilih wilayah target, tombol tarik ulang telemetri, sakelar mode terang/gelap, dan tautan spesifikasi jurnal. Pemilih wilayah sengaja diletakkan di sini (bukan di panel konfigurasi) karena lokasi adalah state global yang memengaruhi seluruh tab.
+**Deskripsi & Tujuan Fitur:** Bilah atas menyatukan identitas aplikasi, pemilih wilayah target, tombol tarik ulang telemetri, sakelar mode terang/gelap, dan tautan spesifikasi jurnal. Pemilih wilayah sengaja diletakkan di sini karena lokasi adalah state global yang memengaruhi kedua tab.
 
-![Bilah atas PeatFR: pemilih wilayah global, tarik ulang telemetri, mode tampilan, dan tab bar empat layar](docs/screenshots/00-header.png)
+![Bilah atas PeatFR: pemilih wilayah global, tarik ulang telemetri, mode tampilan, dan dua tab operasional](docs/screenshots/00-header.png)
 
-*Gambar: Bilah atas PeatFR: pemilih wilayah global, tarik ulang telemetri, mode tampilan, dan tab bar empat layar.*
+*Gambar: Bilah atas PeatFR: pemilih wilayah global, tarik ulang telemetri, mode tampilan, dan dua tab operasional.*
 
+![Tampilan mobile 390px: bilah atas, dua tab, dan chip navigasi bagian tetap rapi tanpa overflow horizontal](docs/screenshots/05-mobile.png)
 
+*Gambar: Tampilan mobile 390px: bilah atas, dua tab, dan chip navigasi bagian tetap rapi tanpa overflow horizontal.*
 
 **Cara Menggunakan:**
 
@@ -314,23 +319,21 @@ export const Header: React.FC<HeaderProps> = ({
 
 ---
 
-## FITUR 2: Tab Ringkasan — Indeks Kerawanan PFVI & Peringatan Aktif
+## FITUR 2: Tab Pemantauan — Status Kerawanan PFVI
 
-**Deskripsi & Tujuan Fitur:** Tab Ringkasan adalah layar pertama dan menjawab satu pertanyaan: seberapa berbahaya kondisi hari ini di wilayah terpilih. Isinya gauge PFVI beserta variabel penggeraknya, diikuti satu daftar peringatan aktif hasil klaster titik panas NASA FIRMS. Daftar peringatan hanya muncul di satu tempat, yaitu komponen ActiveAlerts.
+**Deskripsi & Tujuan Fitur:** Tab Pemantauan memuat seluruh alur pemantauan dalam satu layar kerja. Blok pertamanya menjawab pertanyaan paling mendesak: seberapa berbahaya kondisi hari ini di wilayah terpilih. Tab ini juga menyediakan chip navigasi bagian (Status, Peringatan, Peta, Proyeksi) sehingga pengguna dapat melompat langsung tanpa menggulir panjang.
 
-![Tab Ringkasan: gauge PFVI, variabel penggerak, dan daftar Peringatan Aktif](docs/screenshots/01-ringkasan.png)
+![Bagian Status tab Pemantauan: gauge PFVI, narasi kerawanan, dan panel kesesuaian model](docs/screenshots/01a-status.png)
 
-*Gambar: Tab Ringkasan: gauge PFVI, variabel penggerak, dan daftar Peringatan Aktif.*
-
-
+*Gambar: Bagian Status tab Pemantauan: gauge PFVI, narasi kerawanan, dan panel kesesuaian model.*
 
 **Cara Menggunakan:**
 
-1. Gauge tengah menampilkan **skor PFVI** skala 0 sampai 300 beserta kategorinya (Rendah < 75, Sedang 75-150, Tinggi 150-225, Ekstrem > 225).
-2. Empat angka di bawah narasi menampilkan muka air tanah (m), kelembapan tanah (%), FWI cuaca, dan status pembaruan satelit.
-3. Panel kanan menampilkan kesesuaian model (MSE hasil optimasi Nelder-Mead), proksimitas titik api radius 25 km, area terbakar FirePing, horizon proyeksi, dan sumber telemetri.
-4. Bagian **Peringatan aktif** mendaftar setiap klaster titik panas pada zona gambut dalam 24 jam terakhir, diurutkan dari FRP tertinggi, lengkap dengan jumlah deteksi dan luas terbakar bila tersedia. Angka pada label tab Ringkasan adalah jumlah klaster aktif.
-5. Klik salah satu baris peringatan untuk berpindah ke tab Peta dan memfokuskan telemetri ke koordinat klaster tersebut.
+1. Tab **Pemantauan** terbuka secara default saat aplikasi dimuat.
+2. Gauge tengah menampilkan **skor PFVI** skala 0 sampai 300 beserta kategorinya (Rendah < 75, Sedang 75-150, Tinggi 150-225, Ekstrem > 225).
+3. Empat angka di bawah narasi menampilkan muka air tanah (m), kelembapan tanah (%), FWI cuaca, dan status pembaruan satelit.
+4. Panel kanan menampilkan kesesuaian model (MSE hasil optimasi Nelder-Mead), proksimitas titik api radius 25 km, area terbakar FirePing, horizon proyeksi, dan sumber telemetri.
+5. Gunakan chip **Status / Peringatan / Peta / Proyeksi** di bawah tab bar untuk melompat ke bagian yang dituju.
 6. Bila sumber data tidak dapat dihubungi, aplikasi menampilkan banner merah dan menahan angka risiko kosong alih-alih menampilkan nilai perkiraan.
 
 #### Kode Sumber (Source Code Listing): `frontend/src/components/RiskStatusGauge.tsx`
@@ -572,6 +575,24 @@ export const RiskStatusGauge: React.FC<RiskStatusGaugeProps> = ({
 };
 ```
 
+---
+
+## FITUR 3: Tab Pemantauan — Peringatan Aktif Klaster Hotspot
+
+**Deskripsi & Tujuan Fitur:** Daftar peringatan hasil klaster titik panas NASA FIRMS pada zona gambut. Ini satu-satunya tempat teks peringatan ditampilkan, sehingga pengguna tidak menemukan informasi yang sama di dua tempat berbeda.
+
+![Bagian Peringatan tab Pemantauan: daftar klaster hotspot zona gambut terurut FRP](docs/screenshots/01b-peringatan.png)
+
+*Gambar: Bagian Peringatan tab Pemantauan: daftar klaster hotspot zona gambut terurut FRP.*
+
+**Cara Menggunakan:**
+
+1. Bagian **Peringatan aktif** mendaftar setiap klaster titik panas pada zona gambut dalam 24 jam terakhir, diurutkan dari FRP tertinggi.
+2. Setiap baris menampilkan tingkat bahaya (Kebakaran parah / Anomali termal tinggi / Waspada gambut), wilayah, jumlah deteksi, FRP maksimum, dan luas terbakar bila tersedia.
+3. Angka pada label tab Pemantauan adalah jumlah klaster aktif.
+4. Klik **Lihat di peta** pada baris mana pun untuk memfokuskan peta ke koordinat klaster tersebut dan menggulir ke bagian Peta.
+5. Bila tidak ada klaster dalam 24 jam terakhir, aplikasi menampilkan status aman, bukan daftar kosong tanpa penjelasan.
+
 #### Kode Sumber (Source Code Listing): `frontend/src/components/ActiveAlerts.tsx`
 
 ```tsx
@@ -676,19 +697,17 @@ export const ActiveAlerts: React.FC<ActiveAlertsProps> = ({ alerts, onFocus }) =
 
 ---
 
-## FITUR 3: Tab Peta Titik Panas — Peta Satelit & Inspektor Hotspot
+## FITUR 4: Tab Pemantauan — Peta Titik Panas & Inspektor Hotspot
 
 **Deskripsi & Tujuan Fitur:** Peta GIS berbasis Esri World Imagery dengan layer thermal NASA FIRMS terotorisasi, hotspot vector, dan atribusi zona gambut. Inspektor di sisi kanan menampilkan rincian setiap titik yang dipilih.
 
-![Tab Peta Titik Panas: layer NASA FIRMS, marker hotspot, dan Inspektor Titik Panas](docs/screenshots/02-peta.png)
+![Bagian Peta tab Pemantauan: layer NASA FIRMS, marker hotspot, dan Inspektor Titik Panas](docs/screenshots/01c-peta.png)
 
-*Gambar: Tab Peta Titik Panas: layer NASA FIRMS, marker hotspot, dan Inspektor Titik Panas.*
-
-
+*Gambar: Bagian Peta tab Pemantauan: layer NASA FIRMS, marker hotspot, dan Inspektor Titik Panas.*
 
 **Cara Menggunakan:**
 
-1. Buka tab **Peta titik panas**.
+1. Gulir ke bagian **Peta** atau klik chip Peta di bawah tab bar.
 2. Aktifkan atau matikan layer lewat tombol di kanan atas peta: **FIRMS WMS (NASA Key)**, **Hotspots API** (jumlah deteksi vector), dan **Zona Gambut** (deteksi yang diatribusikan ke kabupaten gambut terdekat, maksimum 75 km).
 3. Klik titik mana pun pada peta untuk mengambil koordinat dan menarik telemetri titik tersebut; peta memfokus ulang ke lokasi baru.
 4. Klik marker hotspot (oranye/merah) untuk melihat tanggal-jam akuisisi UTC, kecerahan T_i4 (K), daya FRP (MW), satelit pengawas, dan jarak ke stasiun utama.
@@ -1204,15 +1223,13 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
 
 ---
 
-## FITUR 4: Tab Tren & Proyeksi — Konfigurasi Model & Grafik Time-Series
+## FITUR 5: Tab Pemantauan — Konfigurasi Model & Grafik Proyeksi
 
-**Deskripsi & Tujuan Fitur:** Tab ini menggabungkan panel konfigurasi algoritma (untuk pengguna pakar) dengan grafik historis dan proyeksi PFVI, ditambah empat grafik variabel pendukung.
+**Deskripsi & Tujuan Fitur:** Bagian Proyeksi menggabungkan panel konfigurasi algoritma (untuk pengguna pakar) dengan grafik historis dan proyeksi PFVI, ditambah empat grafik variabel pendukung.
 
-![Tab Tren & Proyeksi: panel konfigurasi model, grafik PFVI, dan variabel pendukung](docs/screenshots/03-tren.png)
+![Bagian Proyeksi tab Pemantauan: konfigurasi model, sinyal penggerak, dan grafik PFVI historis-proyeksi](docs/screenshots/01d-proyeksi.png)
 
-*Gambar: Tab Tren & Proyeksi: panel konfigurasi model, grafik PFVI, dan variabel pendukung.*
-
-
+*Gambar: Bagian Proyeksi tab Pemantauan: konfigurasi model, sinyal penggerak, dan grafik PFVI historis-proyeksi.*
 
 **Cara Menggunakan:**
 
@@ -1654,19 +1671,13 @@ export const ForecastCharts: React.FC<ForecastChartsProps> = ({
 
 ---
 
-## FITUR 5: Tab Simulasi — Skenario Bagaimana Jika
+## FITUR 6: Tab Simulasi — Skenario Bagaimana Jika
 
 **Deskripsi & Tujuan Fitur:** Simulator interaktif untuk menguji dampak kenaikan suhu, durasi kemarau, dan kedalaman muka air tanah terhadap PFVI. Simulator memakai parameter hidrologi hasil kalibrasi pipeline untuk wilayah terpilih, dan jatuh ke nilai default jurnal Sabangau hanya bila pipeline belum menghasilkan parameter.
 
-![Tab Simulasi: skenario bagaimana jika dengan parameter hidrologi terkalibrasi](docs/screenshots/04-simulasi.png)
+![Tab Simulasi: skenario bagaimana jika dengan parameter hidrologi terkalibrasi](docs/screenshots/02-simulasi.png)
 
 *Gambar: Tab Simulasi: skenario bagaimana jika dengan parameter hidrologi terkalibrasi.*
-
-![Tampilan mobile 390px: bilah atas dan tab bar tetap rapi tanpa overflow horizontal](docs/screenshots/05-mobile.png)
-
-*Gambar: Tampilan mobile 390px: bilah atas dan tab bar tetap rapi tanpa overflow horizontal.*
-
-
 
 **Cara Menggunakan:**
 
@@ -1855,7 +1866,7 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({ currentPfv
 
 ---
 
-## FITUR 6: Backend API Routing & Telemetri Satelit Realtime (Backend Core Server)
+## FITUR 7: Backend API Routing & Telemetri Satelit Realtime (Backend Core Server)
 **Deskripsi & Tujuan Fitur:** API Server FastAPI yang bertugas memproses request HTTP, mengambil data satelit Open-Meteo ERA5-Land, mengolah hotspot NASA FIRMS, dan menjalankan pipeline otomatis.
 
 **Cara Menggunakan:**
@@ -2249,7 +2260,7 @@ def run_auto_pipeline(req: AutoPipelineRequest):
 
 ---
 
-## FITUR 7: PeatFR Mathematical Engine & Optimasi Nelder-Mead (Physical Core)
+## FITUR 8: PeatFR Mathematical Engine & Optimasi Nelder-Mead (Physical Core)
 **Deskripsi & Tujuan Fitur:** Modul backend terinti yang menghitung formula fisik PFVI, evapotranspirasi (DF), rain factor (RF), water table factor (WTF van Genuchten), dan optimasi Nelder-Mead ber-constraint fisik.
 
 **Cara Menggunakan:**
@@ -2413,7 +2424,7 @@ def optimize_pfvi_parameters(
 
 ---
 
-## FITUR 8: Multi-Source Fire Intelligence Proxy (Satellite Aggregator)
+## FITUR 9: Multi-Source Fire Intelligence Proxy (Satellite Aggregator)
 **Deskripsi & Tujuan Fitur:** Modul backend yang mengagregasi data thermal anomaly dari NASA FIRMS API (MAP_KEY authorized), GWIS burned area, dan FirePing public API.
 
 **Cara Menggunakan:**
@@ -2864,17 +2875,17 @@ fire_engine = FireIntelligenceEngine()
 
 ---
 
-## FITUR 9: Main Application Layout & State Management (App Core)
-**Deskripsi & Tujuan Fitur:** Shell aplikasi yang mengelola state global (wilayah target, hasil telemetri, hasil pipeline, daftar peringatan aktif) dan merutekannya ke empat tab. Lokasi dan atribusi jenis tanah menjadi state bersama antara bilah atas, peta, dan panel konfigurasi.
+## FITUR 10: Main Application Layout & State Management (App Core)
+**Deskripsi & Tujuan Fitur:** Shell aplikasi yang mengelola state global (wilayah target, hasil telemetri, hasil pipeline, daftar peringatan aktif) dan merutekannya ke dua tab operasional. Lokasi dan atribusi jenis tanah menjadi state bersama antara bilah atas, peta, dan panel konfigurasi.
 
 **Cara Menggunakan:**
-Tab **Ringkasan** memuat RiskStatusGauge dan ActiveAlerts; tab **Peta titik panas** memuat PeatlandMap; tab **Tren & proyeksi** memuat PipelineControls dan ForecastCharts; tab **Simulasi** memuat ScenarioSimulator. Bilah atas (Header) memuat pemilih wilayah dan kontrol tema, sedangkan TheoreticalSpecsModal terbuka dari bilah atas maupun footer.
+Tab **Pemantauan** memuat RiskStatusGauge, ActiveAlerts, PeatlandMap, PipelineControls, dan ForecastCharts secara berurutan dengan chip navigasi bagian; tab **Simulasi** memuat ScenarioSimulator. Bilah atas (Header) memuat pemilih wilayah dan kontrol tema, sedangkan TheoreticalSpecsModal terbuka dari bilah atas maupun footer.
 
 #### Kode Sumber (Source Code Listing): `frontend/src/App.tsx`
 ```tsx
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { AlertTriangle, Gauge, Map as MapIcon, Activity, Sliders } from 'lucide-react';
+import { AlertTriangle, Gauge, Sliders } from 'lucide-react';
 import { Header, Province, Regency } from './components/Header';
 import { RiskStatusGauge } from './components/RiskStatusGauge';
 import { PeatlandMap } from './components/PeatlandMap';
@@ -2887,9 +2898,7 @@ import { TheoreticalSpecsModal } from './components/TheoreticalSpecsModal';
 const API_BASE = '/api/v1';
 
 const TABS = [
-  { id: 'ringkasan', label: 'Ringkasan', Icon: Gauge },
-  { id: 'peta', label: 'Peta titik panas', Icon: MapIcon },
-  { id: 'tren', label: 'Tren & proyeksi', Icon: Activity },
+  { id: 'pemantauan', label: 'Pemantauan', Icon: Gauge },
   { id: 'simulasi', label: 'Simulasi', Icon: Sliders }
 ] as const;
 
@@ -2911,7 +2920,7 @@ export function App() {
   const [model, setModel] = useState('arima');
   const [h, setH] = useState(4);
   const [epochs, setEpochs] = useState(50);
-  const [activeTab, setActiveTab] = useState<TabId>('ringkasan');
+  const [activeTab, setActiveTab] = useState<TabId>('pemantauan');
 
   // Data & Pipeline Result State
   const [sampleData, setSampleData] = useState<any>(null);
@@ -3061,9 +3070,19 @@ export function App() {
     : { id: 'sabangau', name: 'Sabangau, Kalteng', lat: -2.321, lon: 113.901 };
 
   const focusAlert = (alert: any) => {
-    setActiveTab('peta');
     handleSelectCustomLocation(alert.lat, alert.lon, alert.location);
+    // The map lives on the same tab, so just bring it into view instead of switching tabs.
+    document.getElementById('bagian-peta')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
+
+  // In-tab anchors: the Pemantauan tab holds the whole monitoring story, so give users
+  // a way to jump between its four blocks instead of forcing one long scroll.
+  const SECTIONS = [
+    { id: 'bagian-ringkasan', label: 'Status' },
+    { id: 'bagian-peringatan', label: 'Peringatan' },
+    { id: 'bagian-peta', label: 'Peta' },
+    { id: 'bagian-proyeksi', label: 'Proyeksi' }
+  ];
 
   return (
     <div className="min-h-[100dvh] pb-12">
@@ -3100,7 +3119,7 @@ export function App() {
               >
                 <Icon className="w-3.5 h-3.5" />
                 <span>{label}</span>
-                {id === 'ringkasan' && severeAlerts.length > 0 && (
+                {id === 'pemantauan' && severeAlerts.length > 0 && (
                   <span className="ml-0.5 min-w-[17px] h-[17px] px-1 rounded-full bg-[var(--danger)] text-[10px] font-mono font-bold text-white flex items-center justify-center">
                     {severeAlerts.length}
                   </span>
@@ -3109,6 +3128,22 @@ export function App() {
             );
           })}
         </div>
+
+        {/* Section jump chips: keep the Pemantauan tab navigable without splitting it again */}
+        {activeTab === 'pemantauan' && (
+          <div className="max-w-[1440px] mx-auto px-4 lg:px-7 flex gap-2 overflow-x-auto pb-2">
+            {SECTIONS.map(({ id, label }) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                className="shrink-0 px-2.5 py-1 rounded-full border border-[var(--line)] bg-[var(--surface)] text-[11px] font-mono text-[var(--text-mute)] hover:border-[var(--accent-line)] hover:text-[var(--accent)] transition-colors cursor-pointer"
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
       </nav>
 
       <main className="max-w-[1440px] mx-auto px-4 lg:px-7 pt-6 flex flex-col gap-6">
@@ -3132,55 +3167,59 @@ export function App() {
           </div>
         )}
 
-        {activeTab === 'ringkasan' && (
+        {activeTab === 'pemantauan' && (
           <>
-            <RiskStatusGauge
-              hasData={hasData}
-              pfvi={currentPfvi}
-              status={currentStatus}
-              waterTable={currentWT}
-              soilMoisture={currentSM}
-              rainfall={currentRf}
-              temp={currentTemp}
-              forecastDays={h}
-              minPfvi={minForecastPfvi}
-              maxPfvi={maxForecastPfvi}
-              fireIntelligence={sampleData?.fire_intelligence}
-              optimizedParams={pipelineResult?.optimization}
-            />
-            <ActiveAlerts alerts={severeAlerts} onFocus={focusAlert} />
-          </>
-        )}
+            <div id="bagian-ringkasan" className="scroll-mt-[120px]">
+              <RiskStatusGauge
+                hasData={hasData}
+                pfvi={currentPfvi}
+                status={currentStatus}
+                waterTable={currentWT}
+                soilMoisture={currentSM}
+                rainfall={currentRf}
+                temp={currentTemp}
+                forecastDays={h}
+                minPfvi={minForecastPfvi}
+                maxPfvi={maxForecastPfvi}
+                fireIntelligence={sampleData?.fire_intelligence}
+                optimizedParams={pipelineResult?.optimization}
+              />
+            </div>
 
-        {activeTab === 'peta' && (
-          <PeatlandMap
-            currentPfvi={currentPfvi}
-            status={currentStatus}
-            location={locationPreset}
-            onSelectCustomLocation={handleSelectCustomLocation}
-          />
-        )}
+            <div id="bagian-peringatan" className="scroll-mt-[120px]">
+              <ActiveAlerts alerts={severeAlerts} onFocus={focusAlert} />
+            </div>
 
-        {activeTab === 'tren' && (
-          <>
-            <PipelineControls
-              soilType={soilType}
-              imputation={imputation}
-              setImputation={setImputation}
-              model={model}
-              setModel={setModel}
-              h={h}
-              setH={setH}
-              onRunPipeline={() => executePipeline()}
-              isRunning={isRunningPipeline}
-            />
-            {pipelineResult ? (
-              <ForecastCharts fullSeries={pipelineResult.full_series} forecastHorizon={h} />
-            ) : (
-              <div className="border border-[var(--line)] rounded-[var(--r-md)] bg-[var(--surface)] p-6 text-center text-xs text-[var(--text-mute)]">
-                Grafik tren muncul setelah pipeline PFVI menghasilkan data.
-              </div>
-            )}
+            <div id="bagian-peta" className="scroll-mt-[120px]">
+              <PeatlandMap
+                currentPfvi={currentPfvi}
+                status={currentStatus}
+                location={locationPreset}
+                onSelectCustomLocation={handleSelectCustomLocation}
+              />
+            </div>
+
+            <div id="bagian-proyeksi" className="scroll-mt-[120px] flex flex-col gap-6">
+              <PipelineControls
+                soilType={soilType}
+                imputation={imputation}
+                setImputation={setImputation}
+                model={model}
+                setModel={setModel}
+                h={h}
+                setH={setH}
+                onRunPipeline={() => executePipeline()}
+                isRunning={isRunningPipeline}
+              />
+
+              {pipelineResult ? (
+                <ForecastCharts fullSeries={pipelineResult.full_series} forecastHorizon={h} />
+              ) : (
+                <div className="border border-[var(--line)] rounded-[var(--r-md)] bg-[var(--surface)] p-6 text-center text-xs text-[var(--text-mute)]">
+                  Grafik tren muncul setelah pipeline PFVI menghasilkan data.
+                </div>
+              )}
+            </div>
           </>
         )}
 
@@ -3216,7 +3255,7 @@ export default App;
 
 ---
 
-## FITUR 10: Infrastruktur Deployment & Container Orchestration
+## FITUR 11: Infrastruktur Deployment & Container Orchestration
 **Deskripsi & Tujuan Fitur:** Spesifikasi Docker Compose multi-container yang mengisolasi layanan web UI (Nginx), API Engine (Uvicorn FastAPI), dan Cloudflare Tunnel SSL.
 
 **Cara Menggunakan:**

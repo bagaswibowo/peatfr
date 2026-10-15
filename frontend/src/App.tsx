@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { AlertTriangle, Gauge, Map as MapIcon, Activity, Sliders } from 'lucide-react';
+import { AlertTriangle, Gauge, Sliders } from 'lucide-react';
 import { Header, Province, Regency } from './components/Header';
 import { RiskStatusGauge } from './components/RiskStatusGauge';
 import { PeatlandMap } from './components/PeatlandMap';
@@ -13,9 +13,7 @@ import { TheoreticalSpecsModal } from './components/TheoreticalSpecsModal';
 const API_BASE = '/api/v1';
 
 const TABS = [
-  { id: 'ringkasan', label: 'Ringkasan', Icon: Gauge },
-  { id: 'peta', label: 'Peta titik panas', Icon: MapIcon },
-  { id: 'tren', label: 'Tren & proyeksi', Icon: Activity },
+  { id: 'pemantauan', label: 'Pemantauan', Icon: Gauge },
   { id: 'simulasi', label: 'Simulasi', Icon: Sliders }
 ] as const;
 
@@ -37,7 +35,7 @@ export function App() {
   const [model, setModel] = useState('arima');
   const [h, setH] = useState(4);
   const [epochs, setEpochs] = useState(50);
-  const [activeTab, setActiveTab] = useState<TabId>('ringkasan');
+  const [activeTab, setActiveTab] = useState<TabId>('pemantauan');
 
   // Data & Pipeline Result State
   const [sampleData, setSampleData] = useState<any>(null);
@@ -187,9 +185,19 @@ export function App() {
     : { id: 'sabangau', name: 'Sabangau, Kalteng', lat: -2.321, lon: 113.901 };
 
   const focusAlert = (alert: any) => {
-    setActiveTab('peta');
     handleSelectCustomLocation(alert.lat, alert.lon, alert.location);
+    // The map lives on the same tab, so just bring it into view instead of switching tabs.
+    document.getElementById('bagian-peta')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
+
+  // In-tab anchors: the Pemantauan tab holds the whole monitoring story, so give users
+  // a way to jump between its four blocks instead of forcing one long scroll.
+  const SECTIONS = [
+    { id: 'bagian-ringkasan', label: 'Status' },
+    { id: 'bagian-peringatan', label: 'Peringatan' },
+    { id: 'bagian-peta', label: 'Peta' },
+    { id: 'bagian-proyeksi', label: 'Proyeksi' }
+  ];
 
   return (
     <div className="min-h-[100dvh] pb-12">
@@ -226,7 +234,7 @@ export function App() {
               >
                 <Icon className="w-3.5 h-3.5" />
                 <span>{label}</span>
-                {id === 'ringkasan' && severeAlerts.length > 0 && (
+                {id === 'pemantauan' && severeAlerts.length > 0 && (
                   <span className="ml-0.5 min-w-[17px] h-[17px] px-1 rounded-full bg-[var(--danger)] text-[10px] font-mono font-bold text-white flex items-center justify-center">
                     {severeAlerts.length}
                   </span>
@@ -235,6 +243,22 @@ export function App() {
             );
           })}
         </div>
+
+        {/* Section jump chips: keep the Pemantauan tab navigable without splitting it again */}
+        {activeTab === 'pemantauan' && (
+          <div className="max-w-[1440px] mx-auto px-4 lg:px-7 flex gap-2 overflow-x-auto pb-2">
+            {SECTIONS.map(({ id, label }) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                className="shrink-0 px-2.5 py-1 rounded-full border border-[var(--line)] bg-[var(--surface)] text-[11px] font-mono text-[var(--text-mute)] hover:border-[var(--accent-line)] hover:text-[var(--accent)] transition-colors cursor-pointer"
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
       </nav>
 
       <main className="max-w-[1440px] mx-auto px-4 lg:px-7 pt-6 flex flex-col gap-6">
@@ -258,55 +282,59 @@ export function App() {
           </div>
         )}
 
-        {activeTab === 'ringkasan' && (
+        {activeTab === 'pemantauan' && (
           <>
-            <RiskStatusGauge
-              hasData={hasData}
-              pfvi={currentPfvi}
-              status={currentStatus}
-              waterTable={currentWT}
-              soilMoisture={currentSM}
-              rainfall={currentRf}
-              temp={currentTemp}
-              forecastDays={h}
-              minPfvi={minForecastPfvi}
-              maxPfvi={maxForecastPfvi}
-              fireIntelligence={sampleData?.fire_intelligence}
-              optimizedParams={pipelineResult?.optimization}
-            />
-            <ActiveAlerts alerts={severeAlerts} onFocus={focusAlert} />
-          </>
-        )}
+            <div id="bagian-ringkasan" className="scroll-mt-[120px]">
+              <RiskStatusGauge
+                hasData={hasData}
+                pfvi={currentPfvi}
+                status={currentStatus}
+                waterTable={currentWT}
+                soilMoisture={currentSM}
+                rainfall={currentRf}
+                temp={currentTemp}
+                forecastDays={h}
+                minPfvi={minForecastPfvi}
+                maxPfvi={maxForecastPfvi}
+                fireIntelligence={sampleData?.fire_intelligence}
+                optimizedParams={pipelineResult?.optimization}
+              />
+            </div>
 
-        {activeTab === 'peta' && (
-          <PeatlandMap
-            currentPfvi={currentPfvi}
-            status={currentStatus}
-            location={locationPreset}
-            onSelectCustomLocation={handleSelectCustomLocation}
-          />
-        )}
+            <div id="bagian-peringatan" className="scroll-mt-[120px]">
+              <ActiveAlerts alerts={severeAlerts} onFocus={focusAlert} />
+            </div>
 
-        {activeTab === 'tren' && (
-          <>
-            <PipelineControls
-              soilType={soilType}
-              imputation={imputation}
-              setImputation={setImputation}
-              model={model}
-              setModel={setModel}
-              h={h}
-              setH={setH}
-              onRunPipeline={() => executePipeline()}
-              isRunning={isRunningPipeline}
-            />
-            {pipelineResult ? (
-              <ForecastCharts fullSeries={pipelineResult.full_series} forecastHorizon={h} />
-            ) : (
-              <div className="border border-[var(--line)] rounded-[var(--r-md)] bg-[var(--surface)] p-6 text-center text-xs text-[var(--text-mute)]">
-                Grafik tren muncul setelah pipeline PFVI menghasilkan data.
-              </div>
-            )}
+            <div id="bagian-peta" className="scroll-mt-[120px]">
+              <PeatlandMap
+                currentPfvi={currentPfvi}
+                status={currentStatus}
+                location={locationPreset}
+                onSelectCustomLocation={handleSelectCustomLocation}
+              />
+            </div>
+
+            <div id="bagian-proyeksi" className="scroll-mt-[120px] flex flex-col gap-6">
+              <PipelineControls
+                soilType={soilType}
+                imputation={imputation}
+                setImputation={setImputation}
+                model={model}
+                setModel={setModel}
+                h={h}
+                setH={setH}
+                onRunPipeline={() => executePipeline()}
+                isRunning={isRunningPipeline}
+              />
+
+              {pipelineResult ? (
+                <ForecastCharts fullSeries={pipelineResult.full_series} forecastHorizon={h} />
+              ) : (
+                <div className="border border-[var(--line)] rounded-[var(--r-md)] bg-[var(--surface)] p-6 text-center text-xs text-[var(--text-mute)]">
+                  Grafik tren muncul setelah pipeline PFVI menghasilkan data.
+                </div>
+              )}
+            </div>
           </>
         )}
 
