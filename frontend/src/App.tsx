@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { AlertTriangle, Gauge, Sliders } from 'lucide-react';
 import { Header, Province, Regency } from './components/Header';
-import { RiskStatusGauge } from './components/RiskStatusGauge';
+import { HeroStatus } from './components/HeroStatus';
 import { PeatlandMap } from './components/PeatlandMap';
 import { ForecastCharts } from './components/ForecastCharts';
 import { ScenarioSimulator } from './components/ScenarioSimulator';
@@ -226,7 +226,7 @@ export function App() {
                 role="tab"
                 aria-selected={isActive}
                 onClick={() => setActiveTab(id)}
-                className={`flex items-center gap-1.5 px-3.5 py-3 text-[12.5px] font-medium border-b-2 whitespace-nowrap transition-colors cursor-pointer ${
+                className={`flex items-center gap-1.5 px-3.5 py-3 text-[14px] font-medium border-b-2 whitespace-nowrap transition-colors cursor-pointer ${
                   isActive
                     ? 'border-[var(--accent)] text-[var(--text)]'
                     : 'border-transparent text-[var(--text-mute)] hover:text-[var(--text)]'
@@ -269,7 +269,7 @@ export function App() {
               <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-[var(--danger)]">
                 Sumber data tidak tersedia
               </span>
-              <p className="text-xs text-[var(--text-mute)] leading-relaxed">{dataError}</p>
+              <p className="text-[13px] text-[var(--text-mute)] leading-relaxed">{dataError}</p>
               <button
                 type="button"
                 onClick={() => fetchRealtimeData(selectedRegency)}
@@ -285,19 +285,17 @@ export function App() {
         {activeTab === 'pemantauan' && (
           <>
             <div id="bagian-ringkasan" className="scroll-mt-[120px]">
-              <RiskStatusGauge
+              <HeroStatus
                 hasData={hasData}
                 pfvi={currentPfvi}
                 status={currentStatus}
                 waterTable={currentWT}
                 soilMoisture={currentSM}
-                rainfall={currentRf}
-                temp={currentTemp}
                 forecastDays={h}
                 minPfvi={minForecastPfvi}
                 maxPfvi={maxForecastPfvi}
-                fireIntelligence={sampleData?.fire_intelligence}
-                optimizedParams={pipelineResult?.optimization}
+                locationName={locationPreset.name}
+                nearby={sampleData?.fire_intelligence?.nearby}
               />
             </div>
 

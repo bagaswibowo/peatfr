@@ -44,20 +44,20 @@ export const ActiveAlerts: React.FC<ActiveAlertsProps> = ({ alerts, onFocus }) =
   return (
     <section>
       <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 mb-3">
-        <h2 className="text-[15px] font-semibold tracking-tight text-[var(--text)] flex items-center gap-2">
+        <h2 className="font-disp text-[17px] font-bold tracking-tight text-[var(--text)] flex items-center gap-2">
           <ShieldAlert className="w-4 h-4 text-[var(--danger)]" />
-          <span>Peringatan aktif</span>
+          <span>Peringatan kebakaran aktif</span>
         </h2>
-        <p className="text-xs text-[var(--text-dim)]">
-          Klaster titik panas zona gambut, 24 jam terakhir{latest ? ` (${latest})` : ''}
+        <p className="text-[13px] text-[var(--text-dim)]">
+          Titik panas di lahan gambut, 24 jam terakhir{latest ? ` (${latest})` : ''}
         </p>
       </div>
 
       {alerts.length === 0 ? (
         <div className="border border-[var(--line)] rounded-[var(--r-md)] bg-[var(--surface)] p-4 flex items-center gap-2.5">
           <CheckCircle2 className="w-4 h-4 text-[var(--ok)] shrink-0" />
-          <p className="text-xs text-[var(--text-mute)]">
-            Tidak ada klaster hotspot pada zona gambut yang terdeteksi dalam 24 jam terakhir.
+          <p className="text-[13px] text-[var(--text-mute)]">
+            Kabar baik: tidak ada titik api di lahan gambut dalam 24 jam terakhir.
           </p>
         </div>
       ) : (
@@ -69,21 +69,21 @@ export const ActiveAlerts: React.FC<ActiveAlertsProps> = ({ alerts, onFocus }) =
                 onClick={() => onFocus(alert)}
                 className="w-full text-left px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 transition-colors hover:bg-[var(--surface-2)] cursor-pointer"
               >
-                <span className={`shrink-0 self-start sm:self-center font-mono text-[10px] font-bold uppercase tracking-wider border rounded-[var(--r-sm)] px-2 py-0.5 ${severityClass(alert.severity)}`}>
+                <span className={`shrink-0 self-start sm:self-center font-mono text-[11px] font-bold uppercase tracking-wider border rounded-[var(--r-sm)] px-2 py-0.5 ${severityClass(alert.severity)}`}>
                   {SEVERITY_LABEL[alert.severity] || alert.severity}
                 </span>
 
                 <span className="flex-1 min-w-0">
-                  <span className="block text-[13px] font-medium text-[var(--text)] leading-snug">
+                  <span className="block text-[14px] font-medium text-[var(--text)] leading-snug">
                     {alert.location}
                   </span>
-                  <span className="block font-mono text-[10.5px] text-[var(--text-dim)] mt-0.5">
-                    {alert.detection_count} deteksi · FRP maks {alert.frp_max_mw} MW
-                    {alert.estimated_burned_ha ? ` · ${alert.estimated_burned_ha} ha terbakar` : ' · luas terbakar tidak tersedia'}
+                  <span className="block font-mono text-[11.5px] text-[var(--text-dim)] mt-0.5">
+                    {alert.detection_count} deteksi satelit · FRP maks {alert.frp_max_mw} MW
+                    {alert.estimated_burned_ha ? ` · ±${alert.estimated_burned_ha} ha terbakar` : ' · luas terbakar belum diketahui'}
                   </span>
                 </span>
 
-                <span className="shrink-0 self-end sm:self-center font-mono text-[11px] font-semibold text-[var(--accent)] flex items-center gap-1">
+                <span className="shrink-0 self-end sm:self-center font-mono text-[12px] font-semibold text-[var(--accent)] flex items-center gap-1">
                   <span>Lihat di peta</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </span>

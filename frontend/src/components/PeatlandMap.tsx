@@ -199,12 +199,12 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
       {/* Section Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-baseline justify-between gap-3 mb-3">
         <div>
-          <h2 className="text-[15px] font-semibold tracking-tight text-[var(--text)] flex items-center gap-2">
+          <h2 className="font-disp text-[17px] font-bold tracking-tight text-[var(--text)] flex items-center gap-2">
             <Satellite className="w-4 h-4 text-[var(--accent)]" />
-            <span>Peta Titik Panas &amp; Kerawanan Lahan Gambut</span>
+            <span>Peta titik api &amp; lahan gambut</span>
           </h2>
-          <p className="text-xs text-[var(--text-dim)] mt-0.5">
-            Telemetri live NASA FIRMS (VIIRS 375m), diatribusikan ke kabupaten gambut terdekat (maks 75 km). Klik titik mana saja untuk inspeksi lokasi.
+          <p className="text-[13px] text-[var(--text-dim)] mt-0.5">
+            Data satelit NASA (VIIRS 375m) langsung, dicocokkan ke kabupaten gambut terdekat (maks 75 km). Klik titik mana saja untuk melihat detail lokasi.
           </p>
         </div>
 
@@ -414,7 +414,7 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
                 <div className="p-2 text-slate-900">
                   <h4 className="font-bold text-slate-900 text-sm mb-1">{location.name}</h4>
                   <div className="text-xs font-mono font-semibold text-slate-900">
-                    PFVI Score: {currentPfvi.toFixed(1)} / 300.0 ({status})
+                    Skor risiko (PFVI): {currentPfvi.toFixed(1)} / 300 ({status})
                   </div>
                 </div>
               </Popup>

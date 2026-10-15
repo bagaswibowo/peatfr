@@ -58,7 +58,7 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({ currentPfv
   return (
     <section className="mb-8">
       <div className="mb-3">
-        <h2 className="text-[15px] font-semibold tracking-tight text-[var(--text)]">Simulasi skenario "bagaimana jika"</h2>
+        <h2 className="font-disp text-[17px] font-bold tracking-tight text-[var(--text)]">Simulasi "bagaimana jika"</h2>
         <p className="text-xs text-[var(--text-dim)] mt-0.5">
           Uji dampak cuaca dan muka air tanah terhadap PFVI · parameter hidrologi{' '}
           {optimizedParams
@@ -108,7 +108,7 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({ currentPfv
           {/* Slider 3: Water Table */}
           <div className="flex flex-col gap-2 font-mono">
             <div className="flex justify-between items-baseline font-sans text-xs">
-              <span className="text-[var(--text-mute)]">Kedalaman muka air tanah</span>
+              <span className="text-[var(--text-mute)]">Kedalaman air tanah</span>
               <span className="font-mono text-[13px] font-bold text-[var(--accent)]">-{wtDepth.toFixed(2)} m</span>
             </div>
             <input
@@ -125,7 +125,7 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({ currentPfv
           {/* Slider 4: Initial PFVI Baseline */}
           <div className="flex flex-col gap-2 font-mono">
             <div className="flex justify-between items-baseline font-sans text-xs">
-              <span className="text-[var(--text-mute)]">PFVI dasar awal</span>
+              <span className="text-[var(--text-mute)]">Skor risiko awal</span>
               <span className="font-mono text-[13px] font-bold text-[var(--text)]">{initialPfvi.toFixed(1)}</span>
             </div>
             <input
@@ -144,13 +144,13 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({ currentPfv
         <div className="lg:col-span-5 p-6 sm:p-7 flex flex-col justify-center gap-5">
           <div className="flex flex-col gap-1 font-mono">
             <span className="text-[11px] uppercase tracking-wider text-[var(--text-dim)] font-sans">
-              Proyeksi PFVI setelah periode simulasi
+              Skor risiko setelah simulasi
             </span>
             <span className="text-4xl font-bold tracking-tight text-[var(--accent)] my-1">
               {simResult.finalPfvi.toFixed(1)}
             </span>
             <span className="text-xs text-[var(--text-mute)] font-sans">
-              {delta >= 0 ? '+' : ''}{delta.toFixed(1)} dari dasar · kategori {category}
+              {delta >= 0 ? 'naik' : 'turun'} {Math.abs(delta).toFixed(1)} dari kondisi sekarang · level {category}
             </span>
           </div>
 

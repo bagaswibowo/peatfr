@@ -51,7 +51,7 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleTheme,
   onOpenPaperModal
 }) => {
-  const modelName = model === 'arima' ? 'ARIMA + Box-Cox' : model === 'lstm' ? 'LSTM PyTorch' : 'GRU PyTorch';
+  const modelName = model === 'arima' ? 'ARIMA (otomatis)' : model === 'lstm' ? 'LSTM (AI)' : 'GRU (AI)';
 
   const isCustomLocation = selectedRegency ? selectedRegency.id.startsWith('CUSTOM-') : false;
 
@@ -75,8 +75,8 @@ export const Header: React.FC<HeaderProps> = ({
             <Flame className="w-[17px] h-[17px] stroke-[#0a0c0a] stroke-[2.2]" />
           </div>
           <div className="hidden sm:flex flex-col leading-tight">
-            <b className="font-bold text-[15px] tracking-tight text-[var(--text)]">PeatFR</b>
-            <span className="text-[11px] text-[var(--text-dim)]">EWS kebakaran gambut</span>
+            <b className="font-disp font-bold text-[16px] tracking-tight text-[var(--text)]">PeatFR</b>
+            <span className="text-[12px] text-[var(--text-dim)]">Peringatan dini kebakaran gambut</span>
           </div>
         </div>
 
@@ -92,7 +92,7 @@ export const Header: React.FC<HeaderProps> = ({
               if (found) onSelectRegion(found.prov, found.reg);
             }}
             aria-label="Pilih wilayah target pemantauan"
-            className="w-full min-w-0 bg-[var(--surface-2)] border border-[var(--line)] rounded-[var(--r-sm)] px-2.5 py-1.5 text-[12.5px] font-medium text-[var(--text)] focus:outline-none focus:border-[var(--accent)] cursor-pointer"
+            className="w-full min-w-0 bg-[var(--surface-2)] border border-[var(--line)] rounded-[var(--r-sm)] px-3 py-2 text-[14px] font-medium text-[var(--text)] focus:outline-none focus:border-[var(--accent)] cursor-pointer"
           >
             {isCustomLocation && <option value="CUSTOM">{selectedRegency?.name}</option>}
             {allRegencies.map(({ prov, reg }) => (
@@ -145,12 +145,12 @@ export const Header: React.FC<HeaderProps> = ({
             {theme === 'dark' ? (
               <>
                 <Sun className="w-3.5 h-3.5 text-[var(--accent)]" />
-                <span className="hidden sm:inline">Mode terang</span>
+                <span className="hidden sm:inline">Terang</span>
               </>
             ) : (
               <>
                 <Moon className="w-3.5 h-3.5 text-[var(--accent)]" />
-                <span className="hidden sm:inline">Mode gelap</span>
+                <span className="hidden sm:inline">Gelap</span>
               </>
             )}
           </button>

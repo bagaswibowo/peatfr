@@ -20,7 +20,8 @@
   --danger: #ff4d4d;
   --r-sm: 3px;
   --r-md: 6px;
-  --font-d: 'Space Grotesk', system-ui, sans-serif;
+  --font-d: 'Inter', system-ui, sans-serif;
+  --font-display: 'Sora', 'Inter', system-ui, sans-serif;
   --font-m: 'JetBrains Mono', ui-monospace, monospace;
   --bg-radial: radial-gradient(1100px 500px at 82% -10%, #1a2117 0%, transparent 60%);
 }
@@ -52,10 +53,15 @@ body {
   background: var(--bg-radial), var(--bg);
   color: var(--text);
   font-family: var(--font-d);
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 15px;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   transition: background 0.25s ease, color 0.25s ease;
+}
+
+/* Display headings (Sora); plain body/UI text uses Inter from body. */
+.font-disp {
+  font-family: var(--font-display);
 }
 
 .mono {

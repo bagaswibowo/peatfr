@@ -12,6 +12,7 @@ import {
   ReferenceArea
 } from 'recharts';
 import { Layers, Droplets, CloudRain, Thermometer } from 'lucide-react';
+import { signalBadge, badgeToneClass } from '../utils/pfviStatus';
 
 interface ForecastChartsProps {
   fullSeries: {
@@ -56,14 +57,21 @@ export const ForecastCharts: React.FC<ForecastChartsProps> = ({
   const latestRF = fullSeries.Rf[fullSeries.Rf.length - 1];
   const latestTemp = fullSeries.Temp[fullSeries.Temp.length - 1];
 
+  // Badges computed from the actual latest value — never hardcoded, so a
+  // critical water table can never sit next to a "Normal" badge.
+  const badgeWT = signalBadge('WT', latestWT);
+  const badgeSM = signalBadge('SM', latestSM);
+  const badgeRf = signalBadge('Rf', latestRF);
+  const badgeTemp = signalBadge('Temp', latestTemp);
+
   return (
     <div className="space-y-6">
       {/* 1. SIGNAL STRIP (4 Key Driving Variables) */}
       <section>
         <div className="flex items-baseline justify-between gap-4 mb-3">
           <div>
-            <h2 className="text-[15px] font-semibold tracking-tight text-[var(--text)]">Sinyal permukaan &amp; atmosfer</h2>
-            <p className="text-xs text-[var(--text-dim)] mt-0.5">Empat variabel penggerak utama indeks, 31 hari terakhir</p>
+            <h2 className="font-disp text-[17px] font-bold tracking-tight text-[var(--text)]">Kondisi saat ini</h2>
+            <p className="text-[13px] text-[var(--text-dim)] mt-0.5">Empat hal utama yang menentukan risiko kebakaran — air tanah, kelembapan tanah, hujan, dan suhu</p>
           </div>
         </div>
 
@@ -75,7 +83,7 @@ export const ForecastCharts: React.FC<ForecastChartsProps> = ({
                 <Droplets className="w-3.5 h-3.5 text-[var(--ok)]" />
                 <span>Muka air tanah</span>
               </span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-[#3fc98a1f] text-[var(--ok)]">Normal</span>
+              <span className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${badgeToneClass(badgeWT.tone)}`}>{badgeWT.label}</span>
             </div>
             <div className="flex items-baseline justify-between gap-2 mt-1">
               <span className="text-2xl font-bold tracking-tight text-[var(--text)]">
@@ -98,7 +106,7 @@ export const ForecastCharts: React.FC<ForecastChartsProps> = ({
                 <Layers className="w-3.5 h-3.5 text-[var(--warn)]" />
                 <span>Kelembapan tanah</span>
               </span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-[#f0b23e1f] text-[var(--warn)]">Kering</span>
+              <span className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${badgeToneClass(badgeSM.tone)}`}>{badgeSM.label}</span>
             </div>
             <div className="flex items-baseline justify-between gap-2 mt-1">
               <span className="text-2xl font-bold tracking-tight text-[var(--text)]">
@@ -121,7 +129,7 @@ export const ForecastCharts: React.FC<ForecastChartsProps> = ({
                 <CloudRain className="w-3.5 h-3.5 text-[var(--high)]" />
                 <span>Curah hujan</span>
               </span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-[#ff8a3d1f] text-[var(--high)]">Minimum</span>
+              <span className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${badgeToneClass(badgeRf.tone)}`}>{badgeRf.label}</span>
             </div>
             <div className="flex items-baseline justify-between gap-2 mt-1">
               <span className="text-2xl font-bold tracking-tight text-[var(--text)]">
@@ -144,7 +152,7 @@ export const ForecastCharts: React.FC<ForecastChartsProps> = ({
                 <Thermometer className="w-3.5 h-3.5 text-[var(--accent)]" />
                 <span>Suhu maksimum</span>
               </span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-[var(--accent-soft)] text-[var(--accent)]">Normal</span>
+              <span className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${badgeToneClass(badgeTemp.tone)}`}>{badgeTemp.label}</span>
             </div>
             <div className="flex items-baseline justify-between gap-2 mt-1">
               <span className="text-2xl font-bold tracking-tight text-[var(--text)]">
@@ -166,7 +174,7 @@ export const ForecastCharts: React.FC<ForecastChartsProps> = ({
       <section>
         <div className="flex items-baseline justify-between gap-4 mb-3">
           <div>
-            <h2 className="text-[15px] font-semibold tracking-tight text-[var(--text)]">Historis &amp; proyeksi PFVI</h2>
+            <h2 className="font-disp text-[17px] font-bold tracking-tight text-[var(--text)]">Perkembangan risiko, kemarin dan beberapa hari ke depan</h2>
             <p className="text-xs text-[var(--text-dim)] mt-0.5">Garis solid = observasi | garis putus-putus = proyeksi {forecastHorizon} hari</p>
           </div>
           <div className="flex items-center gap-4 text-xs font-mono text-[var(--text-mute)]">
@@ -211,7 +219,7 @@ export const ForecastCharts: React.FC<ForecastChartsProps> = ({
       {/* 4. QUAD CHARTS FOR SUPPORTING VARIABLES */}
       <section>
         <div className="mb-3">
-          <h2 className="text-[15px] font-semibold tracking-tight text-[var(--text)]">Variabel pendukung</h2>
+          <h2 className="font-disp text-[17px] font-bold tracking-tight text-[var(--text)]">Grafik lengkap tiap variabel</h2>
           <p className="text-xs text-[var(--text-dim)] mt-0.5">31 hari observasi ditambah 4 hari proyeksi</p>
         </div>
 
