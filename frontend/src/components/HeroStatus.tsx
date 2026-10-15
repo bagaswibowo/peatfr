@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Printer, Info, Droplets, Flame } from 'lucide-react';
-import { statusKey, StatusKey, STATUS_ID, STATUS_MIN, STATUS_ORDER, trendInfo, WT_CRITICAL_CM, layStatusParagraph } from '../utils/pfviStatus';
+import { Info, Droplets, Flame } from 'lucide-react';
+import { statusKey, STATUS_ID, trendInfo, WT_CRITICAL_CM, layStatusParagraph } from '../utils/pfviStatus';
 
 interface HeroStatusProps {
   hasData?: boolean;
@@ -18,48 +18,6 @@ interface HeroStatusProps {
     nearest_distance_km?: number | null;
   };
 }
-
-// Status scale bar: one thick segmented strip with PFVI thresholds (0/75/150/225)
-// and a needle at the current value — the signature element of the hero.
-const StatusScale: React.FC<{ pfvi: number; status: StatusKey }> = ({ pfvi, status }) => {
-  const pct = Math.min(100, Math.max(0, (pfvi / 300) * 100));
-  return (
-    <div className="w-full">
-      <div className="relative h-3.5 rounded-full overflow-hidden flex border border-[var(--line)]">
-        <div className="h-full bg-[var(--ok)]" style={{ width: '25%' }} />
-        <div className="h-full bg-[var(--warn)]" style={{ width: '25%' }} />
-        <div className="h-full bg-[var(--high)]" style={{ width: '25%' }} />
-        <div className="h-full bg-[var(--danger)]" style={{ width: '25%' }} />
-      </div>
-      {/* Needle */}
-      <div className="relative h-0">
-        <div
-          className="absolute -top-[15px] w-[3px] h-[19px] bg-[var(--text)] rounded-sm shadow transition-all duration-700"
-          style={{ left: `calc(${pct}% - 1.5px)` }}
-          aria-hidden="true"
-        />
-      </div>
-      <div className="flex justify-between font-mono text-[10.5px] text-[var(--text-dim)] mt-1.5">
-        <span>0</span>
-        <span>75</span>
-        <span>150</span>
-        <span>225</span>
-        <span>300</span>
-      </div>
-      <div className="flex justify-between text-[10.5px] font-semibold mt-0.5">
-        {STATUS_ORDER.map((k) => (
-          <span
-            key={k}
-            className={k === status ? 'text-[var(--text)]' : 'text-[var(--text-dim)]'}
-            style={{ width: '25%', textAlign: k === 'low' ? 'left' : k === 'extreme' ? 'right' : 'center' }}
-          >
-            {STATUS_ID[k]}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-};
 
 export const HeroStatus: React.FC<HeroStatusProps> = ({
   hasData = true,
@@ -140,9 +98,6 @@ export const HeroStatus: React.FC<HeroStatusProps> = ({
           </p>
         </div>
 
-        {/* Signature: status scale with needle */}
-        <StatusScale pfvi={pfvi} status={key} />
-
         {/* Two quick facts */}
         <div className="flex flex-wrap gap-x-8 gap-y-2 text-[13.5px]">
           <span className="flex items-center gap-1.5 text-[var(--text-mute)]">
@@ -191,17 +146,3 @@ export const HeroStatus: React.FC<HeroStatusProps> = ({
     </section>
   );
 };
-
-// Compact printable summary (kept for field printouts; plain wording).
-export const PrintHint: React.FC = () => (
-  <button
-    type="button"
-    onClick={() => window.print()}
-    className="flex items-center gap-1.5 font-mono text-[12px] text-[var(--text-mute)] hover:text-[var(--accent)] cursor-pointer"
-  >
-    <Printer className="w-3.5 h-3.5" />
-    <span>Cetak ringkasan</span>
-  </button>
-);
-
-export { STATUS_MIN };
