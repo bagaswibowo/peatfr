@@ -73,6 +73,13 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* Leaflet panes default to high z-indexes (400+) and overlay the sticky
+   header/tab bar (z-30/40) when the map scrolls under them. */
+.leaflet-pane,
+.leaflet-control {
+  z-index: 10 !important;
+}
+
 .leaflet-container {
   font-family: var(--font-d) !important;
   border-radius: var(--r-md);
