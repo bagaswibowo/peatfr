@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { AlertTriangle, Gauge, Sliders } from 'lucide-react';
 import { Header, Province, Regency } from './components/Header';
-import { HeroStatus } from './components/HeroStatus';
 import { PeatlandMap } from './components/PeatlandMap';
 import { ForecastCharts } from './components/ForecastCharts';
 import { ScenarioSimulator } from './components/ScenarioSimulator';
@@ -190,9 +189,8 @@ export function App() {
     }, 80);
   };
 
-  // In-tab anchors for the Pemantauan tab (status -> map -> analysis).
+  // In-tab anchors for the Pemantauan tab (map -> analysis).
   const SECTIONS = [
-    { id: 'bagian-ringkasan', label: 'Status' },
     { id: 'bagian-peta', label: 'Peta' },
     { id: 'bagian-proyeksi', label: 'Analisis' }
   ];
@@ -282,17 +280,7 @@ export function App() {
 
         {activeTab === 'pemantauan' && (
           <>
-            <div id="bagian-ringkasan" className="scroll-mt-[120px]">
-              <HeroStatus
-                hasData={hasData}
-                status={currentStatus}
-                waterTable={currentWT}
-                soilMoisture={currentSM}
-                locationName={locationPreset.name}
-              />
-            </div>
-
-            {/* Map right under the status: clicking any point re-targets every
+            {/* Map is the primary surface: clicking any point re-targets every
                 panel below (settings, current conditions, charts). */}
             <div id="bagian-peta" className="scroll-mt-[120px]">
               <PeatlandMap
