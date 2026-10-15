@@ -119,7 +119,7 @@ ini memuat deskripsi, tangkapan layar mode terang, langkah penggunaan, dan dafta
 | Fitur | Layar / Komponen | Berkas Sumber Utama |
 |---|---|---|
 | 1. Bilah Atas & Pemilih Wilayah Global | Kedua tab | `Header.tsx` |
-| 2. Status Kerawanan PFVI | Tab Pemantauan (bagian Status) | `RiskStatusGauge.tsx` |
+| 2. Status Risiko & Skala PFVI (Bahasa Awam) | Tab Pemantauan (bagian Status) | `HeroStatus.tsx`, `pfviStatus.ts` |
 | 3. Peringatan Aktif Klaster Hotspot | Tab Pemantauan (bagian Peringatan) | `ActiveAlerts.tsx` |
 | 4. Peta Titik Panas & Inspektor | Tab Pemantauan (bagian Peta) | `PeatlandMap.tsx` |
 | 5. Konfigurasi Model & Grafik Proyeksi | Tab Pemantauan (bagian Proyeksi) | `PipelineControls.tsx`, `ForecastCharts.tsx` |
@@ -148,7 +148,7 @@ ini memuat deskripsi, tangkapan layar mode terang, langkah penggunaan, dan dafta
 2. Pilih wilayah target dari dropdown **Provinsi / Kabupaten** di bilah atas. Kabupaten bertanda **(Gambut)** memakai konstanta retensi air gambut (FC 32%, saturasi 75%); wilayah tanpa tanda memakai konstanta tanah mineral (FC 20%, saturasi 55%).
 3. Perubahan wilayah langsung memicu penarikan telemetri Open-Meteo ERA5-Land dan menjalankan ulang pipeline PFVI secara otomatis.
 4. Klik ikon **panah melingkar** di kanan dropdown untuk menarik ulang telemetri tanpa mengganti wilayah.
-5. Klik **Mode terang / Mode gelap** untuk berpindah tema. Pilihan tema tidak mengubah data.
+5. Klik **Terang / Gelap** untuk berpindah tema. Pilihan tema tidak mengubah data.
 6. Klik **Spesifikasi Jurnal** untuk membuka modal ringkasan metodologi (render KaTeX).
 
 #### Kode Sumber (Source Code Listing): `frontend/src/components/Header.tsx`
@@ -207,7 +207,7 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleTheme,
   onOpenPaperModal
 }) => {
-  const modelName = model === 'arima' ? 'ARIMA + Box-Cox' : model === 'lstm' ? 'LSTM PyTorch' : 'GRU PyTorch';
+  const modelName = model === 'arima' ? 'ARIMA (otomatis)' : model === 'lstm' ? 'LSTM (AI)' : 'GRU (AI)';
 
   const isCustomLocation = selectedRegency ? selectedRegency.id.startsWith('CUSTOM-') : false;
 
@@ -231,8 +231,8 @@ export const Header: React.FC<HeaderProps> = ({
             <Flame className="w-[17px] h-[17px] stroke-[#0a0c0a] stroke-[2.2]" />
           </div>
           <div className="hidden sm:flex flex-col leading-tight">
-            <b className="font-bold text-[15px] tracking-tight text-[var(--text)]">PeatFR</b>
-            <span className="text-[11px] text-[var(--text-dim)]">EWS kebakaran gambut</span>
+            <b className="font-disp font-bold text-[16px] tracking-tight text-[var(--text)]">PeatFR</b>
+            <span className="text-[12px] text-[var(--text-dim)]">Peringatan dini kebakaran gambut</span>
           </div>
         </div>
 
@@ -248,7 +248,7 @@ export const Header: React.FC<HeaderProps> = ({
               if (found) onSelectRegion(found.prov, found.reg);
             }}
             aria-label="Pilih wilayah target pemantauan"
-            className="w-full min-w-0 bg-[var(--surface-2)] border border-[var(--line)] rounded-[var(--r-sm)] px-2.5 py-1.5 text-[12.5px] font-medium text-[var(--text)] focus:outline-none focus:border-[var(--accent)] cursor-pointer"
+            className="w-full min-w-0 bg-[var(--surface-2)] border border-[var(--line)] rounded-[var(--r-sm)] px-3 py-2 text-[14px] font-medium text-[var(--text)] focus:outline-none focus:border-[var(--accent)] cursor-pointer"
           >
             {isCustomLocation && <option value="CUSTOM">{selectedRegency?.name}</option>}
             {allRegencies.map(({ prov, reg }) => (
@@ -301,12 +301,12 @@ export const Header: React.FC<HeaderProps> = ({
             {theme === 'dark' ? (
               <>
                 <Sun className="w-3.5 h-3.5 text-[var(--accent)]" />
-                <span className="hidden sm:inline">Mode terang</span>
+                <span className="hidden sm:inline">Terang</span>
               </>
             ) : (
               <>
                 <Moon className="w-3.5 h-3.5 text-[var(--accent)]" />
-                <span className="hidden sm:inline">Mode gelap</span>
+                <span className="hidden sm:inline">Gelap</span>
               </>
             )}
           </button>
@@ -319,260 +319,347 @@ export const Header: React.FC<HeaderProps> = ({
 
 ---
 
-## FITUR 2: Tab Pemantauan — Status Kerawanan PFVI
+## FITUR 2: Tab Pemantauan — Status Risiko & Skala PFVI (Bahasa Awam)
 
-**Deskripsi & Tujuan Fitur:** Tab Pemantauan memuat seluruh alur pemantauan dalam satu layar kerja. Blok pertamanya menjawab pertanyaan paling mendesak: seberapa berbahaya kondisi hari ini di wilayah terpilih. Tab ini juga menyediakan chip navigasi bagian (Status, Peringatan, Peta, Proyeksi) sehingga pengguna dapat melompat langsung tanpa menggulir panjang.
+**Deskripsi & Tujuan Fitur:** Blok pertama tab Pemantauan menjawab pertanyaan paling mendesak bagi pengguna awam: *"apakah lahan gambut di sini berbahaya hari ini?"* — dalam bahasa sehari-hari, bukan angka statistik. Hero ini menampilkan satu paragraf penjelasan polos (kedalaman air tanah vs batas aman 40 cm PP 71/2014, kelembapan tanah, tren beberapa hari ke depan, dan aksi nyata yang bisa dilakukan warga), badge status **Rendah / Sedang / Tinggi / Ekstrem**, serta skala status empat segmen berjarum pada ambang PFVI 0/75/150/225 sebagai elemen utama. Angka teknis (skor PFVI, rentang proyeksi, muka air tanah dalam meter, kelembapan) tetap tersedia tetapi disembunyikan di balik tombol **"Lihat detail teknis"** agar layar utama tidak membingungkan.
 
-![Bagian Status tab Pemantauan: gauge PFVI, narasi kerawanan, dan panel kesesuaian model](docs/screenshots/01a-status.png)
+![Bagian Status tab Pemantauan: narasi bahasa awam, skala status PFVI berjarum, dan detail teknis tersembunyi](docs/screenshots/01a-status.png)
 
-*Gambar: Bagian Status tab Pemantauan: gauge PFVI, narasi kerawanan, dan panel kesesuaian model.*
+*Gambar: Bagian Status tab Pemantauan: narasi bahasa awam, skala status PFVI berjarum, dan detail teknis tersembunyi.*
 
 **Cara Menggunakan:**
 
 1. Tab **Pemantauan** terbuka secara default saat aplikasi dimuat.
-2. Gauge tengah menampilkan **skor PFVI** skala 0 sampai 300 beserta kategorinya (Rendah < 75, Sedang 75-150, Tinggi 150-225, Ekstrem > 225).
-3. Empat angka di bawah narasi menampilkan muka air tanah (m), kelembapan tanah (%), FWI cuaca, dan status pembaruan satelit.
-4. Panel kanan menampilkan kesesuaian model (MSE hasil optimasi Nelder-Mead), proksimitas titik api radius 25 km, area terbakar FirePing, horizon proyeksi, dan sumber telemetri.
-5. Gunakan chip **Status / Peringatan / Peta / Proyeksi** di bawah tab bar untuk melompat ke bagian yang dituju.
-6. Bila sumber data tidak dapat dihubungi, aplikasi menampilkan banner merah dan menahan angka risiko kosong alih-alih menampilkan nilai perkiraan.
+2. Baca badge status berwarna (**Rendah** hijau, **Sedang** kuning, **Tinggi** oranye, **Ekstrem** merah) dan paragraf penjelasan di bawahnya — paragraf ini menyebut kedalaman air tanah aktual dan apa yang bisa dilakukan warga.
+3. Perhatikan **skala status** di bawah narasi: jarum hitam menunjukkan posisi skor risiko saat ini di antara ambang 0/75/150/225/300.
+4. Dua fakta singkat di bawah skala menampilkan kedalaman air tanah (cm) dan jarak titik api terdekat dari lokasi terpilih.
+5. Klik **"Lihat detail teknis (angka PFVI & proyeksi)"** untuk membuka angka teknis lengkap; klik lagi untuk menyembunyikan.
+6. Gunakan chip **Status / Peringatan / Peta / Proyeksi** di bawah tab bar untuk melompat ke bagian lain.
+7. Bila sumber data satelit tidak dapat dihubungi, aplikasi menampilkan banner merah dan menahan angka risiko kosong alih-alih menampilkan nilai perkiraan.
 
-#### Kode Sumber (Source Code Listing): `frontend/src/components/RiskStatusGauge.tsx`
+#### Kode Sumber (Source Code Listing): `frontend/src/utils/pfviStatus.ts`
 
 ```tsx
-import React from 'react';
-import { Activity, ShieldAlert, CheckCircle2, Flame, Layers, Clock, Satellite, AlertTriangle } from 'lucide-react';
+// Shared PFVI (Peat Fire Vulnerability Index) helpers — one source of truth
+// for status thresholds, labels, and lay explanation. Status comes from the
+// pipeline; everything derivable from it lives here.
 
-export interface FireIntelligenceData {
-  nearby?: {
-    status?: string;
-    detection_count?: number;
-    nearest_distance_km?: number | null;
-    latest_detection_at?: string;
-    burned_area_ha?: number;
-    satellite_sources?: string[];
-  };
-  fwi?: {
-    status?: string;
-    source?: string;
-    fwi_score?: number;
-    danger_rating?: string;
-  };
+export type StatusKey = 'low' | 'moderate' | 'high' | 'extreme' | 'unknown';
+
+export const statusKey = (status: string | undefined | null): StatusKey => {
+  const s = (status || '').toLowerCase();
+  if (s === 'low' || s === 'moderate' || s === 'high' || s === 'extreme') return s;
+  return 'unknown';
+};
+
+export const STATUS_ID: Record<StatusKey, string> = {
+  low: 'Rendah',
+  moderate: 'Sedang',
+  high: 'Tinggi',
+  extreme: 'Ekstrem',
+  unknown: 'Tidak diketahui'
+};
+
+// PFVI thresholds used across the app (chart bands use the same numbers).
+export const STATUS_MIN: Record<Exclude<StatusKey, 'unknown'>, number> = {
+  low: 0,
+  moderate: 75,
+  high: 150,
+  extreme: 225
+};
+export const STATUS_ORDER: Exclude<StatusKey, 'unknown'>[] = ['low', 'moderate', 'high', 'extreme'];
+
+export const TREND_THRESHOLD = 10; // PFVI points over the forecast horizon
+
+export function trendInfo(min: number, max: number): { label: string; tone: 'naik' | 'turun' | 'stabil' } {
+  const delta = max - min;
+  if (delta > TREND_THRESHOLD) return { label: 'cenderung NAIK', tone: 'naik' };
+  if (delta < -TREND_THRESHOLD) return { label: 'cenderung TURUN', tone: 'turun' };
+  return { label: 'cenderung stabil', tone: 'stabil' };
 }
 
-interface RiskStatusGaugeProps {
+// PP 71/2014 critical water-table depth (40 cm below surface).
+export const WT_CRITICAL_CM = 40;
+
+// One short paragraph of plain Indonesian: what's happening + what to do.
+export function layStatusParagraph(opts: {
+  status: StatusKey;
+  wtCm: number;
+  sm: number;
+  locationName?: string;
+  trendLabel?: string;
+}): string {
+  const { status, wtCm, sm, locationName, trendLabel } = opts;
+  const loc = locationName ? ` di ${locationName}` : '';
+  const wtDry = wtCm > WT_CRITICAL_CM;
+  const wtTxt = `Air tanah gambut sekarang sedalam ${wtCm.toFixed(0)} cm di bawah permukaan${
+    wtDry ? ' — sudah melewati batas aman 40 cm (aturan PP 71/2014)' : ' — masih di atas batas aman 40 cm'
+  }`;
+  const smTxt = sm <= 0
+    ? ''
+    : sm < 45
+      ? ', dan tanahnya sudah kering'
+      : ', tanah masih cukup lembap';
+  const trendTxt = trendLabel ? ` Kondisi ${trendLabel.toLowerCase().replace('cenderung ', 'cenderung ')} dalam beberapa hari ke depan.` : '';
+
+  switch (status) {
+    case 'extreme':
+      return `${wtTxt}${smTxt}. Gambut yang mengering bisa terbakar di bawah permukaan dan menghasilkan asap tebal yang sulit dipadamkan. Yang bisa dilakukan warga: jangan membakar sampah atau membuka lahan sama sekali, tutup sekat kanal agar air tertahan, dan segera laporkan asap atau titik api apa pun ke ketua RT/RW atau Manggala Agni terdekat.${trendTxt}`;
+    case 'high':
+      return `${wtTxt}${smTxt}. Risiko kebakaran tinggi: gambut kering dapat menyala meski tanpa api besar di permukaan. Kurangi membuka lahan, jangan membakar apa pun, dan bantu jaga pintu sekat kanal tetap tertutup agar lahan tetap basah.${trendTxt}`;
+    case 'moderate':
+      return `${wtTxt}${smTxt}. Risiko sedang — tetap waspada, terutama saat cuaca panas berkepanjangan. Hindari pembakaran lahan dan laporkan jika melihat asap di area gambut${loc}.${trendTxt}`;
+    case 'low':
+      return `${wtTxt}${smTxt}. Risiko kebakaran saat ini rendah, tetapi kebiasaan baik tetap perlu: tidak membakar lahan dan menjaga kanal tetap berair.${trendTxt}`;
+    default:
+      return 'Status belum dapat ditentukan untuk lokasi ini.';
+  }
+}
+
+// Badge labels for the four signal cards — computed from the actual value
+// instead of hardcoded, so a critical reading never shows "Normal".
+export function signalBadge(variable: 'WT' | 'SM' | 'Rf' | 'Temp', value: number): { label: string; tone: 'ok' | 'warn' | 'danger' } {
+  switch (variable) {
+    case 'WT': {
+      const cm = Math.abs(value) * 100;
+      if (cm > 80) return { label: 'Sangat kritis', tone: 'danger' };
+      if (cm > WT_CRITICAL_CM) return { label: 'Melewati batas aman', tone: 'danger' };
+      return { label: 'Aman', tone: 'ok' };
+    }
+    case 'SM':
+      if (value < 30) return { label: 'Kering kritis', tone: 'danger' };
+      if (value < 45) return { label: 'Kering', tone: 'warn' };
+      return { label: 'Lembap', tone: 'ok' };
+    case 'Rf':
+      if (value < 1) return { label: 'Kering', tone: 'warn' };
+      if (value <= 10) return { label: 'Hujan ringan', tone: 'ok' };
+      return { label: 'Hujan deras', tone: 'ok' };
+    case 'Temp':
+      if (value >= 34) return { label: 'Sangat panas', tone: 'danger' };
+      if (value >= 31) return { label: 'Panas', tone: 'warn' };
+      return { label: 'Normal', tone: 'ok' };
+  }
+}
+
+export function badgeToneClass(tone: 'ok' | 'warn' | 'danger'): string {
+  switch (tone) {
+    case 'danger': return 'bg-[#ff4d4d1f] text-[var(--danger)]';
+    case 'warn': return 'bg-[#f0b23e1f] text-[var(--warn)]';
+    default: return 'bg-[#3fc98a1f] text-[var(--ok)]';
+  }
+}
+```
+
+#### Kode Sumber (Source Code Listing): `frontend/src/components/HeroStatus.tsx`
+
+```tsx
+import React, { useState } from 'react';
+import { Printer, Info, Droplets, Flame } from 'lucide-react';
+import { statusKey, StatusKey, STATUS_ID, STATUS_MIN, STATUS_ORDER, trendInfo, WT_CRITICAL_CM, layStatusParagraph } from '../utils/pfviStatus';
+
+interface HeroStatusProps {
   hasData?: boolean;
   pfvi: number;
   status: string;
   waterTable: number;
   soilMoisture: number;
-  rainfall: number;
-  temp: number;
   forecastDays: number;
   minPfvi?: number;
   maxPfvi?: number;
-  fireIntelligence?: FireIntelligenceData;
-  optimizedParams?: {
-    a_h: number;
-    b_h: number;
-    n: number;
-    alpha: number;
-    mse: number;
+  locationName: string;
+  nearby?: {
+    status?: string;
+    detection_count?: number;
+    nearest_distance_km?: number | null;
   };
 }
 
-export const RiskStatusGauge: React.FC<RiskStatusGaugeProps> = ({
+// Status scale bar: one thick segmented strip with PFVI thresholds (0/75/150/225)
+// and a needle at the current value — the signature element of the hero.
+const StatusScale: React.FC<{ pfvi: number; status: StatusKey }> = ({ pfvi, status }) => {
+  const pct = Math.min(100, Math.max(0, (pfvi / 300) * 100));
+  return (
+    <div className="w-full">
+      <div className="relative h-3.5 rounded-full overflow-hidden flex border border-[var(--line)]">
+        <div className="h-full bg-[var(--ok)]" style={{ width: '25%' }} />
+        <div className="h-full bg-[var(--warn)]" style={{ width: '25%' }} />
+        <div className="h-full bg-[var(--high)]" style={{ width: '25%' }} />
+        <div className="h-full bg-[var(--danger)]" style={{ width: '25%' }} />
+      </div>
+      {/* Needle */}
+      <div className="relative h-0">
+        <div
+          className="absolute -top-[15px] w-[3px] h-[19px] bg-[var(--text)] rounded-sm shadow transition-all duration-700"
+          style={{ left: `calc(${pct}% - 1.5px)` }}
+          aria-hidden="true"
+        />
+      </div>
+      <div className="flex justify-between font-mono text-[10.5px] text-[var(--text-dim)] mt-1.5">
+        <span>0</span>
+        <span>75</span>
+        <span>150</span>
+        <span>225</span>
+        <span>300</span>
+      </div>
+      <div className="flex justify-between text-[10.5px] font-semibold mt-0.5">
+        {STATUS_ORDER.map((k) => (
+          <span
+            key={k}
+            className={k === status ? 'text-[var(--text)]' : 'text-[var(--text-dim)]'}
+            style={{ width: '25%', textAlign: k === 'low' ? 'left' : k === 'extreme' ? 'right' : 'center' }}
+          >
+            {STATUS_ID[k]}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export const HeroStatus: React.FC<HeroStatusProps> = ({
   hasData = true,
   pfvi,
   status,
   waterTable,
   soilMoisture,
-  rainfall,
-  temp,
   forecastDays,
-  minPfvi = 45.0,
-  maxPfvi = 285.0,
-  fireIntelligence,
-  optimizedParams
+  minPfvi = 0,
+  maxPfvi = 0,
+  locationName,
+  nearby
 }) => {
-  // SVG gauge circle parameters
-  const radius = 52;
-  const circumference = 2 * Math.PI * radius;
-  const pct = Math.min(300, Math.max(0, pfvi)) / 300;
-  const strokeDashoffset = circumference * (1 - pct);
-
-  const getBadgeColor = (category: string) => {
-    switch (category.toLowerCase()) {
-      case 'low':
-        return 'bg-[var(--ok)] text-[#0a0c0a]';
-      case 'moderate':
-        return 'bg-[var(--warn)] text-[#0a0c0a]';
-      case 'high':
-        return 'bg-[var(--high)] text-[#0a0c0a]';
-      case 'extreme':
-      case 'very high':
-        return 'bg-[var(--danger)] text-[#1a0805] animate-pulse';
-      default:
-        return 'bg-[var(--line)] text-[var(--text)]';
-    }
-  };
-
-  const nearby = fireIntelligence?.nearby;
-  const fwi = fireIntelligence?.fwi;
+  const [showDetail, setShowDetail] = useState(false);
+  const key = statusKey(status);
+  const wtCm = Math.abs(waterTable) * 100;
+  const trend = trendInfo(minPfvi, maxPfvi);
+  const paragraph = layStatusParagraph({
+    status: key,
+    wtCm,
+    sm: soilMoisture,
+    locationName,
+    trendLabel: trend.label
+  });
 
   const nearestDist = nearby?.nearest_distance_km ?? null;
-  const isProximityHazard = nearestDist !== null && nearestDist <= 25.0;
-  const burnedAreaHa = nearby?.burned_area_ha ?? null;
-  // "no detections" is a real answer (nothing burning nearby); "error" is not.
-  const proximityText = nearby?.status === 'error'
+  const hotspotTxt = nearby?.status === 'error'
     ? 'Sumber tidak terbaca'
     : nearestDist !== null
-      ? (isProximityHazard ? `Waspada (${nearestDist} km)` : `Aman (${nearestDist} km)`)
+      ? (nearestDist <= 25 ? `⚠ ${nearestDist} km dari sini` : `${nearestDist} km dari sini`)
       : nearby?.status === 'no_detections'
-        ? 'Aman (tanpa deteksi 25 km)'
+        ? 'Tidak ada dalam radius 25 km'
         : 'Tidak tersedia';
-  const proximityUnknown = proximityText === 'Tidak tersedia' || proximityText === 'Sumber tidak terbaca';
+  const hotspotDanger = nearestDist !== null && nearestDist <= 25;
 
-  // Every figure below is either a measured value or an explicit "no data" —
-  // a stand-in constant would read as live telemetry on the dashboard.
   if (!hasData) {
     return (
       <section className="hero border border-[var(--line)] rounded-[var(--r-md)] bg-[var(--surface)] p-8 flex flex-col items-center justify-center gap-3 text-center min-h-[220px]">
-        <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full font-mono text-[11.5px] font-bold uppercase tracking-wide bg-[var(--line)] text-[var(--text-mute)]">
-          <AlertTriangle className="w-3.5 h-3.5" /> Telemetri belum tersedia
+        <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full font-mono text-[12px] font-bold uppercase tracking-wide bg-[var(--line)] text-[var(--text-mute)]">
+          <Info className="w-3.5 h-3.5" /> Data belum tersedia
         </span>
-        <h1 className="text-base font-bold tracking-tight text-[var(--text)] max-w-[46ch] leading-snug">
-          Indeks kerawanan PFVI belum dapat dihitung untuk lokasi ini
+        <h1 className="font-disp text-lg font-bold tracking-tight text-[var(--text)] max-w-[46ch] leading-snug">
+          Kondisi gambut untuk lokasi ini belum bisa dihitung
         </h1>
-        <p className="text-xs text-[var(--text-mute)] max-w-[60ch] leading-relaxed">
-          Tarik telemetri satelit pada panel konfigurasi di bawah, atau pilih ulang wilayah target.
-          PeatFR menahan tampilan angka risiko daripada menampilkan nilai perkiraan.
+        <p className="text-sm text-[var(--text-mute)] max-w-[60ch] leading-relaxed">
+          Pilih wilayah dari menu di atas, lalu tunggu data satelit ditarik.
+          PeatFR tidak menampilkan angka perkiraan — hanya data sungguhan.
         </p>
       </section>
     );
   }
 
   return (
-    <section className="hero border border-[var(--line)] rounded-[var(--r-md)] bg-[var(--surface)] overflow-hidden grid grid-cols-1 lg:grid-cols-12">
-      {/* Left Column: Gauge & Hero Narrative */}
-      <div className="lg:col-span-7 p-6 sm:p-8 flex flex-col sm:flex-row items-center sm:items-start gap-6 lg:border-r border-[var(--line)] border-b lg:border-b-0">
-        {/* SVG Circular Gauge */}
-        <div className="relative w-[184px] h-[184px] flex-shrink-0">
-          <svg viewBox="0 0 120 120" className="w-full h-full -rotate-90">
-            <circle
-              cx="60"
-              cy="60"
-              r={radius}
-              className="fill-none stroke-[var(--line)] stroke-[10]"
-            />
-            <circle
-              cx="60"
-              cy="60"
-              r={radius}
-              className="fill-none stroke-[var(--danger)] stroke-[10] stroke-linecap-round transition-all duration-1000 ease-out"
-              strokeDasharray={circumference.toFixed(1)}
-              strokeDashoffset={strokeDashoffset.toFixed(1)}
-            />
-          </svg>
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-            <span className="font-mono text-4xl font-bold tracking-tight text-[var(--text)]">
-              {pfvi.toFixed(1)}
+    <section className="hero border border-[var(--line)] rounded-[var(--r-md)] bg-[var(--surface)] overflow-hidden">
+      <div className="p-6 sm:p-8 flex flex-col gap-6">
+        {/* Plain-language headline */}
+        <div className="flex flex-col gap-3 max-w-[75ch]">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <span className="text-[13px] text-[var(--text-mute)] flex items-center gap-1.5">
+              Kondisi gambut di <b className="text-[var(--text)]">{locationName}</b>
             </span>
-            <span className="text-[10.5px] text-[var(--text-dim)] font-mono font-medium -mt-1">
-              / 300 PFVI
+            <span
+              className="inline-flex items-center px-3 py-1 rounded-full text-[12.5px] font-bold uppercase tracking-wide text-[#0a0c0a]"
+              style={{
+                background:
+                  key === 'extreme' ? 'var(--danger)'
+                  : key === 'high' ? 'var(--high)'
+                  : key === 'moderate' ? 'var(--warn)'
+                  : 'var(--ok)'
+              }}
+            >
+              Risiko {STATUS_ID[key]}
             </span>
           </div>
-        </div>
 
-        {/* Narrative Copy & Meta */}
-        <div className="flex flex-col gap-3 min-w-0">
-          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full font-mono text-[11.5px] font-bold uppercase tracking-wide w-fit ${getBadgeColor(status)}`}>
-            {status} Hazard
-          </span>
-          <h1 className="text-xl font-bold tracking-tight text-[var(--text)] leading-snug">
-            Indeks kerawanan gambut berada pada level {status.toLowerCase()} di sepanjang periode ini
-          </h1>
-          <p className="text-xs text-[var(--text-mute)] leading-relaxed">
-            Proyeksi {forecastDays} hari ke depan berada di rentang {minPfvi.toFixed(1)} / {maxPfvi.toFixed(1)}, didorong oleh muka air tanah ({waterTable.toFixed(2)}m) dan kelembaban tanah ({soilMoisture.toFixed(1)}%).
+          <p className="text-[15.5px] sm:text-[17px] leading-relaxed text-[var(--text)]">
+            {paragraph}
           </p>
-
-          <div className="flex flex-wrap gap-4 pt-2 border-t border-[var(--line-soft)] text-xs font-mono">
-            <div>
-              <span className="text-[10px] uppercase text-[var(--text-dim)] block">Muka Air Tanah</span>
-              <span className="font-bold text-[var(--text)]">{waterTable.toFixed(2)} m</span>
-            </div>
-            <div>
-              <span className="text-[10px] uppercase text-[var(--text-dim)] block">Kelembapan</span>
-              <span className="font-bold text-[var(--text)]">{soilMoisture.toFixed(1)}%</span>
-            </div>
-            <div>
-              <span className="text-[10px] uppercase text-[var(--text-dim)] block">FWI Cuaca</span>
-              <span className="font-bold text-[var(--warn)]">
-                {fwi?.fwi_score !== undefined
-                  ? `${fwi.fwi_score.toFixed(1)} (${fwi.danger_rating ?? 'n/a'})`
-                  : 'Tidak tersedia'}
-              </span>
-            </div>
-            <div>
-              <span className="text-[10px] uppercase text-[var(--text-dim)] block">Diperbarui</span>
-              <span className="font-bold text-[var(--text-mute)]">Live Satellite</span>
-            </div>
-          </div>
         </div>
-      </div>
 
-      {/* Right Column: Technical Fit & Satellite Parameters Table */}
-      <div className="lg:col-span-5 p-6 sm:p-8 flex flex-col justify-center gap-2.5 font-mono text-xs">
-        <div className="flex items-center justify-between py-2 border-b border-[var(--line-soft)]">
-          <span className="text-[var(--text-mute)] flex items-center gap-2">
-            <Activity className="w-3.5 h-3.5 text-[var(--text-dim)]" />
-            <span>Kesesuaian Model (MSE)</span>
+        {/* Signature: status scale with needle */}
+        <StatusScale pfvi={pfvi} status={key} />
+
+        {/* Two quick facts */}
+        <div className="flex flex-wrap gap-x-8 gap-y-2 text-[13.5px]">
+          <span className="flex items-center gap-1.5 text-[var(--text-mute)]">
+            <Droplets className="w-4 h-4 text-[var(--ok)]" />
+            Kedalaman air tanah: <b className="text-[var(--text)] num">{wtCm.toFixed(0)} cm</b>
+            {wtCm > WT_CRITICAL_CM && <b className="text-[var(--danger)]">(terlalu kering)</b>}
           </span>
-          <span className="font-bold text-[var(--text)]">
-            {optimizedParams ? optimizedParams.mse.toFixed(2) : 'Tidak tersedia'}
+          <span className="flex items-center gap-1.5 text-[var(--text-mute)]">
+            <Flame className={`w-4 h-4 ${hotspotDanger ? 'text-[var(--danger)]' : 'text-[var(--text-dim)]'}`} />
+            Titik api terdekat: <b className={hotspotDanger ? 'text-[var(--danger)]' : 'text-[var(--text)]'}>{hotspotTxt}</b>
           </span>
         </div>
 
-        <div className="flex items-center justify-between py-2 border-b border-[var(--line-soft)]">
-          <span className="text-[var(--text-mute)] flex items-center gap-2">
-            <Flame className="w-3.5 h-3.5 text-[var(--accent)]" />
-            <span>Proksimitas Titik Api (&lt; 25 km)</span>
-          </span>
-          <span className={`font-bold ${
-            proximityUnknown ? 'text-[var(--text-dim)]' : isProximityHazard ? 'text-[var(--danger)]' : 'text-[var(--ok)]'
-          }`}>
-            {proximityText}
-          </span>
-        </div>
-
-        <div className="flex items-center justify-between py-2 border-b border-[var(--line-soft)]">
-          <span className="text-[var(--text-mute)] flex items-center gap-2">
-            <Layers className="w-3.5 h-3.5 text-[var(--text-dim)]" />
-            <span>Area Terbakar (FirePing, radius 25 km)</span>
-          </span>
-          <span className="font-bold text-[var(--text)]">
-            {burnedAreaHa !== null && burnedAreaHa > 0 ? `${burnedAreaHa.toLocaleString('id-ID')} ha` : 'Tidak ada laporan'}
-          </span>
-        </div>
-
-        <div className="flex items-center justify-between py-2 border-b border-[var(--line-soft)]">
-          <span className="text-[var(--text-mute)] flex items-center gap-2">
-            <Clock className="w-3.5 h-3.5 text-[var(--text-dim)]" />
-            <span>Horizon Proyeksi EWS</span>
-          </span>
-          <span className="font-bold text-[var(--text)]">{forecastDays} Hari</span>
-        </div>
-
-        <div className="flex items-center justify-between py-2">
-          <span className="text-[var(--text-mute)] flex items-center gap-2">
-            <Satellite className="w-3.5 h-3.5 text-[var(--text-dim)]" />
-            <span>Sumber Telemetri Satelit</span>
-          </span>
-          <span className="font-bold text-[var(--accent)]">Centroid Wilayah &amp; GIS Point</span>
+        {/* Technical detail, hidden behind a toggle */}
+        <div className="border-t border-[var(--line-soft)] pt-4 flex flex-col gap-3">
+          <button
+            type="button"
+            onClick={() => setShowDetail(!showDetail)}
+            aria-expanded={showDetail}
+            className="self-start font-mono text-[12px] text-[var(--text-mute)] hover:text-[var(--accent)] transition-colors cursor-pointer"
+          >
+            {showDetail ? '▾ Tutup detail teknis' : '▸ Lihat detail teknis (angka PFVI & proyeksi)'}
+          </button>
+          {showDetail && (
+            <dl className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-3 font-mono text-[12.5px]">
+              <div>
+                <dt className="text-[10.5px] uppercase tracking-wider text-[var(--text-dim)]">Skor PFVI</dt>
+                <dd className="num font-bold text-[var(--text)] text-base">{pfvi.toFixed(1)} <span className="text-[10.5px] font-normal text-[var(--text-dim)]">/ 300</span></dd>
+              </div>
+              <div>
+                <dt className="text-[10.5px] uppercase tracking-wider text-[var(--text-dim)]">Proyeksi {forecastDays} hari</dt>
+                <dd className="num font-bold text-[var(--text)] text-base">{minPfvi.toFixed(0)}–{maxPfvi.toFixed(0)}</dd>
+              </div>
+              <div>
+                <dt className="text-[10.5px] uppercase tracking-wider text-[var(--text-dim)]">Muka air tanah</dt>
+                <dd className="num font-bold text-[var(--text)] text-base">{waterTable.toFixed(2)} m</dd>
+              </div>
+              <div>
+                <dt className="text-[10.5px] uppercase tracking-wider text-[var(--text-dim)]">Kelembapan tanah</dt>
+                <dd className="num font-bold text-[var(--text)] text-base">{soilMoisture.toFixed(1)}%</dd>
+              </div>
+            </dl>
+          )}
         </div>
       </div>
     </section>
   );
 };
+
+// Compact printable summary (kept for field printouts; plain wording).
+export const PrintHint: React.FC = () => (
+  <button
+    type="button"
+    onClick={() => window.print()}
+    className="flex items-center gap-1.5 font-mono text-[12px] text-[var(--text-mute)] hover:text-[var(--accent)] cursor-pointer"
+  >
+    <Printer className="w-3.5 h-3.5" />
+    <span>Cetak ringkasan</span>
+  </button>
+);
+
+export { STATUS_MIN };
 ```
 
 ---
@@ -642,20 +729,20 @@ export const ActiveAlerts: React.FC<ActiveAlertsProps> = ({ alerts, onFocus }) =
   return (
     <section>
       <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 mb-3">
-        <h2 className="text-[15px] font-semibold tracking-tight text-[var(--text)] flex items-center gap-2">
+        <h2 className="font-disp text-[17px] font-bold tracking-tight text-[var(--text)] flex items-center gap-2">
           <ShieldAlert className="w-4 h-4 text-[var(--danger)]" />
-          <span>Peringatan aktif</span>
+          <span>Peringatan kebakaran aktif</span>
         </h2>
-        <p className="text-xs text-[var(--text-dim)]">
-          Klaster titik panas zona gambut, 24 jam terakhir{latest ? ` (${latest})` : ''}
+        <p className="text-[13px] text-[var(--text-dim)]">
+          Titik panas di lahan gambut, 24 jam terakhir{latest ? ` (${latest})` : ''}
         </p>
       </div>
 
       {alerts.length === 0 ? (
         <div className="border border-[var(--line)] rounded-[var(--r-md)] bg-[var(--surface)] p-4 flex items-center gap-2.5">
           <CheckCircle2 className="w-4 h-4 text-[var(--ok)] shrink-0" />
-          <p className="text-xs text-[var(--text-mute)]">
-            Tidak ada klaster hotspot pada zona gambut yang terdeteksi dalam 24 jam terakhir.
+          <p className="text-[13px] text-[var(--text-mute)]">
+            Kabar baik: tidak ada titik api di lahan gambut dalam 24 jam terakhir.
           </p>
         </div>
       ) : (
@@ -667,21 +754,21 @@ export const ActiveAlerts: React.FC<ActiveAlertsProps> = ({ alerts, onFocus }) =
                 onClick={() => onFocus(alert)}
                 className="w-full text-left px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 transition-colors hover:bg-[var(--surface-2)] cursor-pointer"
               >
-                <span className={`shrink-0 self-start sm:self-center font-mono text-[10px] font-bold uppercase tracking-wider border rounded-[var(--r-sm)] px-2 py-0.5 ${severityClass(alert.severity)}`}>
+                <span className={`shrink-0 self-start sm:self-center font-mono text-[11px] font-bold uppercase tracking-wider border rounded-[var(--r-sm)] px-2 py-0.5 ${severityClass(alert.severity)}`}>
                   {SEVERITY_LABEL[alert.severity] || alert.severity}
                 </span>
 
                 <span className="flex-1 min-w-0">
-                  <span className="block text-[13px] font-medium text-[var(--text)] leading-snug">
+                  <span className="block text-[14px] font-medium text-[var(--text)] leading-snug">
                     {alert.location}
                   </span>
-                  <span className="block font-mono text-[10.5px] text-[var(--text-dim)] mt-0.5">
-                    {alert.detection_count} deteksi · FRP maks {alert.frp_max_mw} MW
-                    {alert.estimated_burned_ha ? ` · ${alert.estimated_burned_ha} ha terbakar` : ' · luas terbakar tidak tersedia'}
+                  <span className="block font-mono text-[11.5px] text-[var(--text-dim)] mt-0.5">
+                    {alert.detection_count} deteksi satelit · FRP maks {alert.frp_max_mw} MW
+                    {alert.estimated_burned_ha ? ` · ±${alert.estimated_burned_ha} ha terbakar` : ' · luas terbakar belum diketahui'}
                   </span>
                 </span>
 
-                <span className="shrink-0 self-end sm:self-center font-mono text-[11px] font-semibold text-[var(--accent)] flex items-center gap-1">
+                <span className="shrink-0 self-end sm:self-center font-mono text-[12px] font-semibold text-[var(--accent)] flex items-center gap-1">
                   <span>Lihat di peta</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </span>
@@ -918,12 +1005,12 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
       {/* Section Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-baseline justify-between gap-3 mb-3">
         <div>
-          <h2 className="text-[15px] font-semibold tracking-tight text-[var(--text)] flex items-center gap-2">
+          <h2 className="font-disp text-[17px] font-bold tracking-tight text-[var(--text)] flex items-center gap-2">
             <Satellite className="w-4 h-4 text-[var(--accent)]" />
-            <span>Peta Titik Panas &amp; Kerawanan Lahan Gambut</span>
+            <span>Peta titik api &amp; lahan gambut</span>
           </h2>
-          <p className="text-xs text-[var(--text-dim)] mt-0.5">
-            Telemetri live NASA FIRMS (VIIRS 375m), diatribusikan ke kabupaten gambut terdekat (maks 75 km). Klik titik mana saja untuk inspeksi lokasi.
+          <p className="text-[13px] text-[var(--text-dim)] mt-0.5">
+            Data satelit NASA (VIIRS 375m) langsung, dicocokkan ke kabupaten gambut terdekat (maks 75 km). Klik titik mana saja untuk melihat detail lokasi.
           </p>
         </div>
 
@@ -1133,7 +1220,7 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
                 <div className="p-2 text-slate-900">
                   <h4 className="font-bold text-slate-900 text-sm mb-1">{location.name}</h4>
                   <div className="text-xs font-mono font-semibold text-slate-900">
-                    PFVI Score: {currentPfvi.toFixed(1)} / 300.0 ({status})
+                    Skor risiko (PFVI): {currentPfvi.toFixed(1)} / 300 ({status})
                   </div>
                 </div>
               </Popup>
@@ -1225,7 +1312,7 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
 
 ## FITUR 5: Tab Pemantauan — Konfigurasi Model & Grafik Proyeksi
 
-**Deskripsi & Tujuan Fitur:** Bagian Proyeksi menggabungkan panel konfigurasi algoritma (untuk pengguna pakar) dengan grafik historis dan proyeksi PFVI, ditambah empat grafik variabel pendukung.
+**Deskripsi & Tujuan Fitur:** Bagian Proyeksi menggabungkan panel pengaturan perhitungan (untuk pengguna pakar) dengan grafik historis dan proyeksi PFVI, ditambah empat grafik variabel pendukung. Seluruh label panel memakai bahasa awam, dan badge kondisi pada kartu sinyal dihitung dari nilai aktual (misalnya muka air tanah -60 cm otomatis berlabel "Melewati batas aman", bukan "Normal").
 
 ![Bagian Proyeksi tab Pemantauan: konfigurasi model, sinyal penggerak, dan grafik PFVI historis-proyeksi](docs/screenshots/01d-proyeksi.png)
 
@@ -1233,12 +1320,12 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
 
 **Cara Menggunakan:**
 
-1. Pilih **Imputasi data kosong**: kNN (Gower Distance), Cubic Spline, LOESS, atau Linear.
-2. Pilih **Model proyeksi**: ARIMA + Box-Cox, LSTM (PyTorch), atau GRU (PyTorch).
-3. Pilih **Horizon proyeksi**: 4, 7, atau 14 hari.
+1. Pilih **Cara mengisi data kosong**: kNN (bawaan, paling aman), Cubic Spline, LOESS, atau Interpolasi Linear.
+2. Pilih **Model perhitungan**: ARIMA (bawaan, cepat), LSTM (AI, lebih berat), atau GRU (AI, lebih berat).
+3. Pilih **Berapa hari ke depan**: 4, 7, atau 14 hari.
 4. Klik **Hitung ulang proyeksi** untuk menjalankan ulang imputasi, forecasting, dan optimasi parameter Nelder-Mead.
-5. Grafik **Historis & proyeksi PFVI** menampilkan garis solid untuk observasi dan garis putus-putus untuk proyeksi, dengan pita warna ambang risiko.
-6. Panel **Variabel pendukung** menampilkan muka air tanah, kelembapan tanah, curah hujan, dan suhu maksimum sebagai grafik kecil.
+5. Grafik **Perkembangan risiko, kemarin dan beberapa hari ke depan** menampilkan garis solid untuk observasi dan garis putus-putus untuk proyeksi, dengan pita warna ambang risiko.
+6. Panel **Grafik lengkap tiap variabel** menampilkan muka air tanah, kelembapan tanah, curah hujan, dan suhu maksimum sebagai grafik kecil; kartu **Kondisi saat ini** di atasnya menampilkan nilai terbaru dengan badge yang dihitung dari nilai aktual.
 
 #### Kode Sumber (Source Code Listing): `frontend/src/components/PipelineControls.tsx`
 
@@ -1258,8 +1345,8 @@ interface PipelineControlsProps {
   isRunning: boolean;
 }
 
-const FIELD = 'w-full bg-[var(--surface-2)] border border-[var(--line)] rounded-[var(--r-sm)] px-3 py-2 text-xs font-mono text-[var(--text)] focus:outline-none focus:border-[var(--accent)] cursor-pointer';
-const LABEL = 'block text-[11px] font-mono font-semibold text-[var(--text-mute)] mb-1.5 uppercase tracking-wider';
+const FIELD = 'w-full bg-[var(--surface-2)] border border-[var(--line)] rounded-[var(--r-sm)] px-3 py-2 text-[13px] text-[var(--text)] focus:outline-none focus:border-[var(--accent)] cursor-pointer';
+const LABEL = 'block text-[12.5px] font-semibold text-[var(--text-mute)] mb-1.5';
 
 /**
  * Expert-only knobs. Target location now lives in the top bar (global state) and the
@@ -1282,9 +1369,9 @@ export const PipelineControls: React.FC<PipelineControlsProps> = ({
   return (
     <section className="border border-[var(--line)] rounded-[var(--r-md)] bg-[var(--surface)] p-5">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 border-b border-[var(--line-soft)] pb-3">
-        <h2 className="text-xs font-mono font-bold text-[var(--text)] uppercase tracking-wider flex items-center gap-2">
+        <h2 className="font-disp text-[15px] font-bold text-[var(--text)] flex items-center gap-2">
           <Settings className="w-4 h-4 text-[var(--accent)]" />
-          <span>Konfigurasi model</span>
+          <span>Pengaturan perhitungan</span>
         </h2>
 
         <div className="flex items-center gap-2 text-[11px] font-mono">
@@ -1309,10 +1396,10 @@ export const PipelineControls: React.FC<PipelineControlsProps> = ({
       </div>
 
       {showHelp && (
-        <p className="mb-4 bg-[var(--surface-2)] border border-[var(--line)] rounded-[var(--r-sm)] p-3 font-mono text-[11px] text-[var(--text-mute)] leading-relaxed">
-          <b className="text-[var(--text)]">Imputasi</b> mengisi data satelit yang kosong sebelum proyeksi.{' '}
-          <b className="text-[var(--text)]">Model</b> memproyeksikan empat variabel cuaca &amp; tanah.{' '}
-          <b className="text-[var(--text)]">Horizon</b> menentukan berapa hari ke depan PFVI diproyeksikan.
+        <p className="mb-4 bg-[var(--surface-2)] border border-[var(--line)] rounded-[var(--r-sm)] p-3.5 text-[13px] text-[var(--text-mute)] leading-relaxed">
+          <b className="text-[var(--text)]">Cara mengisi data kosong</b> menentukan bagaimana data satelit yang bolong diisi sebelum dihitung — biarkan bawaan (kNN) kalau ragu.{' '}
+          <b className="text-[var(--text)]">Model perhitungan</b> adalah mesin yang memproyeksikan cuaca dan tanah ke depan — ARIMA adalah bawaan yang cepat dan stabil.{' '}
+          <b className="text-[var(--text)]">Berapa hari ke depan</b> menentukan seberapa jauh proyeksi dihitung.
           Wilayah target diatur dari pemilih wilayah di bar atas; klik peta atau tombol &quot;Lihat di peta&quot;
           pada peringatan untuk memakai koordinat spesifik.
         </p>
@@ -1323,14 +1410,14 @@ export const PipelineControls: React.FC<PipelineControlsProps> = ({
           <label className={LABEL} htmlFor="opt-imputation">
             <span className="flex items-center gap-1.5">
               <Database className="w-3.5 h-3.5" />
-              <span>Imputasi data kosong</span>
+              <span>Cara mengisi data kosong</span>
             </span>
           </label>
           <select id="opt-imputation" value={imputation} onChange={(e) => setImputation(e.target.value)} className={FIELD}>
-            <option value="knn">kNN (Gower Distance)</option>
+            <option value="knn">kNN (bawaan, paling aman)</option>
             <option value="spline">Cubic Spline</option>
             <option value="loess">LOESS Smoothing</option>
-            <option value="linear">Linear Interpolation</option>
+            <option value="linear">Interpolasi Linear</option>
           </select>
         </div>
 
@@ -1338,13 +1425,13 @@ export const PipelineControls: React.FC<PipelineControlsProps> = ({
           <label className={LABEL} htmlFor="opt-model">
             <span className="flex items-center gap-1.5">
               <Cpu className="w-3.5 h-3.5" />
-              <span>Model proyeksi</span>
+              <span>Model perhitungan</span>
             </span>
           </label>
           <select id="opt-model" value={model} onChange={(e) => setModel(e.target.value)} className={FIELD}>
-            <option value="arima">ARIMA + Box-Cox</option>
-            <option value="lstm">LSTM (PyTorch)</option>
-            <option value="gru">GRU (PyTorch)</option>
+            <option value="arima">ARIMA (bawaan, cepat)</option>
+            <option value="lstm">LSTM (AI, lebih berat)</option>
+            <option value="gru">GRU (AI, lebih berat)</option>
           </select>
         </div>
 
@@ -1352,7 +1439,7 @@ export const PipelineControls: React.FC<PipelineControlsProps> = ({
           <label className={LABEL} htmlFor="opt-horizon">
             <span className="flex items-center gap-1.5">
               <Calendar className="w-3.5 h-3.5" />
-              <span>Horizon proyeksi</span>
+              <span>Berapa hari ke depan</span>
             </span>
           </label>
           <select id="opt-horizon" value={h} onChange={(e) => setH(parseInt(e.target.value))} className={FIELD}>
@@ -1366,16 +1453,16 @@ export const PipelineControls: React.FC<PipelineControlsProps> = ({
           type="button"
           onClick={onRunPipeline}
           disabled={isRunning}
-          className="w-full flex items-center justify-center gap-2 bg-[var(--accent)] text-[#0a0c0a] font-mono font-bold px-4 py-2.5 text-xs rounded-[var(--r-sm)] transition-opacity hover:opacity-90 disabled:opacity-50 cursor-pointer"
+          className="w-full flex items-center justify-center gap-2 bg-[var(--accent)] text-[#0a0c0a] font-bold px-4 py-2.5 text-[13.5px] rounded-[var(--r-sm)] transition-opacity hover:opacity-90 disabled:opacity-50 cursor-pointer"
         >
           {isRunning ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5 fill-[#0a0c0a]" />}
           <span>{isRunning ? 'Menghitung...' : 'Hitung ulang proyeksi'}</span>
         </button>
       </div>
 
-      <p className="mt-3 text-[11px] font-mono text-[var(--text-dim)] flex items-center gap-1.5">
+      <p className="mt-3 text-[12px] text-[var(--text-dim)] flex items-center gap-1.5">
         <Satellite className="w-3.5 h-3.5" />
-        <span>Telemetri ditarik otomatis saat wilayah berubah. Tombol tarik ulang ada di bar atas.</span>
+        <span>Data satelit ditarik otomatis saat wilayah diganti. Tombol tarik ulang ada di bar atas.</span>
       </p>
     </section>
   );
@@ -1399,6 +1486,7 @@ import {
   ReferenceArea
 } from 'recharts';
 import { Layers, Droplets, CloudRain, Thermometer } from 'lucide-react';
+import { signalBadge, badgeToneClass } from '../utils/pfviStatus';
 
 interface ForecastChartsProps {
   fullSeries: {
@@ -1443,14 +1531,21 @@ export const ForecastCharts: React.FC<ForecastChartsProps> = ({
   const latestRF = fullSeries.Rf[fullSeries.Rf.length - 1];
   const latestTemp = fullSeries.Temp[fullSeries.Temp.length - 1];
 
+  // Badges computed from the actual latest value — never hardcoded, so a
+  // critical water table can never sit next to a "Normal" badge.
+  const badgeWT = signalBadge('WT', latestWT);
+  const badgeSM = signalBadge('SM', latestSM);
+  const badgeRf = signalBadge('Rf', latestRF);
+  const badgeTemp = signalBadge('Temp', latestTemp);
+
   return (
     <div className="space-y-6">
       {/* 1. SIGNAL STRIP (4 Key Driving Variables) */}
       <section>
         <div className="flex items-baseline justify-between gap-4 mb-3">
           <div>
-            <h2 className="text-[15px] font-semibold tracking-tight text-[var(--text)]">Sinyal permukaan &amp; atmosfer</h2>
-            <p className="text-xs text-[var(--text-dim)] mt-0.5">Empat variabel penggerak utama indeks, 31 hari terakhir</p>
+            <h2 className="font-disp text-[17px] font-bold tracking-tight text-[var(--text)]">Kondisi saat ini</h2>
+            <p className="text-[13px] text-[var(--text-dim)] mt-0.5">Empat hal utama yang menentukan risiko kebakaran — air tanah, kelembapan tanah, hujan, dan suhu</p>
           </div>
         </div>
 
@@ -1462,7 +1557,7 @@ export const ForecastCharts: React.FC<ForecastChartsProps> = ({
                 <Droplets className="w-3.5 h-3.5 text-[var(--ok)]" />
                 <span>Muka air tanah</span>
               </span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-[#3fc98a1f] text-[var(--ok)]">Normal</span>
+              <span className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${badgeToneClass(badgeWT.tone)}`}>{badgeWT.label}</span>
             </div>
             <div className="flex items-baseline justify-between gap-2 mt-1">
               <span className="text-2xl font-bold tracking-tight text-[var(--text)]">
@@ -1485,7 +1580,7 @@ export const ForecastCharts: React.FC<ForecastChartsProps> = ({
                 <Layers className="w-3.5 h-3.5 text-[var(--warn)]" />
                 <span>Kelembapan tanah</span>
               </span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-[#f0b23e1f] text-[var(--warn)]">Kering</span>
+              <span className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${badgeToneClass(badgeSM.tone)}`}>{badgeSM.label}</span>
             </div>
             <div className="flex items-baseline justify-between gap-2 mt-1">
               <span className="text-2xl font-bold tracking-tight text-[var(--text)]">
@@ -1508,7 +1603,7 @@ export const ForecastCharts: React.FC<ForecastChartsProps> = ({
                 <CloudRain className="w-3.5 h-3.5 text-[var(--high)]" />
                 <span>Curah hujan</span>
               </span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-[#ff8a3d1f] text-[var(--high)]">Minimum</span>
+              <span className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${badgeToneClass(badgeRf.tone)}`}>{badgeRf.label}</span>
             </div>
             <div className="flex items-baseline justify-between gap-2 mt-1">
               <span className="text-2xl font-bold tracking-tight text-[var(--text)]">
@@ -1531,7 +1626,7 @@ export const ForecastCharts: React.FC<ForecastChartsProps> = ({
                 <Thermometer className="w-3.5 h-3.5 text-[var(--accent)]" />
                 <span>Suhu maksimum</span>
               </span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-[var(--accent-soft)] text-[var(--accent)]">Normal</span>
+              <span className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${badgeToneClass(badgeTemp.tone)}`}>{badgeTemp.label}</span>
             </div>
             <div className="flex items-baseline justify-between gap-2 mt-1">
               <span className="text-2xl font-bold tracking-tight text-[var(--text)]">
@@ -1553,7 +1648,7 @@ export const ForecastCharts: React.FC<ForecastChartsProps> = ({
       <section>
         <div className="flex items-baseline justify-between gap-4 mb-3">
           <div>
-            <h2 className="text-[15px] font-semibold tracking-tight text-[var(--text)]">Historis &amp; proyeksi PFVI</h2>
+            <h2 className="font-disp text-[17px] font-bold tracking-tight text-[var(--text)]">Perkembangan risiko, kemarin dan beberapa hari ke depan</h2>
             <p className="text-xs text-[var(--text-dim)] mt-0.5">Garis solid = observasi | garis putus-putus = proyeksi {forecastHorizon} hari</p>
           </div>
           <div className="flex items-center gap-4 text-xs font-mono text-[var(--text-mute)]">
@@ -1598,7 +1693,7 @@ export const ForecastCharts: React.FC<ForecastChartsProps> = ({
       {/* 4. QUAD CHARTS FOR SUPPORTING VARIABLES */}
       <section>
         <div className="mb-3">
-          <h2 className="text-[15px] font-semibold tracking-tight text-[var(--text)]">Variabel pendukung</h2>
+          <h2 className="font-disp text-[17px] font-bold tracking-tight text-[var(--text)]">Grafik lengkap tiap variabel</h2>
           <p className="text-xs text-[var(--text-dim)] mt-0.5">31 hari observasi ditambah 4 hari proyeksi</p>
         </div>
 
@@ -1751,7 +1846,7 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({ currentPfv
   return (
     <section className="mb-8">
       <div className="mb-3">
-        <h2 className="text-[15px] font-semibold tracking-tight text-[var(--text)]">Simulasi skenario "bagaimana jika"</h2>
+        <h2 className="font-disp text-[17px] font-bold tracking-tight text-[var(--text)]">Simulasi "bagaimana jika"</h2>
         <p className="text-xs text-[var(--text-dim)] mt-0.5">
           Uji dampak cuaca dan muka air tanah terhadap PFVI · parameter hidrologi{' '}
           {optimizedParams
@@ -1801,7 +1896,7 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({ currentPfv
           {/* Slider 3: Water Table */}
           <div className="flex flex-col gap-2 font-mono">
             <div className="flex justify-between items-baseline font-sans text-xs">
-              <span className="text-[var(--text-mute)]">Kedalaman muka air tanah</span>
+              <span className="text-[var(--text-mute)]">Kedalaman air tanah</span>
               <span className="font-mono text-[13px] font-bold text-[var(--accent)]">-{wtDepth.toFixed(2)} m</span>
             </div>
             <input
@@ -1818,7 +1913,7 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({ currentPfv
           {/* Slider 4: Initial PFVI Baseline */}
           <div className="flex flex-col gap-2 font-mono">
             <div className="flex justify-between items-baseline font-sans text-xs">
-              <span className="text-[var(--text-mute)]">PFVI dasar awal</span>
+              <span className="text-[var(--text-mute)]">Skor risiko awal</span>
               <span className="font-mono text-[13px] font-bold text-[var(--text)]">{initialPfvi.toFixed(1)}</span>
             </div>
             <input
@@ -1837,13 +1932,13 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({ currentPfv
         <div className="lg:col-span-5 p-6 sm:p-7 flex flex-col justify-center gap-5">
           <div className="flex flex-col gap-1 font-mono">
             <span className="text-[11px] uppercase tracking-wider text-[var(--text-dim)] font-sans">
-              Proyeksi PFVI setelah periode simulasi
+              Skor risiko setelah simulasi
             </span>
             <span className="text-4xl font-bold tracking-tight text-[var(--accent)] my-1">
               {simResult.finalPfvi.toFixed(1)}
             </span>
             <span className="text-xs text-[var(--text-mute)] font-sans">
-              {delta >= 0 ? '+' : ''}{delta.toFixed(1)} dari dasar · kategori {category}
+              {delta >= 0 ? 'naik' : 'turun'} {Math.abs(delta).toFixed(1)} dari kondisi sekarang · level {category}
             </span>
           </div>
 
@@ -2879,7 +2974,7 @@ fire_engine = FireIntelligenceEngine()
 **Deskripsi & Tujuan Fitur:** Shell aplikasi yang mengelola state global (wilayah target, hasil telemetri, hasil pipeline, daftar peringatan aktif) dan merutekannya ke dua tab operasional. Lokasi dan atribusi jenis tanah menjadi state bersama antara bilah atas, peta, dan panel konfigurasi.
 
 **Cara Menggunakan:**
-Tab **Pemantauan** memuat RiskStatusGauge, ActiveAlerts, PeatlandMap, PipelineControls, dan ForecastCharts secara berurutan dengan chip navigasi bagian; tab **Simulasi** memuat ScenarioSimulator. Bilah atas (Header) memuat pemilih wilayah dan kontrol tema, sedangkan TheoreticalSpecsModal terbuka dari bilah atas maupun footer.
+Tab **Pemantauan** memuat HeroStatus, ActiveAlerts, PeatlandMap, PipelineControls, dan ForecastCharts secara berurutan dengan chip navigasi bagian; tab **Simulasi** memuat ScenarioSimulator. Bilah atas (Header) memuat pemilih wilayah dan kontrol tema, sedangkan TheoreticalSpecsModal terbuka dari bilah atas maupun footer.
 
 #### Kode Sumber (Source Code Listing): `frontend/src/App.tsx`
 ```tsx
@@ -2887,7 +2982,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { AlertTriangle, Gauge, Sliders } from 'lucide-react';
 import { Header, Province, Regency } from './components/Header';
-import { RiskStatusGauge } from './components/RiskStatusGauge';
+import { HeroStatus } from './components/HeroStatus';
 import { PeatlandMap } from './components/PeatlandMap';
 import { ForecastCharts } from './components/ForecastCharts';
 import { ScenarioSimulator } from './components/ScenarioSimulator';
@@ -3111,7 +3206,7 @@ export function App() {
                 role="tab"
                 aria-selected={isActive}
                 onClick={() => setActiveTab(id)}
-                className={`flex items-center gap-1.5 px-3.5 py-3 text-[12.5px] font-medium border-b-2 whitespace-nowrap transition-colors cursor-pointer ${
+                className={`flex items-center gap-1.5 px-3.5 py-3 text-[14px] font-medium border-b-2 whitespace-nowrap transition-colors cursor-pointer ${
                   isActive
                     ? 'border-[var(--accent)] text-[var(--text)]'
                     : 'border-transparent text-[var(--text-mute)] hover:text-[var(--text)]'
@@ -3154,7 +3249,7 @@ export function App() {
               <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-[var(--danger)]">
                 Sumber data tidak tersedia
               </span>
-              <p className="text-xs text-[var(--text-mute)] leading-relaxed">{dataError}</p>
+              <p className="text-[13px] text-[var(--text-mute)] leading-relaxed">{dataError}</p>
               <button
                 type="button"
                 onClick={() => fetchRealtimeData(selectedRegency)}
@@ -3170,19 +3265,17 @@ export function App() {
         {activeTab === 'pemantauan' && (
           <>
             <div id="bagian-ringkasan" className="scroll-mt-[120px]">
-              <RiskStatusGauge
+              <HeroStatus
                 hasData={hasData}
                 pfvi={currentPfvi}
                 status={currentStatus}
                 waterTable={currentWT}
                 soilMoisture={currentSM}
-                rainfall={currentRf}
-                temp={currentTemp}
                 forecastDays={h}
                 minPfvi={minForecastPfvi}
                 maxPfvi={maxForecastPfvi}
-                fireIntelligence={sampleData?.fire_intelligence}
-                optimizedParams={pipelineResult?.optimization}
+                locationName={locationPreset.name}
+                nearby={sampleData?.fire_intelligence?.nearby}
               />
             </div>
 
