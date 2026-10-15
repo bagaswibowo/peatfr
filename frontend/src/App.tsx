@@ -212,7 +212,7 @@ export function App() {
 
       {/* Tab bar — one section per screen instead of one very long scroll */}
       <nav className="border-b border-[var(--line)] bg-[var(--surface)] sticky top-[60px] z-30">
-        <div className="max-w-[1440px] mx-auto px-4 lg:px-7 flex gap-1 overflow-x-auto">
+        <div className="max-w-[1440px] mx-auto px-4 lg:px-7 flex items-stretch gap-1 overflow-x-auto">
           {TABS.map(({ id, label, Icon }) => {
             const isActive = activeTab === id;
             return (
@@ -222,7 +222,7 @@ export function App() {
                 role="tab"
                 aria-selected={isActive}
                 onClick={() => setActiveTab(id)}
-                className={`flex items-center gap-1.5 px-3.5 py-3 text-[14px] font-medium border-b-2 whitespace-nowrap transition-colors cursor-pointer ${
+                className={`flex items-center gap-1.5 px-4 py-3 text-[14px] font-medium border-b-2 whitespace-nowrap transition-colors cursor-pointer ${
                   isActive
                     ? 'border-[var(--accent)] text-[var(--text)]'
                     : 'border-transparent text-[var(--text-mute)] hover:text-[var(--text)]'
@@ -238,23 +238,23 @@ export function App() {
               </button>
             );
           })}
-        </div>
 
-        {/* Section jump chips: keep the Pemantauan tab navigable */}
-        {activeTab === 'pemantauan' && (
-          <div className="max-w-[1440px] mx-auto px-4 lg:px-7 flex gap-2 overflow-x-auto pb-2">
-            {SECTIONS.map(({ id, label }) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                className="shrink-0 px-2.5 py-1 rounded-full border border-[var(--line)] bg-[var(--surface)] text-[11px] font-mono text-[var(--text-mute)] hover:border-[var(--accent-line)] hover:text-[var(--accent)] transition-colors cursor-pointer"
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        )}
+          {/* Section anchors inline with the tabs, pushed right — no cramped second row. */}
+          {activeTab === 'pemantauan' && (
+            <div className="ml-auto hidden sm:flex items-center gap-1.5">
+              {SECTIONS.map(({ id, label }) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                  className="shrink-0 px-3 py-1.5 rounded-full border border-[var(--line)] text-[12px] text-[var(--text-mute)] hover:border-[var(--accent-line)] hover:text-[var(--accent)] transition-colors cursor-pointer"
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </nav>
 
       <main className="max-w-[1440px] mx-auto px-4 lg:px-7 pt-6 flex flex-col gap-6">
