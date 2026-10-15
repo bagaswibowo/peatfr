@@ -167,10 +167,6 @@ export function App() {
   const pfviList = pipelineResult ? pipelineResult.full_series.PFVI : [];
   const currentPfvi = pfviList.length ? pfviList[pfviList.length - 1] : 0;
 
-  const forecastPfviList = pfviList.slice(-h);
-  const minForecastPfvi = forecastPfviList.length ? Math.min(...forecastPfviList) : 0;
-  const maxForecastPfvi = forecastPfviList.length ? Math.max(...forecastPfviList) : 0;
-
   const currentStatus = pipelineResult ? pipelineResult.forecast.Current_Status : 'Unknown';
 
   const lastOf = (series: number[] | undefined, fallback: number) =>
@@ -289,15 +285,10 @@ export function App() {
             <div id="bagian-ringkasan" className="scroll-mt-[120px]">
               <HeroStatus
                 hasData={hasData}
-                pfvi={currentPfvi}
                 status={currentStatus}
                 waterTable={currentWT}
                 soilMoisture={currentSM}
-                forecastDays={h}
-                minPfvi={minForecastPfvi}
-                maxPfvi={maxForecastPfvi}
                 locationName={locationPreset.name}
-                nearby={sampleData?.fire_intelligence?.nearby}
               />
             </div>
 
