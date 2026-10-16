@@ -27,7 +27,8 @@ WIDTH, HEIGHT = 1440, 1000
 def wait_port(url, tries=30):
     for _ in range(tries):
         try:
-            urllib.request.urlopen(url, timeout=3)
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
+            urllib.request.urlopen(req, timeout=5)
             return True
         except Exception:
             time.sleep(1)
