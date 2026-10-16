@@ -1316,9 +1316,20 @@ export const ActiveAlerts: React.FC<ActiveAlertsProps> = ({ alerts, onFocus }) =
 2. Pilih **Model perhitungan**: ARIMA (bawaan, cepat), LSTM (AI, lebih berat), atau GRU (AI, lebih berat).
 3. Pilih **Berapa hari ke depan**: 4, 7, atau 14 hari.
 4. Klik **Hitung ulang proyeksi** untuk menjalankan ulang imputasi, forecasting, dan optimasi parameter Nelder-Mead.
-5. Kartu **Kondisi saat ini** menampilkan muka air tanah, kelembapan tanah, curah hujan, dan suhu maksimum beserta badge (Aman/Lembap/Kering/Panas) yang dihitung dari nilai aktual.
-6. Grafik **Perkembangan risiko** menampilkan garis solid untuk observasi dan garis putus-putus untuk proyeksi, dengan pita warna ambang 75/150/225.
-7. Panel **Grafik lengkap tiap variabel** menampilkan empat grafik garis (muka air tanah, kelembapan tanah, curah hujan, suhu maksimum).
+5. Kartu **Kondisi saat ini** menampilkan 4 variabel lingkungan utama beserta badge status dinamis yang dihitung dari nilai observasi hari ini ($H-0$):
+   - **Muka Air Tanah (TMA):** Dihitung via model van Genuchten $WT_t = -0.4 + a_H \cdot \max(0, \theta_t - \theta_{\text{fc}})^{b_H}$. Mengacu pada aturan hukum **PP No. 71/2014**, batas kritis subsistensi gambut adalah **-40 cm**. Bila $\le 40\text{ cm}$ berstatus **Aman**, $> 40\text{ cm}$ **Melewati batas aman**, dan $> 80\text{ cm}$ **Sangat kritis**.
+   - **Kelembapan Tanah:** Ditarik dari rata-rata lapisan tanah atas satelit Open-Meteo ERA5-Land (0-7 cm dan 7-28 cm). Nilai $\ge 45\%$ berstatus **Lembap**, $30-44\%$ **Kering**, dan $< 30\%$ **Kering kritis**.
+   - **Curah Hujan:** Ditarik dari parameter `precipitation_sum` Open-Meteo ERA5-Land. Nilai $< 1\text{ mm/hari}$ berstatus **Kering**, $1-10\text{ mm/hari}$ **Hujan ringan**, dan $> 10\text{ mm/hari}$ **Hujan deras**.
+   - **Suhu Maksimum:** Ditarik dari parameter `temperature_2m_max` Open-Meteo ERA5-Land. Nilai $< 31^\circ\text{C}$ berstatus **Normal**, $31-33.9^\circ\text{C}$ **Panas**, dan $\ge 34^\circ\text{C}$ **Sangat panas**.
+6. Grafik **Perkembangan risiko, kemarin dan beberapa hari ke depan**:
+   - Garis solid hijau menandai **observasi historis** (kemarin s.d. hari ini, $H-30$ s.d. $H-0$) dari data riil satelit Open-Meteo.
+   - Garis putus-putus oranye menandai **proyeksi ke depan** ($H+1$ s.d. $H+4$/$H+7$/$H+14$) hasil inferensi machine learning ARIMA/LSTM/GRU.
+   - Pita warna ambang batas risiko memandu mitigasi: Hijau (Rendah $<75$), Kuning (Sedang $75-150$), Oranye (Tinggi $150-225$), dan Merah (Ekstrem $>225$).
+7. Panel **Grafik lengkap tiap variabel** dilengkapi **Tab Filter Rentang Waktu** interaktif:
+   - **Tab `1 Hari`:** Menampilkan pergerakan 24 jam terakhir ($H-1$, $H-0$) ditambah proyeksi.
+   - **Tab `7 Hari`:** Menampilkan jendela mingguan (7 hari observasi terakhir ditambah proyeksi).
+   - **Tab `1 Bulan` (Bawaan):** Menampilkan siklus bulanan penuh (30 hari observasi Open-Meteo ERA5-Land ditambah proyeksi).
+   - Setiap kartu variabel dilengkapi badge rentang waktu aktif, nilai numerik terbaru beserta satuannya, dan tooltip interaktif pada garis grafik.
 
 #### Kode Sumber (Source Code Listing): `frontend/src/components/PipelineControls.tsx`
 

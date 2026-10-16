@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -33,6 +33,8 @@ export const ForecastCharts: React.FC<ForecastChartsProps> = ({
   const totalPoints = fullSeries.PFVI.length;
   const historicalCount = totalPoints - forecastHorizon;
 
+  const [timeRange, setTimeRange] = useState<'1d' | '7d' | '1m'>('1m');
+
   // Prepare chart dataset
   const chartData = fullSeries.PFVI.map((pfviVal, idx) => {
     const isForecast = idx >= historicalCount;
@@ -63,6 +65,16 @@ export const ForecastCharts: React.FC<ForecastChartsProps> = ({
   const badgeSM = signalBadge('SM', latestSM);
   const badgeRf = signalBadge('Rf', latestRF);
   const badgeTemp = signalBadge('Temp', latestTemp);
+
+  const filteredQuadData = useMemo(() => {
+    if (timeRange === '1d') {
+      return chartData.slice(- (forecastHorizon + 1));
+    }
+    if (timeRange === '7d') {
+      return chartData.slice(- (forecastHorizon + 7));
+    }
+    return chartData;
+  }, [chartData, timeRange, forecastHorizon]);
 
   return (
     <div className="space-y-6">
@@ -218,67 +230,201 @@ export const ForecastCharts: React.FC<ForecastChartsProps> = ({
 
       {/* 4. QUAD CHARTS FOR SUPPORTING VARIABLES */}
       <section>
-        <div className="mb-3">
-          <h2 className="font-disp text-[17px] font-bold tracking-tight text-[var(--text)]">Grafik lengkap tiap variabel</h2>
-          <p className="text-xs text-[var(--text-dim)] mt-0.5">31 hari observasi ditambah 4 hari proyeksi</p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="font-disp text-[17px] font-bold tracking-tight text-[var(--text)]">Grafik lengkap tiap variabel</h2>
+              <span className="px-2.5 py-0.5 rounded-full text-[10.5px] font-mono font-bold bg-[var(--surface-2)] text-[var(--accent)] border border-[var(--accent-line)]">
+                {timeRange === '1d' ? 'Rentang: 1 Hari' : timeRange === '7d' ? 'Rentang: 7 Hari' : 'Rentang: 1 Bulan (30 Hari)'}
+              </span>
+            </div>
+            <p className="text-xs text-[var(--text-dim)] mt-0.5">
+              {timeRange === '1d'
+                ? `Menampilkan 1 hari observasi satelit terbaru ditambah ${forecastHorizon} hari proyeksi AI`
+                : timeRange === '7d'
+                ? `Menampilkan 7 hari observasi satelit ditambah ${forecastHorizon} hari proyeksi AI`
+                : `Menampilkan 30 hari observasi satelit Open-Meteo ERA5-Land ditambah ${forecastHorizon} hari proyeksi AI`}
+            </p>
+          </div>
+
+          {/* Time Range Switcher Tabs */}
+          <div className="flex items-center p-1 bg-[var(--surface-2)] border border-[var(--line)] rounded-[var(--r-sm)] font-mono text-xs shrink-0 self-start sm:self-auto">
+            <button
+              type="button"
+              onClick={() => setTimeRange('1d')}
+              className={`px-3 py-1 rounded-[calc(var(--r-sm)-2px)] font-bold transition-all cursor-pointer ${
+                timeRange === '1d'
+                  ? 'bg-[var(--accent)] text-[#0a0c0a] shadow-sm'
+                  : 'text-[var(--text-mute)] hover:text-[var(--text)]'
+              }`}
+            >
+              1 Hari
+            </button>
+            <button
+              type="button"
+              onClick={() => setTimeRange('7d')}
+              className={`px-3 py-1 rounded-[calc(var(--r-sm)-2px)] font-bold transition-all cursor-pointer ${
+                timeRange === '7d'
+                  ? 'bg-[var(--accent)] text-[#0a0c0a] shadow-sm'
+                  : 'text-[var(--text-mute)] hover:text-[var(--text)]'
+              }`}
+            >
+              7 Hari
+            </button>
+            <button
+              type="button"
+              onClick={() => setTimeRange('1m')}
+              className={`px-3 py-1 rounded-[calc(var(--r-sm)-2px)] font-bold transition-all cursor-pointer ${
+                timeRange === '1m'
+                  ? 'bg-[var(--accent)] text-[#0a0c0a] shadow-sm'
+                  : 'text-[var(--text-mute)] hover:text-[var(--text)]'
+              }`}
+            >
+              1 Bulan
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 font-mono">
           {/* Quad 1: Water Table */}
-          <div className="border border-[var(--line)] rounded-[var(--r-md)] bg-[var(--surface)] p-4">
-            <div className="flex justify-between items-center mb-2">
-              <h4 className="text-[11px] uppercase tracking-wider text-[var(--text-dim)]">Muka air tanah</h4>
-              <b className="text-[11px] text-[var(--text-mute)]">m</b>
+          <div className="border border-[var(--line)] rounded-[var(--r-md)] bg-[var(--surface)] p-4 flex flex-col justify-between">
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-[11px] uppercase tracking-wider text-[var(--text-dim)] flex items-center gap-1.5">
+                  <Droplets className="w-3.5 h-3.5 text-[var(--ok)]" />
+                  <span>Muka air tanah</span>
+                </span>
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${badgeToneClass(badgeWT.tone)}`}>
+                  {badgeWT.label}
+                </span>
+              </div>
+              <div className="text-[15px] font-bold text-[var(--text)] mb-2">
+                {latestWT.toFixed(2)} <span className="text-[11px] font-normal text-[var(--text-dim)]">m ({Math.abs(latestWT * 100).toFixed(0)} cm)</span>
+              </div>
             </div>
-            <div className="h-[90px] w-full">
+            <div className="h-[95px] w-full mt-1">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData}>
-                  <Line type="monotone" dataKey="WT" stroke="var(--ok)" strokeWidth={1.6} dot={false} />
+                <LineChart data={filteredQuadData}>
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'var(--surface)',
+                      borderColor: 'var(--line)',
+                      borderRadius: 'var(--r-sm)',
+                      fontSize: '11px',
+                      color: 'var(--text)',
+                      fontFamily: 'var(--font-m)'
+                    }}
+                    formatter={(val: any) => [`${Number(val).toFixed(2)} m (${Math.abs(Number(val) * 100).toFixed(0)} cm)`, 'TMA']}
+                  />
+                  <Line type="monotone" dataKey="WT" stroke="var(--ok)" strokeWidth={1.8} dot={timeRange === '1d' ? { r: 3, fill: 'var(--ok)' } : false} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
           </div>
 
           {/* Quad 2: Soil Moisture */}
-          <div className="border border-[var(--line)] rounded-[var(--r-md)] bg-[var(--surface)] p-4">
-            <div className="flex justify-between items-center mb-2">
-              <h4 className="text-[11px] uppercase tracking-wider text-[var(--text-dim)]">Kelembapan tanah</h4>
-              <b className="text-[11px] text-[var(--text-mute)]">%</b>
+          <div className="border border-[var(--line)] rounded-[var(--r-md)] bg-[var(--surface)] p-4 flex flex-col justify-between">
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-[11px] uppercase tracking-wider text-[var(--text-dim)] flex items-center gap-1.5">
+                  <Layers className="w-3.5 h-3.5 text-[var(--warn)]" />
+                  <span>Kelembapan tanah</span>
+                </span>
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${badgeToneClass(badgeSM.tone)}`}>
+                  {badgeSM.label}
+                </span>
+              </div>
+              <div className="text-[15px] font-bold text-[var(--text)] mb-2">
+                {latestSM.toFixed(1)} <span className="text-[11px] font-normal text-[var(--text-dim)]">% volumetrik</span>
+              </div>
             </div>
-            <div className="h-[90px] w-full">
+            <div className="h-[95px] w-full mt-1">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData}>
-                  <Line type="monotone" dataKey="SM" stroke="var(--warn)" strokeWidth={1.6} dot={false} />
+                <LineChart data={filteredQuadData}>
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'var(--surface)',
+                      borderColor: 'var(--line)',
+                      borderRadius: 'var(--r-sm)',
+                      fontSize: '11px',
+                      color: 'var(--text)',
+                      fontFamily: 'var(--font-m)'
+                    }}
+                    formatter={(val: any) => [`${Number(val).toFixed(1)}%`, 'Lengas Tanah']}
+                  />
+                  <Line type="monotone" dataKey="SM" stroke="var(--warn)" strokeWidth={1.8} dot={timeRange === '1d' ? { r: 3, fill: 'var(--warn)' } : false} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
           </div>
 
           {/* Quad 3: Rainfall */}
-          <div className="border border-[var(--line)] rounded-[var(--r-md)] bg-[var(--surface)] p-4">
-            <div className="flex justify-between items-center mb-2">
-              <h4 className="text-[11px] uppercase tracking-wider text-[var(--text-dim)]">Curah hujan</h4>
-              <b className="text-[11px] text-[var(--text-mute)]">mm/hari</b>
+          <div className="border border-[var(--line)] rounded-[var(--r-md)] bg-[var(--surface)] p-4 flex flex-col justify-between">
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-[11px] uppercase tracking-wider text-[var(--text-dim)] flex items-center gap-1.5">
+                  <CloudRain className="w-3.5 h-3.5 text-[var(--high)]" />
+                  <span>Curah hujan</span>
+                </span>
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${badgeToneClass(badgeRf.tone)}`}>
+                  {badgeRf.label}
+                </span>
+              </div>
+              <div className="text-[15px] font-bold text-[var(--text)] mb-2">
+                {latestRF.toFixed(1)} <span className="text-[11px] font-normal text-[var(--text-dim)]">mm/hari</span>
+              </div>
             </div>
-            <div className="h-[90px] w-full">
+            <div className="h-[95px] w-full mt-1">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData}>
-                  <Line type="monotone" dataKey="Rf" stroke="var(--high)" strokeWidth={1.6} dot={false} />
+                <LineChart data={filteredQuadData}>
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'var(--surface)',
+                      borderColor: 'var(--line)',
+                      borderRadius: 'var(--r-sm)',
+                      fontSize: '11px',
+                      color: 'var(--text)',
+                      fontFamily: 'var(--font-m)'
+                    }}
+                    formatter={(val: any) => [`${Number(val).toFixed(1)} mm/hari`, 'Curah Hujan']}
+                  />
+                  <Line type="monotone" dataKey="Rf" stroke="var(--high)" strokeWidth={1.8} dot={timeRange === '1d' ? { r: 3, fill: 'var(--high)' } : false} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
           </div>
 
           {/* Quad 4: Temperature */}
-          <div className="border border-[var(--line)] rounded-[var(--r-md)] bg-[var(--surface)] p-4">
-            <div className="flex justify-between items-center mb-2">
-              <h4 className="text-[11px] uppercase tracking-wider text-[var(--text-dim)]">Suhu maksimum</h4>
-              <b className="text-[11px] text-[var(--text-mute)]">°C</b>
+          <div className="border border-[var(--line)] rounded-[var(--r-md)] bg-[var(--surface)] p-4 flex flex-col justify-between">
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-[11px] uppercase tracking-wider text-[var(--text-dim)] flex items-center gap-1.5">
+                  <Thermometer className="w-3.5 h-3.5 text-[var(--accent)]" />
+                  <span>Suhu maksimum</span>
+                </span>
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${badgeToneClass(badgeTemp.tone)}`}>
+                  {badgeTemp.label}
+                </span>
+              </div>
+              <div className="text-[15px] font-bold text-[var(--text)] mb-2">
+                {latestTemp.toFixed(1)} <span className="text-[11px] font-normal text-[var(--text-dim)]">°C</span>
+              </div>
             </div>
-            <div className="h-[90px] w-full">
+            <div className="h-[95px] w-full mt-1">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData}>
-                  <Line type="monotone" dataKey="Temp" stroke="var(--accent)" strokeWidth={1.6} dot={false} />
+                <LineChart data={filteredQuadData}>
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'var(--surface)',
+                      borderColor: 'var(--line)',
+                      borderRadius: 'var(--r-sm)',
+                      fontSize: '11px',
+                      color: 'var(--text)',
+                      fontFamily: 'var(--font-m)'
+                    }}
+                    formatter={(val: any) => [`${Number(val).toFixed(1)}°C`, 'Suhu Maks']}
+                  />
+                  <Line type="monotone" dataKey="Temp" stroke="var(--accent)" strokeWidth={1.8} dot={timeRange === '1d' ? { r: 3, fill: 'var(--accent)' } : false} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
