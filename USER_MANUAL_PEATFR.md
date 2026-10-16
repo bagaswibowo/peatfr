@@ -505,6 +505,7 @@ export interface FirmsHotspot {
 }
 
 const FIRMS_MAP_KEY = "aa16407e5eb11df46b09cafc085fe020";
+const CARTO_API_KEY = "cb1_4m3n_1_b06409956145d8a930b2bfdd";
 
 const createCustomIcon = (color: string) => {
   return L.divIcon({
@@ -749,7 +750,7 @@ export const PeatlandMap: React.FC<PeatlandMapProps> = ({
             {/* Place Names & Labels Overlay */}
             <TileLayer
               attribution='&copy; <a href="https://carto.com/">CARTO Voyager Labels</a>'
-              url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png"
+              url={`https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png?key=${CARTO_API_KEY}`}
             />
 
             {/* NASA FIRMS Dedicated WMS Thermal Layer */}
