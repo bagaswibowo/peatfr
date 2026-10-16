@@ -24,11 +24,13 @@ interface ForecastChartsProps {
     DI_obs: number[];
   };
   forecastHorizon: number;
+  onChangeHorizon?: (h: number) => void;
 }
 
 export const ForecastCharts: React.FC<ForecastChartsProps> = ({
   fullSeries,
-  forecastHorizon
+  forecastHorizon,
+  onChangeHorizon
 }) => {
   const totalPoints = fullSeries.PFVI.length;
   const historicalCount = totalPoints - forecastHorizon;
@@ -65,6 +67,35 @@ export const ForecastCharts: React.FC<ForecastChartsProps> = ({
   const badgeSM = signalBadge('SM', latestSM);
   const badgeRf = signalBadge('Rf', latestRF);
   const badgeTemp = signalBadge('Temp', latestTemp);
+
+  const [selectedPoint, setSelectedPoint] = useState<any>(null);
+
+  // Historical-only stats (30–31 days observation period)
+  const histWT = fullSeries.WT.slice(0, historicalCount);
+  const histSM = fullSeries.SM.slice(0, historicalCount);
+  const histRF = fullSeries.Rf.slice(0, historicalCount);
+  const histTemp = fullSeries.Temp.slice(0, historicalCount);
+
+  const statsWT = {
+    curr: latestWT,
+    max: histWT.length ? Math.max(...histWT) : latestWT,
+    min: histWT.length ? Math.min(...histWT) : latestWT,
+  };
+  const statsSM = {
+    curr: latestSM,
+    max: histSM.length ? Math.max(...histSM) : latestSM,
+    min: histSM.length ? Math.min(...histSM) : latestSM,
+  };
+  const statsRF = {
+    curr: latestRF,
+    max: histRF.length ? Math.max(...histRF) : latestRF,
+    min: histRF.length ? Math.min(...histRF) : latestRF,
+  };
+  const statsTemp = {
+    curr: latestTemp,
+    max: histTemp.length ? Math.max(...histTemp) : latestTemp,
+    min: histTemp.length ? Math.min(...histTemp) : latestTemp,
+  };
 
   const filteredQuadData = useMemo(() => {
     if (timeRange === '1d') {
@@ -184,21 +215,74 @@ export const ForecastCharts: React.FC<ForecastChartsProps> = ({
 
       {/* 2. PRIMARY PFVI TREND CHART */}
       <section>
-        <div className="flex items-baseline justify-between gap-4 mb-3">
+        <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-3 mb-3">
           <div>
             <h2 className="font-disp text-[17px] font-bold tracking-tight text-[var(--text)]">Perkembangan risiko, kemarin dan beberapa hari ke depan</h2>
-            <p className="text-xs text-[var(--text-dim)] mt-0.5">Garis solid = observasi | garis putus-putus = proyeksi {forecastHorizon} hari</p>
+            <p className="text-xs text-[var(--text-dim)] mt-0.5">
+              Garis solid = observasi ({historicalCount} hari) | garis putus-putus = proyeksi AI ({forecastHorizon} hari ke depan)
+            </p>
           </div>
-          <div className="flex items-center gap-4 text-xs font-mono text-[var(--text-mute)]">
+          <div className="flex flex-wrap items-center gap-3 text-xs font-mono text-[var(--text-mute)]">
+            <div className="flex items-center gap-1.5 mr-2">
+              <span className="text-[11px] text-[var(--text-dim)]">Horizon:</span>
+              {[4, 7, 14].map((hOpt) => (
+                <button
+                  key={hOpt}
+                  type="button"
+                  onClick={() => onChangeHorizon && onChangeHorizon(hOpt)}
+                  className={`px-2 py-0.5 rounded font-bold transition-all cursor-pointer ${
+                    forecastHorizon === hOpt
+                      ? 'bg-[var(--accent)] text-[#0a0c0a]'
+                      : 'bg-[var(--surface-2)] text-[var(--text-mute)] border border-[var(--line)] hover:text-[var(--text)]'
+                  }`}
+                >
+                  {hOpt} Hari
+                </button>
+              ))}
+            </div>
             <span className="flex items-center gap-1.5"><i className="w-3 h-0.5 rounded bg-[var(--ok)] inline-block" /> Observasi</span>
             <span className="flex items-center gap-1.5"><i className="w-3 h-0.5 rounded bg-[var(--accent)] inline-block" /> Proyeksi</span>
           </div>
         </div>
 
+        {/* Interactive Click Inspection Strip */}
+        {selectedPoint && (
+          <div className="mb-3 p-3 bg-[var(--surface-2)] border border-[var(--accent-line)] rounded-[var(--r-sm)] font-mono text-xs flex flex-wrap items-center justify-between gap-2.5">
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-[var(--accent)] px-2 py-0.5 bg-[var(--accent-soft)] rounded border border-[var(--accent-line)]">
+                {selectedPoint.day} ({selectedPoint.isForecast ? `Proyeksi H+${selectedPoint.step - historicalCount}` : 'Observasi Satelit'})
+              </span>
+              <span className="text-[var(--text-dim)] text-[11px]">Hasil klik titik garis:</span>
+            </div>
+            <div className="flex flex-wrap items-center gap-3.5 text-xs">
+              <span>TMA: <b className="text-[var(--text)]">{selectedPoint.WT !== undefined ? `${selectedPoint.WT.toFixed(2)} m` : '-'}</b></span>
+              <span>Lengas: <b className="text-[var(--text)]">{selectedPoint.SM !== undefined ? `${selectedPoint.SM.toFixed(1)}%` : '-'}</b></span>
+              <span>Hujan: <b className="text-[var(--text)]">{selectedPoint.Rf !== undefined ? `${selectedPoint.Rf.toFixed(1)} mm` : '-'}</b></span>
+              <span>Suhu: <b className="text-[var(--text)]">{selectedPoint.Temp !== undefined ? `${selectedPoint.Temp.toFixed(1)}°C` : '-'}</b></span>
+              <span>PFVI: <b className="text-[var(--accent)] font-bold">{(selectedPoint.PFVI_hist ?? selectedPoint.PFVI_pred)?.toFixed(1)}</b></span>
+              <button
+                type="button"
+                onClick={() => setSelectedPoint(null)}
+                className="text-[var(--text-dim)] hover:text-[var(--text)] cursor-pointer text-[11px] underline ml-1"
+              >
+                ✕ Tutup
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="border border-[var(--line)] rounded-[var(--r-md)] bg-[var(--surface)] p-5">
-          <div className="h-[280px] w-full">
+          <div className="h-[280px] w-full cursor-pointer">
             <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <ComposedChart
+                data={chartData}
+                margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                onClick={(e) => {
+                  if (e && e.activePayload && e.activePayload.length) {
+                    setSelectedPoint(e.activePayload[0].payload);
+                  }
+                }}
+              >
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--line-soft)" vertical={false} />
                 <XAxis dataKey="day" stroke="var(--text-dim)" tick={{ fontSize: 10, fill: 'var(--text-mute)', fontFamily: 'var(--font-m)' }} />
                 <YAxis domain={[0, 300]} stroke="var(--text-dim)" tick={{ fontSize: 10, fill: 'var(--text-mute)', fontFamily: 'var(--font-m)' }} />
@@ -220,8 +304,8 @@ export const ForecastCharts: React.FC<ForecastChartsProps> = ({
                 <ReferenceLine y={150} stroke="var(--high)" strokeDasharray="3 3" />
                 <ReferenceLine y={75} stroke="var(--warn)" strokeDasharray="3 3" />
 
-                <Line type="monotone" dataKey="PFVI_hist" stroke="var(--ok)" strokeWidth={2} dot={false} name="PFVI Observasi" />
-                <Line type="monotone" dataKey="PFVI_pred" stroke="var(--accent)" strokeWidth={2} strokeDasharray="5 4" dot={{ r: 3, fill: 'var(--accent)' }} name="PFVI Proyeksi" />
+                <Line type="monotone" dataKey="PFVI_hist" stroke="var(--ok)" strokeWidth={2} dot={{ r: 2 }} activeDot={{ r: 5 }} name="PFVI Observasi" />
+                <Line type="monotone" dataKey="PFVI_pred" stroke="var(--accent)" strokeWidth={2} strokeDasharray="5 4" dot={{ r: 3, fill: 'var(--accent)' }} activeDot={{ r: 6 }} name="PFVI Proyeksi" />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
@@ -298,13 +382,39 @@ export const ForecastCharts: React.FC<ForecastChartsProps> = ({
                   {badgeWT.label}
                 </span>
               </div>
-              <div className="text-[15px] font-bold text-[var(--text)] mb-2">
+              <div className="text-[15px] font-bold text-[var(--text)] mb-1">
                 {latestWT.toFixed(2)} <span className="text-[11px] font-normal text-[var(--text-dim)]">m ({Math.abs(latestWT * 100).toFixed(0)} cm)</span>
               </div>
+              {/* Stat Peak / Low (30-day hist) */}
+              <div className="flex items-center gap-2 text-[10px] text-[var(--text-dim)] pb-1 border-b border-[var(--line-soft)]">
+                <span>Peak: <b className="text-[var(--text)]">{statsWT.max.toFixed(2)}m</b></span>
+                <span>•</span>
+                <span>Low: <b className="text-[var(--text)]">{statsWT.min.toFixed(2)}m</b></span>
+              </div>
             </div>
-            <div className="h-[95px] w-full mt-1">
+            <div className="h-[140px] w-full mt-2">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={filteredQuadData}>
+                <LineChart
+                  data={filteredQuadData}
+                  margin={{ top: 5, right: 8, left: -22, bottom: 0 }}
+                  onClick={(e) => {
+                    if (e && e.activePayload && e.activePayload.length) {
+                      setSelectedPoint(e.activePayload[0].payload);
+                    }
+                  }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--line-soft)" vertical={false} />
+                  <XAxis
+                    dataKey="day"
+                    stroke="var(--text-dim)"
+                    tick={{ fontSize: 8, fill: 'var(--text-mute)', fontFamily: 'var(--font-m)' }}
+                    interval={timeRange === '1m' ? 6 : timeRange === '7d' ? 1 : 0}
+                  />
+                  <YAxis
+                    stroke="var(--text-dim)"
+                    tick={{ fontSize: 8, fill: 'var(--text-mute)', fontFamily: 'var(--font-m)' }}
+                    domain={['auto', 'auto']}
+                  />
                   <Tooltip
                     contentStyle={{
                       backgroundColor: 'var(--surface)',
@@ -316,7 +426,7 @@ export const ForecastCharts: React.FC<ForecastChartsProps> = ({
                     }}
                     formatter={(val: any) => [`${Number(val).toFixed(2)} m (${Math.abs(Number(val) * 100).toFixed(0)} cm)`, 'TMA']}
                   />
-                  <Line type="monotone" dataKey="WT" stroke="var(--ok)" strokeWidth={1.8} dot={timeRange === '1d' ? { r: 3, fill: 'var(--ok)' } : false} />
+                  <Line type="monotone" dataKey="WT" stroke="var(--ok)" strokeWidth={1.8} dot={{ r: 2 }} activeDot={{ r: 5 }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -334,13 +444,39 @@ export const ForecastCharts: React.FC<ForecastChartsProps> = ({
                   {badgeSM.label}
                 </span>
               </div>
-              <div className="text-[15px] font-bold text-[var(--text)] mb-2">
+              <div className="text-[15px] font-bold text-[var(--text)] mb-1">
                 {latestSM.toFixed(1)} <span className="text-[11px] font-normal text-[var(--text-dim)]">% volumetrik</span>
               </div>
+              {/* Stat Peak / Low (30-day hist) */}
+              <div className="flex items-center gap-2 text-[10px] text-[var(--text-dim)] pb-1 border-b border-[var(--line-soft)]">
+                <span>Peak: <b className="text-[var(--text)]">{statsSM.max.toFixed(1)}%</b></span>
+                <span>•</span>
+                <span>Low: <b className="text-[var(--text)]">{statsSM.min.toFixed(1)}%</b></span>
+              </div>
             </div>
-            <div className="h-[95px] w-full mt-1">
+            <div className="h-[140px] w-full mt-2">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={filteredQuadData}>
+                <LineChart
+                  data={filteredQuadData}
+                  margin={{ top: 5, right: 8, left: -22, bottom: 0 }}
+                  onClick={(e) => {
+                    if (e && e.activePayload && e.activePayload.length) {
+                      setSelectedPoint(e.activePayload[0].payload);
+                    }
+                  }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--line-soft)" vertical={false} />
+                  <XAxis
+                    dataKey="day"
+                    stroke="var(--text-dim)"
+                    tick={{ fontSize: 8, fill: 'var(--text-mute)', fontFamily: 'var(--font-m)' }}
+                    interval={timeRange === '1m' ? 6 : timeRange === '7d' ? 1 : 0}
+                  />
+                  <YAxis
+                    stroke="var(--text-dim)"
+                    tick={{ fontSize: 8, fill: 'var(--text-mute)', fontFamily: 'var(--font-m)' }}
+                    domain={['auto', 'auto']}
+                  />
                   <Tooltip
                     contentStyle={{
                       backgroundColor: 'var(--surface)',
@@ -352,7 +488,7 @@ export const ForecastCharts: React.FC<ForecastChartsProps> = ({
                     }}
                     formatter={(val: any) => [`${Number(val).toFixed(1)}%`, 'Lengas Tanah']}
                   />
-                  <Line type="monotone" dataKey="SM" stroke="var(--warn)" strokeWidth={1.8} dot={timeRange === '1d' ? { r: 3, fill: 'var(--warn)' } : false} />
+                  <Line type="monotone" dataKey="SM" stroke="var(--warn)" strokeWidth={1.8} dot={{ r: 2 }} activeDot={{ r: 5 }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -370,13 +506,39 @@ export const ForecastCharts: React.FC<ForecastChartsProps> = ({
                   {badgeRf.label}
                 </span>
               </div>
-              <div className="text-[15px] font-bold text-[var(--text)] mb-2">
+              <div className="text-[15px] font-bold text-[var(--text)] mb-1">
                 {latestRF.toFixed(1)} <span className="text-[11px] font-normal text-[var(--text-dim)]">mm/hari</span>
               </div>
+              {/* Stat Peak / Low (30-day hist) */}
+              <div className="flex items-center gap-2 text-[10px] text-[var(--text-dim)] pb-1 border-b border-[var(--line-soft)]">
+                <span>Peak: <b className="text-[var(--text)]">{statsRF.max.toFixed(1)}mm</b></span>
+                <span>•</span>
+                <span>Low: <b className="text-[var(--text)]">{statsRF.min.toFixed(1)}mm</b></span>
+              </div>
             </div>
-            <div className="h-[95px] w-full mt-1">
+            <div className="h-[140px] w-full mt-2">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={filteredQuadData}>
+                <LineChart
+                  data={filteredQuadData}
+                  margin={{ top: 5, right: 8, left: -22, bottom: 0 }}
+                  onClick={(e) => {
+                    if (e && e.activePayload && e.activePayload.length) {
+                      setSelectedPoint(e.activePayload[0].payload);
+                    }
+                  }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--line-soft)" vertical={false} />
+                  <XAxis
+                    dataKey="day"
+                    stroke="var(--text-dim)"
+                    tick={{ fontSize: 8, fill: 'var(--text-mute)', fontFamily: 'var(--font-m)' }}
+                    interval={timeRange === '1m' ? 6 : timeRange === '7d' ? 1 : 0}
+                  />
+                  <YAxis
+                    stroke="var(--text-dim)"
+                    tick={{ fontSize: 8, fill: 'var(--text-mute)', fontFamily: 'var(--font-m)' }}
+                    domain={['auto', 'auto']}
+                  />
                   <Tooltip
                     contentStyle={{
                       backgroundColor: 'var(--surface)',
@@ -388,7 +550,7 @@ export const ForecastCharts: React.FC<ForecastChartsProps> = ({
                     }}
                     formatter={(val: any) => [`${Number(val).toFixed(1)} mm/hari`, 'Curah Hujan']}
                   />
-                  <Line type="monotone" dataKey="Rf" stroke="var(--high)" strokeWidth={1.8} dot={timeRange === '1d' ? { r: 3, fill: 'var(--high)' } : false} />
+                  <Line type="monotone" dataKey="Rf" stroke="var(--high)" strokeWidth={1.8} dot={{ r: 2 }} activeDot={{ r: 5 }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -406,13 +568,39 @@ export const ForecastCharts: React.FC<ForecastChartsProps> = ({
                   {badgeTemp.label}
                 </span>
               </div>
-              <div className="text-[15px] font-bold text-[var(--text)] mb-2">
+              <div className="text-[15px] font-bold text-[var(--text)] mb-1">
                 {latestTemp.toFixed(1)} <span className="text-[11px] font-normal text-[var(--text-dim)]">°C</span>
               </div>
+              {/* Stat Peak / Low (30-day hist) */}
+              <div className="flex items-center gap-2 text-[10px] text-[var(--text-dim)] pb-1 border-b border-[var(--line-soft)]">
+                <span>Peak: <b className="text-[var(--text)]">{statsTemp.max.toFixed(1)}°C</b></span>
+                <span>•</span>
+                <span>Low: <b className="text-[var(--text)]">{statsTemp.min.toFixed(1)}°C</b></span>
+              </div>
             </div>
-            <div className="h-[95px] w-full mt-1">
+            <div className="h-[140px] w-full mt-2">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={filteredQuadData}>
+                <LineChart
+                  data={filteredQuadData}
+                  margin={{ top: 5, right: 8, left: -22, bottom: 0 }}
+                  onClick={(e) => {
+                    if (e && e.activePayload && e.activePayload.length) {
+                      setSelectedPoint(e.activePayload[0].payload);
+                    }
+                  }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--line-soft)" vertical={false} />
+                  <XAxis
+                    dataKey="day"
+                    stroke="var(--text-dim)"
+                    tick={{ fontSize: 8, fill: 'var(--text-mute)', fontFamily: 'var(--font-m)' }}
+                    interval={timeRange === '1m' ? 6 : timeRange === '7d' ? 1 : 0}
+                  />
+                  <YAxis
+                    stroke="var(--text-dim)"
+                    tick={{ fontSize: 8, fill: 'var(--text-mute)', fontFamily: 'var(--font-m)' }}
+                    domain={['auto', 'auto']}
+                  />
                   <Tooltip
                     contentStyle={{
                       backgroundColor: 'var(--surface)',
@@ -424,7 +612,7 @@ export const ForecastCharts: React.FC<ForecastChartsProps> = ({
                     }}
                     formatter={(val: any) => [`${Number(val).toFixed(1)}°C`, 'Suhu Maks']}
                   />
-                  <Line type="monotone" dataKey="Temp" stroke="var(--accent)" strokeWidth={1.8} dot={timeRange === '1d' ? { r: 3, fill: 'var(--accent)' } : false} />
+                  <Line type="monotone" dataKey="Temp" stroke="var(--accent)" strokeWidth={1.8} dot={{ r: 2 }} activeDot={{ r: 5 }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>

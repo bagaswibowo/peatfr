@@ -1324,12 +1324,22 @@ export const ActiveAlerts: React.FC<ActiveAlertsProps> = ({ alerts, onFocus }) =
 6. Grafik **Perkembangan risiko, kemarin dan beberapa hari ke depan**:
    - Garis solid hijau menandai **observasi historis** (kemarin s.d. hari ini, $H-30$ s.d. $H-0$) dari data riil satelit Open-Meteo.
    - Garis putus-putus oranye menandai **proyeksi ke depan** ($H+1$ s.d. $H+4$/$H+7$/$H+14$) hasil inferensi machine learning ARIMA/LSTM/GRU.
+   - **Pemilih Horizon Cepat (Quick Horizon Selector):** Pengguna dapat memilih durasi proyeksi langsung pada bilah grafik melalui tombol **`4 Hari`**, **`7 Hari`**, atau **`14 Hari`**, yang langsung memicu komputasi ulang model AI secara otomatis.
    - Pita warna ambang batas risiko memandu mitigasi: Hijau (Rendah $<75$), Kuning (Sedang $75-150$), Oranye (Tinggi $150-225$), dan Merah (Ekstrem $>225$).
-7. Panel **Grafik lengkap tiap variabel** dilengkapi **Tab Filter Rentang Waktu** interaktif:
-   - **Tab `1 Hari`:** Menampilkan pergerakan 24 jam terakhir ($H-1$, $H-0$) ditambah proyeksi.
-   - **Tab `7 Hari`:** Menampilkan jendela mingguan (7 hari observasi terakhir ditambah proyeksi).
-   - **Tab `1 Bulan` (Bawaan):** Menampilkan siklus bulanan penuh (30 hari observasi Open-Meteo ERA5-Land ditambah proyeksi).
-   - Setiap kartu variabel dilengkapi badge rentang waktu aktif, nilai numerik terbaru beserta satuannya, dan tooltip interaktif pada garis grafik.
+   - **Inspeksi Interaktif Titik Garis (Click to Inspect):** Pengguna dapat mengklik sembarang titik pada garis grafik untuk memunculkan bilah inspeksi khusus yang menampilkan tanggal/hari ($H-x$ atau $H+x$), nilai TMA, kelembapan, curah hujan, suhu, dan skor PFVI presisi pada hari tersebut.
+7. Panel **Grafik lengkap tiap variabel (Multi-Variable Analytic Cards)**:
+   - **Tab Filter Rentang Waktu Interaktif:**
+     * **Tab `1 Hari`:** Menampilkan pergerakan 24 jam terakhir ($H-1$, $H-0$) ditambah proyeksi.
+     * **Tab `7 Hari`:** Menampilkan jendela mingguan (7 hari observasi terakhir ditambah proyeksi).
+     * **Tab `1 Bulan` (Bawaan):** Menampilkan siklus bulanan penuh (30 hari observasi Open-Meteo ERA5-Land ditambah proyeksi).
+   - **Statistik Ekstrem (Peak Tertinggi, Terendah, dan Sekarang):** Setiap kartu variabel kini menampilkan tiga indikator komparasi historis:
+     * **SEKARANG:** Nilai observasi satelit terbaru pada hari ini ($H-0$).
+     * **TERTINGGI (PEAK):** Titik nilai tertinggi yang tercatat sepanjang periode 30 hari observasi.
+     * **TERENDAH (LOW):** Titik nilai terendah yang tercatat sepanjang periode 30 hari observasi.
+   - **Visualisasi Sumbu X dan Sumbu Y Penuh:**
+     * Setiap grafik mini kini dilengkapi **Sumbu X** (penanda hari relatif $H-x$ hingga $H+x$) dan **Sumbu Y** (nilai skalar terukur dengan skala adaptif).
+     * Dilengkapi garis kisi *Cartesian Grid* horizontal lembut untuk memudahkan pembacaan tren per hari.
+     * Setiap garis grafik mendukung klik langsung (*click-to-inspect*) untuk menampilkan telemetri hari tersebut secara detail.
 
 #### Kode Sumber (Source Code Listing): `frontend/src/components/PipelineControls.tsx`
 

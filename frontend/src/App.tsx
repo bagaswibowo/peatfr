@@ -135,11 +135,16 @@ export function App() {
     fetchRealtimeData(customReg);
   };
 
-  const executePipeline = async (inputData: any = sampleData, isPeatFlag: boolean = sampleData?.is_peat !== false) => {
+  const executePipeline = async (
+    inputData: any = sampleData,
+    isPeatFlag: boolean = sampleData?.is_peat !== false,
+    overrideH?: number
+  ) => {
     if (!inputData) return;
     setIsRunningPipeline(true);
 
     try {
+      const activeH = overrideH !== undefined ? overrideH : h;
       const payload = {
         WT: inputData.WT,
         SM: inputData.SM,
@@ -147,7 +152,7 @@ export function App() {
         Temp: inputData.Temp,
         imputation,
         model,
-        h,
+        h: activeH,
         r0: 3000.0,
         look_back: 12,
         hidden_units: 32,
@@ -355,7 +360,14 @@ export function App() {
               />
 
               {pipelineResult ? (
-                <ForecastCharts fullSeries={pipelineResult.full_series} forecastHorizon={h} />
+                <ForecastCharts
+                  fullSeries={pipelineResult.full_series}
+                  forecastHorizon={h}
+                  onChangeHorizon={(newH) => {
+                    setH(newH);
+                    executePipeline(sampleData, sampleData?.is_peat !== false, newH);
+                  }}
+                />
               ) : (
                 <div className="border border-[var(--line)] rounded-[var(--r-md)] bg-[var(--surface)] p-6 text-center text-[13px] text-[var(--text-mute)]">
                   Grafik tren muncul setelah perhitungan selesai.
