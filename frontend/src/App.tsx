@@ -19,6 +19,28 @@ const TABS = [
 
 type TabId = typeof TABS[number]['id'];
 
+// Helper to find the nearest province to any clicked geographical point
+const findNearestProvince = (lat: number, lon: number, provList: Province[]): Province | null => {
+  if (!provList.length) return null;
+  let nearest: Province | null = null;
+  let minDist = Infinity;
+  for (const p of provList) {
+    const dP = Math.hypot(p.lat - lat, p.lon - lon);
+    if (dP < minDist) {
+      minDist = dP;
+      nearest = p;
+    }
+    for (const r of (p.regencies || [])) {
+      const dR = Math.hypot(r.lat - lat, r.lon - lon);
+      if (dR < minDist) {
+        minDist = dR;
+        nearest = p;
+      }
+    }
+  }
+  return nearest;
+};
+
 export function App() {
   const [provinces, setProvinces] = useState<Province[]>([]);
   const [selectedProvince, setSelectedProvince] = useState<Province | null>(null);
@@ -59,6 +81,18 @@ export function App() {
       setSampleData(res.data);
       setSoilType(res.data.soil_type || 'Tidak diketahui');
       setDataError(null);
+
+      // Reconcile province from server-side spatial peat attribution if available
+      if (res.data?.peat_attribution?.adm1) {
+        const adm1 = res.data.peat_attribution.adm1;
+        const matched = provinces.find(
+          p => p.name.toLowerCase().includes(adm1.toLowerCase()) || adm1.toLowerCase().includes(p.name.toLowerCase())
+        );
+        if (matched) {
+          setSelectedProvince(matched);
+        }
+      }
+
       executePipeline(res.data, res.data.is_peat !== false);
     } catch (err: any) {
       // No simulated numbers: an unavailable upstream is reported, not invented.
@@ -81,6 +115,12 @@ export function App() {
   };
 
   const handleSelectCustomLocation = (lat: number, lon: number, name?: string) => {
+    // Immediately identify the nearest province based on clicked coordinates so UI doesn't linger on previous province
+    const nearestProv = findNearestProvince(lat, lon, provinces);
+    if (nearestProv) {
+      setSelectedProvince(nearestProv);
+    }
+
     const customName = name || `Titik GIS (${lat.toFixed(3)}, ${lon.toFixed(3)})`;
     const customReg: Regency = {
       id: `CUSTOM-${lat.toFixed(3)}-${lon.toFixed(3)}`,
@@ -177,7 +217,16 @@ export function App() {
   const currentTemp = pipelineResult ? lastOf(pipelineResult.full_series.Temp, 0) : 0;
 
   const locationPreset = selectedRegency
-    ? { id: selectedRegency.id, name: `${selectedRegency.name}, ${selectedProvince?.name || 'Indonesia'}`, lat: selectedRegency.lat, lon: selectedRegency.lon }
+    ? {
+        id: selectedRegency.id,
+        name: selectedRegency.id.startsWith('CUSTOM-')
+          ? (selectedProvince && !selectedRegency.name.toLowerCase().includes(selectedProvince.name.toLowerCase())
+              ? `${selectedRegency.name}, ${selectedProvince.name}`
+              : selectedRegency.name)
+          : `${selectedRegency.name}, ${selectedProvince?.name || 'Indonesia'}`,
+        lat: selectedRegency.lat,
+        lon: selectedRegency.lon
+      }
     : { id: 'sabangau', name: 'Sabangau, Kalteng', lat: -2.321, lon: 113.901 };
 
   const focusAlert = (alert: any) => {
