@@ -110,11 +110,12 @@ def main():
     cdp = CDP(a.base)
     try:
         cdp.goto(a.base + "/")
-        # Wait for pipeline data + map tiles.
+        # Wait for pipeline data + map tiles + charts rendering.
         for _ in range(60):
             ok = cdp.js(
                 "!!document.getElementById('bagian-peta') && "
-                "document.querySelectorAll('.leaflet-tile-loaded').length >= 4")
+                "document.querySelectorAll('.leaflet-tile-loaded').length >= 4 && "
+                "document.querySelectorAll('.recharts-wrapper').length >= 5")
             if ok:
                 break
             time.sleep(1)
