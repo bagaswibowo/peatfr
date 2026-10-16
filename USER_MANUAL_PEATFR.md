@@ -22,14 +22,58 @@
 
 ---
 
-# 1. GAMBARAN UMUM APLIKASI
-PeatFR (Peatland Fire Vulnerability Index & Early Warning System) adalah platform pemantauan dan peringatan dini berbasis web yang dirancang khusus untuk memetakan dan memprediksi risiko kebakaran lahan gambut tropis di Indonesia (*Mahdiyasa et al., 2025*).
+# 1. LANDASAN TEORETIS & SPESIFIKASI JURNAL ILMIAH ACUAN
 
-Aplikasi ini menghubungkan stasiun telemetri lingkungan realtime (Open-Meteo ERA5-Land), citra thermal satelit NASA FIRMS (VIIRS 375m & MODIS), atribusi zona gambut berbasis sentroid kabupaten gambut terdekat (is_peat), serta model kecerdasan buatan (ARIMA, LSTM, GRU) untuk memprediksi Indeks Kerawanan Kebakaran Gambut (PFVI) hingga 14 hari ke depan.
+Pengembangan aplikasi PeatFR berpijak secara formal dan utuh pada riset pemodelan kerawanan kebakaran lahan gambut tropis yang dipublikasikan dalam jurnal ilmiah internasional bereputasi tinggi (Elsevier, terindeks Scopus Q1):
+
+> **Publikasi Acuan Utama:**  
+> **Mahdiyasa, A. W., Melly, Pasaribu, U. S., Taufik, M., & Muljadi, B. P. (2025).**  
+> *Peatfr: An R package to forecast tropical peatland fire risk with stochastic, machine learning, and optimisation methods.*  
+> **Ecological Informatics**, Volume 92, Artikel 103532. Penerbit: Elsevier B.V.  
+> **Digital Object Identifier (DOI):** [https://doi.org/10.1016/j.ecoinf.2025.103532](https://doi.org/10.1016/j.ecoinf.2025.103532)  
+> **ISSN:** 1574-9541
+
+### Sitasi Resmi Format Standar
+
+* **Format APA (7th Edition):**  
+  Mahdiyasa, A. W., Melly, Pasaribu, U. S., Taufik, M., & Muljadi, B. P. (2025). Peatfr: An R package to forecast tropical peatland fire risk with stochastic, machine learning, and optimisation methods. *Ecological Informatics*, 92, 103532. https://doi.org/10.1016/j.ecoinf.2025.103532
+
+* **Format IEEE:**  
+  A. W. Mahdiyasa, Melly, U. S. Pasaribu, M. Taufik, and B. P. Muljadi, "Peatfr: An R package to forecast tropical peatland fire risk with stochastic, machine learning, and optimisation methods," *Ecological Informatics*, vol. 92, p. 103532, May 2025, doi: 10.1016/j.ecoinf.2025.103532.
+
+* **Format BibTeX:**  
+  ```bibtex
+  @article{Mahdiyasa2025Peatfr,
+    author    = {Adilan W. Mahdiyasa and Melly and Udjianna S. Pasaribu and Muh Taufik and Bagus P. Muljadi},
+    title     = {Peatfr: An R package to forecast tropical peatland fire risk with stochastic, machine learning, and optimisation methods},
+    journal   = {Ecological Informatics},
+    volume    = {92},
+    pages     = {103532},
+    year      = {2025},
+    issn      = {1574-9541},
+    doi       = {10.1016/j.ecoinf.2025.103532},
+    publisher = {Elsevier}
+  }
+  ```
+
+### Rekayasa Modernisasi: Dari R Package ke Cloud-Native Web Service
+Riset Mahdiyasa dkk. (2025) memperkenalkan pustaka (*package*) bahasa R bernama `Peatfr` untuk menganalisis risiko kebakaran gambut secara komputasional di lingkungan workstation saintifik. Aplikasi web PeatFR (Bagas Wibowo & Tim SEAL Telkom University) mere-implementasikan rumus hidrologis, optimasi parameter fisik, dan algoritma kecerdasan buatan tersebut ke dalam sistem terdistribusi modern:
+
+1. **Otomatisasi Pipa Data Satelit:** Dari pembacaan berkas CSV lokal manual menjadi penarikan telemetri streaming otomatis tanpa jeda (Open-Meteo ERA5, NASA FIRMS, NASA GIBS).
+2. **Ketersediaan Layanan Tanpa Instalasi Lingkungan R:** Petugas lapangan BPBD, Manggala Agni, dan pemangku kebijakan dapat mengakses analisis tanpa perlu menginstal R, Python, atau dependensi matematika di perangkat lokal.
+3. **Penyajian Data Spasial Interaktif:** Visualisasi geografis interaktif Leaflet GIS dengan kemampuan klik koordinat mana saja di seluruh kepulauan Indonesia untuk langsung menarik telemetri real-time.
+4. **Prinsip Integritas Tanpa Mock (Strictly No-Mock Policy):** Seluruh visualisasi dan angka risiko hanya bersumber dari data satelit dan stasiun lingkungan riil. Bila koneksi terputus, sistem secara jujur menampilkan status galat dan menahan proyeksi kosong, menjamin validitas hukum dan operasional lapangan.
 
 ---
 
-# 2. TUJUAN UTAMA APLIKASI
+# 2. GAMBARAN UMUM APLIKASI
+PeatFR (Peatland Fire Vulnerability Index & Early Warning System) adalah platform pemantauan dan peringatan dini berbasis web yang dirancang khusus untuk memetakan dan memprediksi risiko kebakaran lahan gambut tropis di Indonesia (*Mahdiyasa et al., 2025*).
+
+Aplikasi ini menghubungkan stasiun telemetri lingkungan realtime (Open-Meteo ERA5-Land), citra thermal satelit NASA FIRMS (VIIRS 375m & MODIS), lapisan anomali termal NASA GIBS WMS, atribusi zona gambut berbasis sentroid kabupaten gambut terdekat (is_peat), pelabelan kartografis CARTO Voyager, serta model kecerdasan buatan (ARIMA, LSTM, GRU) untuk memprediksi Indeks Kerawanan Kebakaran Gambut (PFVI) hingga 14 hari ke depan.
+
+---
+
+# 3. TUJUAN UTAMA APLIKASI
 1. **Deteksi Dini Kebakaran Bawah Permukaan (Smoldering Fire):** Memantau penurunan Muka Air Tanah (TMA) hingga di bawah batas kritis PP 71/2014 (-40 cm).
 2. **Penyederhanaan Akses Informasi Kebencanaan:** Menyajikan status kerawanan, daftar peringatan aktif, dan peta titik panas pada layar terpisah per tab sehingga petugas lapangan BPBD, Manggala Agni, dan warga lokal dapat membaca status tanpa membuka rumus statistik.
 3. **Analisis Lanjutan & Machine Learning (Mode Pakar):** Menyediakan instrumen tuning algoritma imputasi data missing (kNN/Spline) dan model kecerdasan buatan forecasting time-series.
@@ -37,7 +81,7 @@ Aplikasi ini menghubungkan stasiun telemetri lingkungan realtime (Open-Meteo ERA
 
 ---
 
-# 3. ARSITEKTUR SISTEM & DESAIN TEKNIS (SYSTEM ARCHITECTURE)
+# 4. ARSITEKTUR SISTEM & DESAIN TEKNIS (SYSTEM ARCHITECTURE)
 
 Sistem PeatFR dirancang menggunakan arsitektur 4-tier berkinerja tinggi:
 
@@ -47,6 +91,7 @@ flowchart TD
         OM["Open-Meteo ERA5-Land"]
         FIRMS["NASA FIRMS WMS & Vector API"]
         GIBS["NASA GIBS WMS"]
+        CARTO["CARTO Basemaps & Labels"]
         ZG["Zona Gambut (atribusi sentroid)"]
     end
 
@@ -73,6 +118,30 @@ flowchart TD
     L1 --> L2 --> L3 --> L4
 ```
 
+### Penjelasan Rinci Lapisan Arsitektur (4-Tier Architecture):
+
+1. **Tier 1 — Realtime External Data Providers:**
+   - **NASA GIBS WMS (Global Imagery Browse Services):** Diambil langsung di sisi peramban klien (*browser*) via Leaflet TileLayer secara realtime untuk memvisualisasikan layer termal satelit anomali VIIRS 375m (Pass Siang dan Malam).
+   - **Open-Meteo ERA5-Land Reanalysis API:** Diambil secara realtime oleh backend FastAPI setiap kali pengguna memilih target wilayah baru atau mengklik titik pada peta. Mengambil deret waktu suhu harian ($T_{\max}$), curah hujan ($R_t$), serta lengas tanah kedalaman 0-7 cm dan 7-28 cm ($\theta_t$).
+   - **NASA FIRMS WMS & Vector API:** Menggunakan `MAP_KEY` resmi terotorisasi (`aa16407e5eb11df46b09cafc085fe020`) untuk menampilkan layer raster aktif kebakaran serta penarikan data vektor titik api (koordinat, $T_{i4}$, FRP dlm Megawatt, waktu UTC, dan tingkat kepercayaan).
+   - **CARTO Voyager Basemaps & Labels:** Menggunakan API Key resmi (`cb1_4m3n_1_b06409956145d8a930b2bfdd`) untuk menyajikan label toponimi wilayah dan batas administrasi resolusi tinggi di atas citra satelit tanpa watermark.
+   - **Zona Gambut (Atribusi Sentroid Geodesik Bounded $\le 75\text{ km}$):** Algoritma penapisan spasial in-house yang menghitung jarak haversine titik api terhadap sentroid kabupaten gambut terdekat, memisahkan kebakaran gambut bawah tanah dari kebakaran vegetasi mineral.
+
+2. **Tier 2 — Backend Computation Engine (FastAPI :8097):**
+   - **Realtime Telemetry Ingestion:** Endpoint `/api/v1/realtime-peatland-data` memetakan data cuaca Open-Meteo ke variabel hidrologis standar gambut Indonesia.
+   - **PeatFR Physical Engine:** Menghitung Laju Kehilangan Air Evapotranspirasi ($DF_t$), Retensi van Genuchten ($WT_t$), dan Indeks PFVI multi-faktor.
+   - **SciPy Nelder-Mead Optimization:** Menjalankan kalibrasi parameter fisik terikat ($a_H, b_H \ge 0$) guna meminimalkan Mean Squared Error (MSE) terhadap indeks kekeringan lapangan.
+   - **AI/ML Forecasting Module:** Menjalankan inferensi deret waktu dengan arsitektur PyTorch (LSTM, GRU) dan statsmodels ARIMA untuk proyeksi ke depan (forecast horizon 1–14 hari).
+
+3. **Tier 3 — Container & Network Infrastructure:**
+   - **`peatfr-api`:** Kontainer Python 3.11 berbasis Docker multi-stage build yang mengisolasi pustaka komputasi numerik.
+   - **`peatfr-web`:** Kontainer Nginx Alpine yang menyajikan bundel produksi React 18 / Vite.
+   - **`cftunnel-peatfr`:** Cloudflare Tunnel terenkripsi dengan protokol HTTP/2 khusus jaringan kampus Telkom University, mengekspos domain publik `https://peatfr.bagaswibowo.app/` tanpa membuka port publik pada VPS (keamanan perimeter tinggi).
+
+4. **Tier 4 — Client Presentation Layer (React 18 + TypeScript):**
+   - **Antarmuka Tiga Tab Spesifik Domain:** Memisahkan alur kerja operasional menjadi *Pemantauan* (peta satelit + inspektor titik), *Peringatan* (daftar klaster kebakaran parah), dan *Simulasi* (analisis *what-if* dampak kenaikan suhu / penurunan hujan).
+   - **Zero-Mock Policy:** Jika sumber telemetri eksternal gagal dihubungi, sistem tidak akan menyimulasikan angka tiruan, melainkan menampilkan banner merah transparan dan menahan proyeksi kosong.
+
 ### Persamaan Matematika Model Fisika PeatFR:
 * **Laju Evapotranspirasi ($DF_t$):**
   ```math
@@ -86,6 +155,10 @@ RF_t = \max(0, Rf_t - 5.1)
   ```math
 WTF_t = a_H - b_H \cdot (1 - \theta(v)) \cdot 300, \quad \text{dengan } \theta(v) = \left[1 + \left(\frac{v}{\alpha}\right)^n\right]^{\frac{1 - n}{n}}
 ```
+* **Indeks Kerawanan Kebakaran Gambut ($PFVI_t$ Multi-Faktor):**
+  ```math
+PFVI_t = 100 \cdot \left( 0.4 \cdot \frac{DF_t}{10} + 0.4 \cdot \max\left(0, \frac{-WT_t}{0.4}\right) + 0.2 \cdot (1 - \theta_t) \right)
+```
 * **Physical Boundary Constraints:**
   ```math
 a_H \ge 0.0, \quad b_H \ge 0.0, \quad n > 1.05, \quad \alpha > 0.01
@@ -93,7 +166,7 @@ a_H \ge 0.0, \quad b_H \ge 0.0, \quad n > 1.05, \quad \alpha > 0.01
 
 ---
 
-# 4. DOKUMENTASI API & SUMBER DATA (DATA SOURCES & APIS)
+# 5. DOKUMENTASI API & SUMBER DATA (DATA SOURCES & APIS)
 
 ### A. Sumber Data Satelit Eksternal
 
@@ -119,7 +192,7 @@ a_H \ge 0.0, \quad b_H \ge 0.0, \quad n > 1.05, \quad \alpha > 0.01
 
 ---
 
-# 5. PANDUAN PETUNJUK FITUR-DEMI-FITUR & KODE SUMBER TERHUBUNG
+# 6. PANDUAN PETUNJUK FITUR-DEMI-FITUR & KODE SUMBER TERHUBUNG
 
 Aplikasi disusun sebagai tiga tab operasional — **Pemantauan**, **Peringatan**, dan **Simulasi** — dengan satu bilah atas global untuk pemilihan wilayah. Tab **Pemantauan** menampilkan peta satelit sebagai layar utama: klik titik mana saja untuk mengganti lokasi pantauan, dan seluruh panel (status risiko, pengaturan, kondisi saat ini, grafik) mengikuti titik tersebut. Tab **Peringatan** memuat daftar klaster hotspot aktif, sedangkan tab **Simulasi** memuat simulator skenario. Setiap fitur di bawah ini memuat deskripsi, tangkapan layar, langkah penggunaan, dan daftar kode sumber terkait.
 
