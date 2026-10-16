@@ -172,13 +172,101 @@ a_H \ge 0.0, \quad b_H \ge 0.0, \quad n > 1.05, \quad \alpha > 0.01
 
 | Provider & Dataset | Endpoint / Service URL | Variabel & Penggunaan |
 |---|---|---|
-| **Open-Meteo ERA5-Land** | `https://api.open-meteo.com/v1/forecast` | Suhu max 2m, Soil moisture (0-7cm, 7-28cm), Presipitasi harian |
+| **Open-Meteo ERA5-Land** | `https://api.open-meteo.com/v1/forecast` | Suhu max 2m, Soil moisture (0-7cm, 7-28cm), Presipitasi harian (On-demand backend fetching) |
 | **NASA FIRMS WMS** | `https://firms.modaps.eosdis.nasa.gov/mapserver/wms/` | Layer thermal VIIRS 24j & MODIS 24j dengan MAP_KEY terotorisasi |
-| **NASA FIRMS Vector API** | `https://firms.modaps.eosdis.nasa.gov/api/country/` | Titik hotspot VIIRS 375m, brightness T_i4 (K), daya FRP (MW) |
+| **NASA FIRMS Vector API** | `https://firms.modaps.eosdis.nasa.gov/api/area/csv/` | Titik hotspot VIIRS 375m, brightness T_i4 (K), daya FRP (MW) live area CSV |
 | **Zona Gambut (Atribusi FIRMS)** | NASA FIRMS VIIRS 375m + sentroid `peatfr_engine/indonesia_admin.json` | Deteksi hotspot aktif yang diatribusikan ke kabupaten gambut terdekat (radius <= 75 km); menggantikan GFW Vector Service yang kini mewajibkan API key berbayar (HTTP 403) |
-| **NASA GIBS WMS** | `https://gibs.earthdata.nasa.gov/wms/epsg3857/` | Citra thermal anomalies VIIRS SNPP 375m Pass Siang & Malam |
+| **NASA GIBS WMS** | `https://gibs.earthdata.nasa.gov/wms/epsg3857/` | Citra thermal anomalies VIIRS SNPP 375m Pass Siang & Malam langsung di peramban Leaflet |
+| **CARTO Voyager Basemaps** | `https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/` | Layer toponimi & batas administrasi resmi dengan Telkom University API Key `cb1_4m3n_1_b06409956145d8a930b2bfdd` |
 
-### B. Spesifikasi Internal REST API (FastAPI Engine)
+### B. Implementasi & Cara Pemakaian Setiap Provider di Dalam Kode Sumber
+
+Kelima provider satelit di atas terbukti dipakai secara aktif di dalam kode sumber aplikasi tanpa rekayasa data tiruan. Berikut implementasi teknisnya:
+
+#### 1. Open-Meteo ERA5-Land (`backend/main.py`)
+Setiap kali wilayah atau titik koordinat dipilih, backend mengeksekusi request HTTP streaming ke Open-Meteo untuk menarik data cuaca 30 hari ke belakang:
+```python
+# Berkas: backend/main.py
+url = (
+    f"https://api.open-meteo.com/v1/forecast?"
+    f"latitude={lat}&longitude={lon}&daily="
+    f"temperature_2m_max,precipitation_sum,soil_moisture_0_to_7cm_mean,soil_moisture_7_to_28cm_mean"
+    f"&timezone=auto&past_days={days}&forecast_days=1"
+)
+req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (PeatFR-EWS/1.0)"})
+with urllib.request.urlopen(req, timeout=15) as response:
+    raw_data = json.loads(response.read().decode())
+```
+
+#### 2. NASA FIRMS WMS & Vector Area API (`backend` & `frontend`)
+Menggunakan authorized MAP_KEY (`aa16407e5eb11df46b09cafc085fe020`) untuk lapisan raster WMS dan penarikan CSV titik panas vektor aktif:
+```python
+# Berkas: backend/peatfr_engine/fire_intelligence.py
+url = f"https://firms.modaps.eosdis.nasa.gov/api/area/csv/{self.firms_map_key}/{source}/{bbox}/{day_range}"
+req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (PeatFR-EWS/1.0)"})
+with urllib.request.urlopen(req, timeout=20) as resp:
+    lines = resp.read().decode('utf-8').splitlines()
+# Mengekstrak latitude, longitude, bright_ti4, frp, confidence, acq_date, acq_time
+```
+Dan di frontend Leaflet GIS:
+```tsx
+// Berkas: frontend/src/components/PeatlandMap.tsx
+<WMSTileLayer
+  url={`https://firms.modaps.eosdis.nasa.gov/mapserver/wms/fires/${FIRMS_MAP_KEY}/`}
+  layers="fires_viirs_24,fires_modis_24"
+  format="image/png"
+  transparent={true}
+  attribution="NASA FIRMS WMS"
+/>
+```
+
+#### 3. NASA GIBS WMS Thermal Anomalies (`frontend/src/components/PeatlandMap.tsx`)
+Menampilkan anomali termal VIIRS SNPP 375m siang/malam langsung dari server WMS NASA tanpa perantara:
+```tsx
+// Berkas: frontend/src/components/PeatlandMap.tsx
+<WMSTileLayer
+  url="https://gibs.earthdata.nasa.gov/wms/epsg3857/best/wms.cgi"
+  layers="VIIRS_SNPP_Thermal_Anomalies_375m_Day,VIIRS_SNPP_Thermal_Anomalies_375m_Night"
+  format="image/png"
+  transparent={true}
+  attribution="NASA GIBS VIIRS"
+/>
+```
+
+#### 4. CARTO Voyager Basemaps & Labels (`frontend/src/components/PeatlandMap.tsx`)
+Menggunakan API Key CARTO resmi Telkom University untuk menghilangkan watermark *"API key required"*:
+```tsx
+// Berkas: frontend/src/components/PeatlandMap.tsx
+const CARTO_API_KEY = "cb1_4m3n_1_b06409956145d8a930b2bfdd";
+
+<TileLayer
+  attribution='&copy; <a href="https://carto.com/">CARTO Voyager Labels</a>'
+  url={`https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png?key=${CARTO_API_KEY}`}
+/>
+```
+
+#### 5. Atribusi Geodesik Zona Gambut Sentroid Sentinel (`backend/peatfr_engine/fire_intelligence.py`)
+Menghitung jarak terpendek (geodesic distance) antara koordinat hotspot NASA FIRMS dengan sentroid administratif kabupaten lahan gambut:
+```python
+# Berkas: backend/peatfr_engine/fire_intelligence.py
+def attribute_peatland(lat: float, lon: float, max_dist_km: float = 75.0) -> Dict[str, Any]:
+    best_dist = float('inf')
+    best_c = None
+    for c in PEATLAND_CENTROIDS:
+        d = haversine_distance(lat, lon, c["lat"], c["lon"])
+        if d < best_dist:
+            best_dist = d
+            best_c = c
+    is_peat = best_dist <= max_dist_km
+    return {
+        "is_peatland": is_peat,
+        "adm1": best_c["adm1"] if is_peat else "Unknown",
+        "adm2": best_c["adm2"] if is_peat else "Unknown",
+        "distance_km": round(best_dist, 1)
+    }
+```
+
+### C. Spesifikasi Internal REST API (FastAPI Engine)
 
 | HTTP Method & Route | Fungsi & Deskripsi Operasional |
 |---|---|
