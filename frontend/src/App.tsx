@@ -82,8 +82,12 @@ export function App() {
       setSoilType(res.data.soil_type || 'Tidak diketahui');
       setDataError(null);
 
-      // Reconcile province from server-side spatial peat attribution if available
-      if (res.data?.peat_attribution?.adm1) {
+      // Reconcile province from server-side spatial peat attribution only when the
+      // point lies within the attribution radius; a far-off centroid (e.g. Bali ->
+      // Kalimantan Selatan, ~518 km) must never override the clicked province.
+      const attrKm = res.data?.peat_attribution?.distance_km;
+      const attrValid = typeof attrKm === 'number' && attrKm <= 75;
+      if (attrValid && res.data?.peat_attribution?.adm1) {
         const adm1 = res.data.peat_attribution.adm1;
         const matched = provinces.find(
           p => p.name.toLowerCase().includes(adm1.toLowerCase()) || adm1.toLowerCase().includes(p.name.toLowerCase())

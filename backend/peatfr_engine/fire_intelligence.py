@@ -103,12 +103,18 @@ def attribute_peatland(lat: float, lon: float) -> Dict[str, Any]:
                 "distance_km": None, "attribution": "unavailable"}
 
     within = best["distance_km"] <= PEAT_ATTRIBUTION_MAX_KM
+    # Beyond the attribution radius the nearest peat centroid is meaningless
+    # (e.g. a Bali click 518 km from Tanah Laut, Kalsel): never attach its
+    # province/regency, or downstream consumers mislabel the point.
     return {
         "is_peatland": bool(best["peat"] and within),
-        "adm1": best["adm1"],
-        "adm2": best["adm2"],
+        "adm1": best["adm1"] if within else None,
+        "adm2": best["adm2"] if within else None,
         "distance_km": best["distance_km"],
-        "attribution": f"{_ATTRIBUTION_NOTE} <= {PEAT_ATTRIBUTION_MAX_KM:.0f} km",
+        "attribution": (
+            f"{_ATTRIBUTION_NOTE} <= {PEAT_ATTRIBUTION_MAX_KM:.0f} km" if within
+            else "di luar radius atribusi ({} km > {:.0f} km)".format(best["distance_km"], PEAT_ATTRIBUTION_MAX_KM)
+        ),
     }
 
 
