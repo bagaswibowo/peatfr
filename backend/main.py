@@ -104,17 +104,27 @@ def geocode_point(
     adm2 = attr.get("adm2")
     village = attr.get("village")
     country = attr.get("country")
-    parts = [x for x in (village, adm2, adm1 or country, country if adm1 else None) if x]
-    # de-dup while preserving order
+    kecamatan = attr.get("kecamatan")
+    postcode = attr.get("postcode")
+    road = attr.get("road")
+    country = attr.get("country")
+    # Google-Maps-style full hierarchy, de-duplicated while preserving order:
+    # desa/kelurahan, kecamatan, kabupaten/kota, provinsi, negara.
+    parts = [x for x in (village, kecamatan, adm2, adm1, country) if x]
     seen = set()
     label_all = [x for x in parts if not (x in seen or seen.add(x))]
+    label = ", ".join(label_all) if label_all else None
+    # Breadcrumb-able detail levels for the UI.
     return {
         "lat": lat,
         "lon": lon,
-        "label": ", ".join(label_all) if label_all else None,
+        "label": label,
+        "village": village,
+        "kecamatan": kecamatan,
         "adm1": adm1,
         "adm2": adm2,
-        "village": village,
+        "postcode": postcode,
+        "road": road,
         "country": country,
         "is_peatland": attr.get("is_peatland", False),
         "in_peat_radius": attr.get("in_peat_radius", False),

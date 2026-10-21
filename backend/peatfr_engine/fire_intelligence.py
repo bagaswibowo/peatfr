@@ -112,7 +112,7 @@ def reverse_geocode(lat: float, lon: float) -> Optional[Dict[str, Any]]:
     try:
         url = (
             "https://nominatim.openstreetmap.org/reverse"
-            f"?lat={lat}&lon={lon}&zoom=10&accept-language=id&format=json"
+            f"?lat={lat}&lon={lon}&zoom=14&accept-language=id&format=json&addressdetails=1"
         )
         req = urllib.request.Request(
             url, headers={"User-Agent": "PeatFR-EWS/1.0 (peatfr.bagaswibowo.app)"}
@@ -139,10 +139,18 @@ def reverse_geocode(lat: float, lon: float) -> Optional[Dict[str, Any]]:
         elif not adm2:
             adm2 = addr.get("city") or addr.get("town") or None
         if adm1 or adm2 or coarse:
+            # Full Google-Maps-style hierarchy: desa/kelurahan -> kecamatan ->
+            # kabupaten/kota -> provinsi/state -> negara (+ kode pos & jalan
+            # ketika tersedia). Foreign cities expose suburb/quarter/ward keys.
+            village = (addr.get("village") or addr.get("neighbourhood")
+                       or addr.get("suburb") or addr.get("quarter"))
+            kecamatan = addr.get("city_district") or addr.get("district") or addr.get("ward")
             result = {"adm1": adm1 if (country == "Indonesia" or adm1) else (country or adm1),
                       "adm2": adm2 if country == "Indonesia" else (adm2 or None),
-                      "village": addr.get("village") or addr.get("suburb")
-                      or addr.get("neighbourhood"),
+                      "village": village,
+                      "kecamatan": kecamatan,
+                      "postcode": addr.get("postcode"),
+                      "road": addr.get("road"),
                       "country": country,
                       "coarse": coarse}
     except Exception:
