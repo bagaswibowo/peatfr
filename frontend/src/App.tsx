@@ -20,6 +20,33 @@ const TABS = [
 type TabId = typeof TABS[number]['id'];
 
 // Helper to find the nearest province to any clicked geographical point
+// Google-Maps-style: resolve a readable place label for a raw click through
+// OSM Nominatim (same free authoritative source PeatFR already uses). If the
+// lookup fails, fall back to the raw coordinates as an honest last resort.
+const reverseLabelCache = new Map<string, { name: string; country?: string }>();
+const recommendPlaceLabel = async (lat: number, lon: number): Promise<string> => {
+  const key = `${lat.toFixed(3)},${lon.toFixed(3)}`;
+  const hit = reverseLabelCache.get(key);
+  if (hit) return hit.name;
+  try {
+    const res = await axios.get(
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&zoom=10&accept-language=id&format=json`
+    );
+    const d = res.data || {};
+    const a = d.address || {};
+    const parts: string[] = [];
+    const locality = a.village || a.town || a.city || a.suburb || a.county || a.region || a.municipality || a.state;
+    if (locality) parts.push(locality);
+    if (a.state && a.state !== locality) parts.push(a.state);
+    else if (d.country && a.state !== d.country) parts.push(d.country);
+    const name = parts.join(', ') || d.display_name || `Titik ${lat}, ${lon}`;
+    reverseLabelCache.set(key, { name, country: d.country });
+    return name;
+  } catch {
+    return `Titik ${lat}, ${lon}`;
+  }
+};
+
 const findNearestProvince = (lat: number, lon: number, provList: Province[]): Province | null => {
   if (!provList.length) return null;
   let nearest: Province | null = null;
@@ -99,6 +126,7 @@ export function App() {
         // Outside the peat radius the backend resolved the REAL admin names via
         // OSM reverse geocoding: rename the point and select that province so
         // every map click anywhere in Indonesia is labeled correctly.
+        const country: string | undefined = res.data.peat_attribution.country;
         const realProvName: string = res.data.peat_attribution.adm1;
         const realRegName: string = res.data.peat_attribution.adm2 || realProvName;
         if (reg.id.startsWith('CUSTOM-')) {
@@ -106,10 +134,13 @@ export function App() {
             prev ? { ...prev, name: realRegName } : prev
           );
         }
+        // Only match in-house peat provinces when the click really is in one;
+        // any other place (foreign or non-peat) keeps its OSM/Google-style plain
+        // name and must not be snapped to a wrong Indonesian province.
         const realMatch = provinces.find(
           p => p.name.toLowerCase() === realProvName.toLowerCase()
         ) ?? provinces.find(
-          p => realProvName.toLowerCase().includes(p.name.toLowerCase()) || p.name.toLowerCase().includes(realProvName.toLowerCase())
+          p => country === 'Indonesia' && (realProvName.toLowerCase().includes(p.name.toLowerCase()) || p.name.toLowerCase().includes(realProvName.toLowerCase()))
         );
         if (realMatch) {
           setSelectedProvince(realMatch);
@@ -137,14 +168,16 @@ export function App() {
     fetchRealtimeData(reg);
   };
 
-  const handleSelectCustomLocation = (lat: number, lon: number, name?: string) => {
+  const handleSelectCustomLocation = async (lat: number, lon: number, name?: string) => {
     // Immediately identify the nearest province based on clicked coordinates so UI doesn't linger on previous province
     const nearestProv = findNearestProvince(lat, lon, provinces);
     if (nearestProv) {
       setSelectedProvince(nearestProv);
     }
 
-    const customName = name || `Titik GIS (${lat.toFixed(3)}, ${lon.toFixed(3)})`;
+    // Google-Maps-style instant naming: the coarse OSM/Nominatim reverse for this
+    // exact coordinate replaces the raw GIS tuple as the click label.
+    const customName = name || (await recommendPlaceLabel(lat, lon));
     const customReg: Regency = {
       id: `CUSTOM-${lat.toFixed(3)}-${lon.toFixed(3)}`,
       name: customName,
@@ -247,9 +280,13 @@ export function App() {
   const locationPreset = selectedRegency
     ? {
         id: selectedRegency.id,
+        // A place label always resolves to a real name; nothing generic or
+        // static. Province suffix only when it is a distinct, known province.
         name: selectedProvince && !selectedRegency.name.toLowerCase().includes(selectedProvince.name.toLowerCase())
           ? `${selectedRegency.name}, ${selectedProvince.name}`
-          : (selectedProvince ? selectedRegency.name : `${selectedRegency.name}, Indonesia`),
+          : (selectedProvince
+              ? selectedRegency.name
+              : (selectedRegency.name || 'Lokasi Tidak Dikenal')),
         lat: selectedRegency.lat,
         lon: selectedRegency.lon
       }

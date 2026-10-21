@@ -120,6 +120,13 @@ def reverse_geocode(lat: float, lon: float) -> Optional[Dict[str, Any]]:
         with urllib.request.urlopen(req, timeout=5) as res:
             data = json.loads(res.read().decode())
         addr = data.get("address", {})
+        country = addr.get("country")
+        # Mid-ocean / unaddressed points: derive a coarse label from display_name
+        # (Nominatim always returns one) instead of dropping the click as unknown.
+        coarse = None
+        if not any(k in addr for k in ("county", "region", "regency", "municipality", "city", "state", "town", "village")):
+            parts = [x.strip() for x in data.get("display_name", "").split(",")]
+            coarse = parts[0] if parts and parts[0] and parts[0].lower() not in ("indonesia",) else None
         adm2 = (addr.get("county") or addr.get("region") or addr.get("regency")
                 or addr.get("municipality"))
         adm1 = addr.get("state") or addr.get("province")
@@ -131,23 +138,13 @@ def reverse_geocode(lat: float, lon: float) -> Optional[Dict[str, Any]]:
             adm2 = addr.get("district") or None
         elif not adm2:
             adm2 = addr.get("city") or addr.get("town") or None
-        if not adm1 and adm2:
-            # Provincial name unavailable from OSM (Sumatera Utara style): fall
-            # back to the nearest known province centroid from the in-house dataset.
-            prov_best = None
-            for prov in provinces_raw():
-                for reg in prov.get("regencies", []):
-                    try:
-                        d = haversine_km(lat, lon, float(reg["lat"]), float(reg["lon"]))
-                    except (KeyError, TypeError, ValueError):
-                        continue
-                    if prov_best is None or d < prov_best[0]:
-                        prov_best = (d, prov.get("name"))
-            adm1 = prov_best[1] if prov_best else None
-        if adm1 or adm2:
-            result = {"adm1": adm1, "adm2": adm2,
+        if adm1 or adm2 or coarse:
+            result = {"adm1": adm1 if (country == "Indonesia" or adm1) else (country or adm1),
+                      "adm2": adm2 if country == "Indonesia" else (adm2 or None),
                       "village": addr.get("village") or addr.get("suburb")
-                      or addr.get("neighbourhood")}
+                      or addr.get("neighbourhood"),
+                      "country": country,
+                      "coarse": coarse}
     except Exception:
         result = None
     _REVERSE_CACHE[cell] = result
@@ -176,16 +173,40 @@ def attribute_peatland(lat: float, lon: float) -> Dict[str, Any]:
     # province/regency, or downstream consumers mislabel the point. The real
     # administrative names come from OSM reverse geocoding instead.
     geo = None if within else reverse_geocode(lat, lon)
+    adm1 = (geo or {}).get("adm1")
+    adm2 = (geo or {}).get("adm2")
+    village = (geo or {}).get("village")
+    country = (geo or {}).get("country")
+    coarse = (geo or {}).get("coarse")
+    if not within and country == "Indonesia" and not adm1 and adm2:
+        # OSM omitted the state name for an Indonesian point: fall back to the
+        # nearest province centroid from the in-house dataset.
+        prov_best = None
+        for prov in provinces_raw():
+            for reg in prov.get("regencies", []):
+                try:
+                    d = haversine_km(lat, lon, float(reg["lat"]), float(reg["lon"]))
+                except (KeyError, TypeError, ValueError):
+                    continue
+                if prov_best is None or d < prov_best[0]:
+                    prov_best = (d, prov.get("name"))
+        adm1 = prov_best[1] if prov_best else None
+    if not within and country not in ("Indonesia", None):
+        # Foreign click (other continent/country): OSM names are authoritative,
+        # nothing Indonesian may leak into the label.
+        village = None
     return {
         "is_peatland": bool(best["peat"] and within),
-        "adm1": best["adm1"] if within else (geo or {}).get("adm1"),
-        "adm2": best["adm2"] if within else (geo or {}).get("adm2"),
-        "village": (geo or {}).get("village") if not within else None,
+        "adm1": best["adm1"] if within else (adm1 or coarse),
+        "adm2": best["adm2"] if within else adm2,
+        "village": village if not within else None,
+        "country": None if within else country,
+        "coarse": None if within else coarse,
         "in_peat_radius": within,
         "distance_km": best["distance_km"],
         "attribution": (
             f"{_ATTRIBUTION_NOTE} <= {PEAT_ATTRIBUTION_MAX_KM:.0f} km" if within
-            else "nama administratif via reverse geocoding OSM (di luar radius gambut {:.0f} km)".format(PEAT_ATTRIBUTION_MAX_KM)
+            else ("di tengah laut / zona tanpa administrasi ({}; jarak {:.0f} km)".format(country or "referensi geografis tidak ditemukan", best["distance_km"]) if country is None and geo is None and coarse is None else "nama administratif global via reverse geocoding OSM ({}; di luar radius gambut {:.0f} km)".format(country or "negara tidak diketahui", PEAT_ATTRIBUTION_MAX_KM))
         ),
     }
 
