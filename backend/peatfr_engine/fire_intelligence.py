@@ -86,6 +86,15 @@ def _load_peat_regencies() -> list:
 PEAT_REGENCIES = _load_peat_regencies()
 
 
+def provinces_raw() -> list:
+    """Raw provinces list from the in-house admin dataset."""
+    try:
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "indonesia_admin.json")) as f:
+            return json.load(f)
+    except Exception:
+        return []
+
+
 _REVERSE_CACHE: Dict[tuple, Optional[Dict[str, Any]]] = {}
 
 
@@ -122,6 +131,19 @@ def reverse_geocode(lat: float, lon: float) -> Optional[Dict[str, Any]]:
             adm2 = addr.get("district") or None
         elif not adm2:
             adm2 = addr.get("city") or addr.get("town") or None
+        if not adm1 and adm2:
+            # Provincial name unavailable from OSM (Sumatera Utara style): fall
+            # back to the nearest known province centroid from the in-house dataset.
+            prov_best = None
+            for prov in provinces_raw():
+                for reg in prov.get("regencies", []):
+                    try:
+                        d = haversine_km(lat, lon, float(reg["lat"]), float(reg["lon"]))
+                    except (KeyError, TypeError, ValueError):
+                        continue
+                    if prov_best is None or d < prov_best[0]:
+                        prov_best = (d, prov.get("name"))
+            adm1 = prov_best[1] if prov_best else None
         if adm1 or adm2:
             result = {"adm1": adm1, "adm2": adm2,
                       "village": addr.get("village") or addr.get("suburb")
