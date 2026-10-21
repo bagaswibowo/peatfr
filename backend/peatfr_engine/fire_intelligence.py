@@ -111,7 +111,7 @@ def reverse_geocode(lat: float, lon: float) -> Optional[Dict[str, Any]]:
         with urllib.request.urlopen(req, timeout=5) as res:
             data = json.loads(res.read().decode())
         addr = data.get("address", {})
-        adm2 = (addr.get("county") or addr.get("regency")
+        adm2 = (addr.get("county") or addr.get("region") or addr.get("regency")
                 or addr.get("municipality"))
         adm1 = addr.get("state") or addr.get("province")
         # City-level provinces (DKI Jakarta, DIY Yogyakarta, DKI Papua etc.) expose
