@@ -86,6 +86,52 @@ def _load_peat_regencies() -> list:
 PEAT_REGENCIES = _load_peat_regencies()
 
 
+_REVERSE_CACHE: Dict[tuple, Optional[Dict[str, Any]]] = {}
+
+
+def reverse_geocode(lat: float, lon: float) -> Optional[Dict[str, Any]]:
+    """Resolve the real administrative names for any coordinate via OSM Nominatim.
+
+    No-Mock: this is the authoritative label source for every map click, inside
+    or outside peatland provinces. Cached per ~0.05-degree cell; failures return
+    None so callers fall back gracefully instead of inventing a name.
+    """
+    cell = (round(lat / 0.05), round(lon / 0.05))
+    if cell in _REVERSE_CACHE:
+        return _REVERSE_CACHE[cell]
+    result = None
+    try:
+        url = (
+            "https://nominatim.openstreetmap.org/reverse"
+            f"?lat={lat}&lon={lon}&zoom=10&accept-language=id&format=json"
+        )
+        req = urllib.request.Request(
+            url, headers={"User-Agent": "PeatFR-EWS/1.0 (peatfr.bagaswibowo.app)"}
+        )
+        with urllib.request.urlopen(req, timeout=5) as res:
+            data = json.loads(res.read().decode())
+        addr = data.get("address", {})
+        adm2 = (addr.get("county") or addr.get("regency")
+                or addr.get("municipality"))
+        adm1 = addr.get("state") or addr.get("province")
+        # City-level provinces (DKI Jakarta, DIY Yogyakarta, DKI Papua etc.) expose
+        # their province name under city/municipality keys: promote to adm1 and
+        # demote any lower admin level to adm2.
+        if not adm1 and (addr.get("city") or addr.get("town")):
+            adm1 = addr.get("city") or addr.get("town")
+            adm2 = addr.get("district") or None
+        elif not adm2:
+            adm2 = addr.get("city") or addr.get("town") or None
+        if adm1 or adm2:
+            result = {"adm1": adm1, "adm2": adm2,
+                      "village": addr.get("village") or addr.get("suburb")
+                      or addr.get("neighbourhood")}
+    except Exception:
+        result = None
+    _REVERSE_CACHE[cell] = result
+    return result
+
+
 def attribute_peatland(lat: float, lon: float) -> Dict[str, Any]:
     """Nearest-regency peat attribution for a coordinate. Pure, offline, deterministic."""
     best = None
@@ -105,15 +151,19 @@ def attribute_peatland(lat: float, lon: float) -> Dict[str, Any]:
     within = best["distance_km"] <= PEAT_ATTRIBUTION_MAX_KM
     # Beyond the attribution radius the nearest peat centroid is meaningless
     # (e.g. a Bali click 518 km from Tanah Laut, Kalsel): never attach its
-    # province/regency, or downstream consumers mislabel the point.
+    # province/regency, or downstream consumers mislabel the point. The real
+    # administrative names come from OSM reverse geocoding instead.
+    geo = None if within else reverse_geocode(lat, lon)
     return {
         "is_peatland": bool(best["peat"] and within),
-        "adm1": best["adm1"] if within else None,
-        "adm2": best["adm2"] if within else None,
+        "adm1": best["adm1"] if within else (geo or {}).get("adm1"),
+        "adm2": best["adm2"] if within else (geo or {}).get("adm2"),
+        "village": (geo or {}).get("village") if not within else None,
+        "in_peat_radius": within,
         "distance_km": best["distance_km"],
         "attribution": (
             f"{_ATTRIBUTION_NOTE} <= {PEAT_ATTRIBUTION_MAX_KM:.0f} km" if within
-            else "di luar radius atribusi ({} km > {:.0f} km)".format(best["distance_km"], PEAT_ATTRIBUTION_MAX_KM)
+            else "nama administratif via reverse geocoding OSM (di luar radius gambut {:.0f} km)".format(PEAT_ATTRIBUTION_MAX_KM)
         ),
     }
 

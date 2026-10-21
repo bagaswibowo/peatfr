@@ -95,6 +95,25 @@ export function App() {
         if (matched) {
           setSelectedProvince(matched);
         }
+      } else if (!attrValid && res.data?.peat_attribution?.adm1) {
+        // Outside the peat radius the backend resolved the REAL admin names via
+        // OSM reverse geocoding: rename the point and select that province so
+        // every map click anywhere in Indonesia is labeled correctly.
+        const realProvName: string = res.data.peat_attribution.adm1;
+        const realRegName: string = res.data.peat_attribution.adm2 || realProvName;
+        if (reg.id.startsWith('CUSTOM-')) {
+          setSelectedRegency((prev: Regency | null) =>
+            prev ? { ...prev, name: realRegName } : prev
+          );
+        }
+        const realMatch = provinces.find(
+          p => p.name.toLowerCase() === realProvName.toLowerCase()
+        ) ?? provinces.find(
+          p => realProvName.toLowerCase().includes(p.name.toLowerCase()) || p.name.toLowerCase().includes(realProvName.toLowerCase())
+        );
+        if (realMatch) {
+          setSelectedProvince(realMatch);
+        }
       }
 
       executePipeline(res.data, res.data.is_peat !== false);
@@ -228,11 +247,9 @@ export function App() {
   const locationPreset = selectedRegency
     ? {
         id: selectedRegency.id,
-        name: selectedRegency.id.startsWith('CUSTOM-')
-          ? (selectedProvince && !selectedRegency.name.toLowerCase().includes(selectedProvince.name.toLowerCase())
-              ? `${selectedRegency.name}, ${selectedProvince.name}`
-              : selectedRegency.name)
-          : `${selectedRegency.name}, ${selectedProvince?.name || 'Indonesia'}`,
+        name: selectedProvince && !selectedRegency.name.toLowerCase().includes(selectedProvince.name.toLowerCase())
+          ? `${selectedRegency.name}, ${selectedProvince.name}`
+          : (selectedProvince ? selectedRegency.name : `${selectedRegency.name}, Indonesia`),
         lat: selectedRegency.lat,
         lon: selectedRegency.lon
       }
