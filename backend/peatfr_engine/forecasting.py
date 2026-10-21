@@ -33,7 +33,21 @@ class GRUModel(nn.Module):
 def forecast_arima_single(series: np.ndarray, h: int) -> np.ndarray:
     """
     ARIMA forecasting with Box-Cox transformation & auto AR/MA fitting.
+
+    Numerical guards for degenerate real-world series (clipped sensors,
+    mid-ocean humidity constants, near-constant telemetry): a (near-)constant
+    series has zero Box-Cox variance and drives the MLE into NaN without ever
+    raising — the sane answer is "persistence", the last observed value.
     """
+    series = np.asarray(series, dtype=float)
+    series = series[np.isfinite(series)]
+    if len(series) == 0:
+        return np.zeros(h)
+
+    # (Near-)constant series: Box-Cox MLE is degenerate (NaN, silently).
+    if np.ptp(series) < 1e-9:
+        return np.full(h, float(series[-1]))
+
     shift = 0.0
     min_val = np.min(series)
     if min_val <= 0:
@@ -46,6 +60,10 @@ def forecast_arima_single(series: np.ndarray, h: int) -> np.ndarray:
     except Exception:
         transformed = np.log(shifted_series)
         lmbda = 0.0
+
+    # Box-Cox may still emit non-finite values for pathological inputs.
+    if not np.isfinite(transformed).all():
+        return np.full(h, float(series[-1]))
         
     try:
         from statsmodels.tsa.arima.model import ARIMA
@@ -75,12 +93,19 @@ def forecast_arima_single(series: np.ndarray, h: int) -> np.ndarray:
             forecast_shifted = inv_boxcox(forecast_trans, lmbda)
             
         forecast = forecast_shifted - shift
-        return np.array(forecast)
+        forecast = np.asarray(forecast, dtype=float)
+        if not np.isfinite(forecast).all():
+            # MLE converged to NaN: persistence beats a made-up trend.
+            return np.full(h, float(series[-1]))
+        return forecast
     except Exception:
         # Fallback to linear trend if ARIMA fails
         last_val = series[-1]
         trend = (series[-1] - series[0]) / len(series)
-        return np.array([last_val + trend * (i + 1) for i in range(h)])
+        out = np.array([last_val + trend * (i + 1) for i in range(h)])
+        if not np.isfinite(out).all():
+            return np.full(h, float(series[-1]))
+        return out
 
 def forecast_rnn_single(series: np.ndarray, h: int, model_type: str = "lstm", look_back: int = 12, hidden_units: int = 32, epochs: int = 50) -> np.ndarray:
     """
@@ -131,6 +156,8 @@ def forecast_rnn_single(series: np.ndarray, h: int, model_type: str = "lstm", lo
             curr_input = torch.cat((curr_input[:, 1:, :], next_val_tensor), dim=1)
             
     preds = np.array(preds) * scale + min_val
+    if not np.isfinite(preds).all():
+        preds = np.where(np.isfinite(preds), preds, float(series[-1]) if len(series) else 0.0)
     return preds
 
 def forecast_peatfr_variables(

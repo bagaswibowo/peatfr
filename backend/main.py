@@ -391,24 +391,26 @@ def run_auto_pipeline(req: AutoPipelineRequest):
             "historical_len": len(wt_clean),
             "forecast_horizon": req.h,
             "forecast": {
-                "WT": fc_res["WT_pred"].tolist(),
-                "SM": fc_res["SM_pred"].tolist(),
-                "Rf": fc_res["Rf_pred"].tolist(),
-                "Temp": fc_res["Temp_pred"].tolist(),
-                "PFVI": pfvi_forecast,
+                "WT": [v if np.isfinite(v) else None for v in fc_res["WT_pred"].tolist()],
+                "SM": [v if np.isfinite(v) else None for v in fc_res["SM_pred"].tolist()],
+                "Rf": [v if np.isfinite(v) else None for v in fc_res["Rf_pred"].tolist()],
+                "Temp": [v if np.isfinite(v) else None for v in fc_res["Temp_pred"].tolist()],
+                "PFVI": [v if isinstance(v, (int, float)) and np.isfinite(v) else None for v in pfvi_forecast],
                 "Risk_Categories": risk_categories,
                 "Current_Status": current_status
             },
             "full_series": {
-                "WT": wt_full.tolist(),
-                "SM": sm_full.tolist(),
-                "Rf": rf_full.tolist(),
-                "Temp": temp_full.tolist(),
-                "PFVI": pfvi_series,
-                "DI_obs": pfvi_sim["di_obs"].tolist(),
-                "DF": pfvi_sim["df"].tolist(),
-                "RF": pfvi_sim["rf"].tolist(),
-                "WTF": pfvi_sim["wtf"].tolist()
+                # json-safe: any non-finite that survives upstream guards becomes
+                # None instead of crashing the whole 500 response.
+                "WT": [v if np.isfinite(v) else None for v in wt_full.tolist()],
+                "SM": [v if np.isfinite(v) else None for v in sm_full.tolist()],
+                "Rf": [v if np.isfinite(v) else None for v in rf_full.tolist()],
+                "Temp": [v if np.isfinite(v) else None for v in temp_full.tolist()],
+                "PFVI": [v if isinstance(v, (int, float)) and np.isfinite(v) else None for v in pfvi_series],
+                "DI_obs": [v if np.isfinite(v) else None for v in pfvi_sim["di_obs"].tolist()],
+                "DF": [v if np.isfinite(v) else None for v in pfvi_sim["df"].tolist()],
+                "RF": [v if np.isfinite(v) else None for v in pfvi_sim["rf"].tolist()],
+                "WTF": [v if np.isfinite(v) else None for v in pfvi_sim["wtf"].tolist()]
             }
         }
     except Exception as e:
