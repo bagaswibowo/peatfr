@@ -87,6 +87,41 @@ def read_root():
 def health_check():
     return {"status": "ok", "engine": "Python PyTorch & SciPy PeatFR Core"}
 
+@app.get("/api/v1/geocode")
+def geocode_point(
+    lat: float = Query(0.0, description="Latitude"),
+    lon: float = Query(0.0, description="Longitude")
+):
+    """Google-Maps-style reverse geocode for any coordinate on Earth.
+
+    Single authoritative source: OSM Nominatim via the peat engine (cached
+    server-side). Returns label + adm1/adm2 + country + peat flag so the
+    frontend never has to guess a province from raw centroid distance.
+    """
+    from peatfr_engine.fire_intelligence import attribute_peatland
+    attr = attribute_peatland(lat, lon)
+    adm1 = attr.get("adm1")
+    adm2 = attr.get("adm2")
+    village = attr.get("village")
+    country = attr.get("country")
+    parts = [x for x in (village, adm2, adm1 or country, country if adm1 else None) if x]
+    # de-dup while preserving order
+    seen = set()
+    label_all = [x for x in parts if not (x in seen or seen.add(x))]
+    return {
+        "lat": lat,
+        "lon": lon,
+        "label": ", ".join(label_all) if label_all else None,
+        "adm1": adm1,
+        "adm2": adm2,
+        "village": village,
+        "country": country,
+        "is_peatland": attr.get("is_peatland", False),
+        "in_peat_radius": attr.get("in_peat_radius", False),
+        "distance_km": attr.get("distance_km"),
+    }
+
+
 @app.get("/api/v1/indonesia/regions")
 def get_indonesia_regions():
     """Returns administrative hierarchy of Indonesia Peatland Provinces & Regencies."""

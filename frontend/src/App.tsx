@@ -71,6 +71,10 @@ const findNearestProvince = (lat: number, lon: number, provList: Province[]): Pr
 export function App() {
   const [provinces, setProvinces] = useState<Province[]>([]);
   const [selectedProvince, setSelectedProvince] = useState<Province | null>(null);
+  // Real place state from reverse geocoding for clicks outside the 8 in-house
+  // peat provinces (Pahang, Sulawesi Barat, ...). Drives the display label;
+  // never guessed from centroid distance.
+  const [realProvLabel, setRealProvLabel] = useState<string | null>(null);
   const [selectedRegency, setSelectedRegency] = useState<Regency | null>(null);
   const [loadingRealtime, setLoadingRealtime] = useState(false);
   const [isRunningPipeline, setIsRunningPipeline] = useState(false);
@@ -112,40 +116,9 @@ export function App() {
       // Reconcile province from server-side spatial peat attribution only when the
       // point lies within the attribution radius; a far-off centroid (e.g. Bali ->
       // Kalimantan Selatan, ~518 km) must never override the clicked province.
-      const attrKm = res.data?.peat_attribution?.distance_km;
-      const attrValid = typeof attrKm === 'number' && attrKm <= 75;
-      if (attrValid && res.data?.peat_attribution?.adm1) {
-        const adm1 = res.data.peat_attribution.adm1;
-        const matched = provinces.find(
-          p => p.name.toLowerCase().includes(adm1.toLowerCase()) || adm1.toLowerCase().includes(p.name.toLowerCase())
-        );
-        if (matched) {
-          setSelectedProvince(matched);
-        }
-      } else if (!attrValid && res.data?.peat_attribution?.adm1) {
-        // Outside the peat radius the backend resolved the REAL admin names via
-        // OSM reverse geocoding: rename the point and select that province so
-        // every map click anywhere in Indonesia is labeled correctly.
-        const country: string | undefined = res.data.peat_attribution.country;
-        const realProvName: string = res.data.peat_attribution.adm1;
-        const realRegName: string = res.data.peat_attribution.adm2 || realProvName;
-        if (reg.id.startsWith('CUSTOM-')) {
-          setSelectedRegency((prev: Regency | null) =>
-            prev ? { ...prev, name: realRegName } : prev
-          );
-        }
-        // Only match in-house peat provinces when the click really is in one;
-        // any other place (foreign or non-peat) keeps its OSM/Google-style plain
-        // name and must not be snapped to a wrong Indonesian province.
-        const realMatch = provinces.find(
-          p => p.name.toLowerCase() === realProvName.toLowerCase()
-        ) ?? provinces.find(
-          p => country === 'Indonesia' && (realProvName.toLowerCase().includes(p.name.toLowerCase()) || p.name.toLowerCase().includes(realProvName.toLowerCase()))
-        );
-        if (realMatch) {
-          setSelectedProvince(realMatch);
-        }
-      }
+      // Province reconciliation now happens exclusively in labelCustomLocation
+      // (from the geocode proxy) so a far click can never inherit a stale or
+      // centroid-guessed province object here.
 
       executePipeline(res.data, res.data.is_peat !== false);
     } catch (err: any) {
@@ -164,16 +137,79 @@ export function App() {
 
   const handleSelectRegion = (prov: Province, reg: Regency) => {
     setSelectedProvince(prov);
+    setRealProvLabel(null);
     setSelectedRegency(reg);
     fetchRealtimeData(reg);
   };
 
-  const handleSelectCustomLocation = async (lat: number, lon: number, name?: string) => {
-    // Immediately identify the nearest province based on clicked coordinates so UI doesn't linger on previous province
-    const nearestProv = findNearestProvince(lat, lon, provinces);
-    if (nearestProv) {
-      setSelectedProvince(nearestProv);
+  // Google-Maps style: resolve clicked coordinates to real place names via the
+  // backend geocode proxy (authoritative, cached server-side) and update the
+  // display state — province/adm1 and regency/adm2 — with zero guessing.
+  const labelCustomLocation = async (lat: number, lon: number, name?: string) => {
+    let geoName = name || '';
+    let provLabel: string | null = null;
+    try {
+      const res = await axios.get(`${API_BASE}/geocode?lat=${lat}&lon=${lon}`);
+      geoName = name || (res.data?.label as string) || '';
+      provLabel = (res.data?.adm1 as string) || null;
+      const regLabel = (res.data?.adm2 as string) || null;
+      setSelectedRegency({
+        id: `CUSTOM-${lat.toFixed(3)}-${lon.toFixed(3)}`,
+        name: geoName || regLabel || provLabel || `Titik GIS (${lat.toFixed(3)}, ${lon.toFixed(3)})`,
+        lat: Number(lat.toFixed(3)),
+        lon: Number(lon.toFixed(3)),
+        peat: (res.data?.is_peatland as boolean) ?? true
+      } as Regency);
+      setRealProvLabel(provLabel);
+      // In-house province object only when the click truly is in one of the 8;
+      // otherwise keep the real-place label (Pahang stays Pahang, never Riau).
+      const matched = provinces.find(
+        p => provLabel && p.name.toLowerCase() === provLabel.toLowerCase()
+      );
+      setSelectedProvince(matched ? matched : null);
+    } catch {
+      // geocode proxy failed: honest coordinate-only label, no province guess.
+      setSelectedRegency({
+        id: `CUSTOM-${lat.toFixed(3)}-${lon.toFixed(3)}`,
+        name: name || `Titik GIS (${lat.toFixed(3)}, ${lon.toFixed(3)})`,
+        lat: Number(lat.toFixed(3)),
+        lon: Number(lon.toFixed(3)),
+        peat: true
+      } as Regency);
+      setRealProvLabel(null);
+      setSelectedProvince(null);
     }
+    await fetchRealtimeDataForLocation(lat, lon, geoName || `Titik GIS (${lat.toFixed(3)}, ${lon.toFixed(3)})`);
+  };
+
+  const fetchRealtimeDataForLocation = async (lat: number, lon: number, displayName: string) => {
+    setLoadingRealtime(true);
+    try {
+      const res = await axios.get(`${API_BASE}/realtime-peatland-data?lat=${lat}&lon=${lon}&days=30`);
+      setSampleData(res.data);
+      setSoilType(res.data.soil_type || 'Tidak diketahui');
+      setDataError(null);
+      if (res.data?.peat_attribution?.adm1) {
+        setRealProvLabel(res.data.peat_attribution.adm1);
+      }
+      executePipeline(res.data, res.data.is_peat !== false);
+    } catch (err: any) {
+      setSampleData(null);
+      setPipelineResult(null);
+      setDataError(
+        `Telemetri satelit Open-Meteo/ERA5 tidak dapat dimuat untuk ${displayName} ` +
+        `(${err?.response?.status ?? 'jaringan'} ${err?.message ?? ''}). ` +
+        `PeatFR tidak menampilkan nilai proyeksi sampai sumber data pulih.`
+      );
+    } finally {
+      setLoadingRealtime(false);
+    }
+  };
+
+  const handleSelectCustomLocation = async (lat: number, lon: number, name?: string) => {
+    // Google-Maps naming FIRST so the point resolves to a real place before any
+    // province reconciliation can stale-label it.
+    await labelCustomLocation(lat, lon);
 
     // Google-Maps-style instant naming: the coarse OSM/Nominatim reverse for this
     // exact coordinate replaces the raw GIS tuple as the click label.
@@ -280,13 +316,15 @@ export function App() {
   const locationPreset = selectedRegency
     ? {
         id: selectedRegency.id,
-        // A place label always resolves to a real name; nothing generic or
-        // static. Province suffix only when it is a distinct, known province.
-        name: selectedProvince && !selectedRegency.name.toLowerCase().includes(selectedProvince.name.toLowerCase())
-          ? `${selectedRegency.name}, ${selectedProvince.name}`
-          : (selectedProvince
-              ? selectedRegency.name
-              : (selectedRegency.name || 'Lokasi Tidak Dikenal')),
+        // Province suffix from the in-house object for the 8 peat provinces, or
+        // from realProvLabel (OSM-verified) for anywhere else in the world.
+        name: (() => {
+          const provName = selectedProvince?.name || realProvLabel || null;
+          if (provName && !selectedRegency.name.toLowerCase().includes(provName.toLowerCase())) {
+            return `${selectedRegency.name}, ${provName}`;
+          }
+          return selectedRegency.name || 'Lokasi Tidak Dikenal';
+        })(),
         lat: selectedRegency.lat,
         lon: selectedRegency.lon
       }
