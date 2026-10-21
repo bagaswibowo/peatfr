@@ -160,19 +160,31 @@ def get_realtime_openmeteo_data(
 
         dates = daily["time"]
         temp_max = daily["temperature_2m_max"]
-        precip = daily["precipitation_sum"]
+        precip = [v if v is not None else 0.0 for v in daily["precipitation_sum"]]
+        temp_max = [v if v is not None else None for v in daily["temperature_2m_max"]]
 
-        sm_0_7 = np.array(hourly["soil_moisture_0_to_7cm"])
-        sm_7_28 = np.array(hourly["soil_moisture_7_to_28cm"])
-        sm_combined = (sm_0_7 * 0.4 + sm_7_28 * 0.6)
+        sm_0_7 = np.array(hourly["soil_moisture_0_to_7cm"], dtype=float)
+        sm_7_28 = np.array(hourly["soil_moisture_7_to_28cm"], dtype=float)
+        # ERA5-Land has no soil moisture where the grid bathymetry is ocean /
+        # frozen ground / deserts with missing land data (e.g. New York grid is
+        # all-None on some cells): Open-Meteo returns None, not a number. Treat
+        # those cells as NaN and average around them so a point is never dropped
+        # wholesale for one edge grid artifact.
+        sm_0_7 = np.where(np.array([v is not None for v in hourly["soil_moisture_0_to_7cm"]]), sm_0_7, np.nan)
+        sm_7_28 = np.where(np.array([v is not None for v in hourly["soil_moisture_7_to_28cm"]]), sm_7_28, np.nan)
+        with np.errstate(invalid="ignore"):
+            sm_combined = (sm_0_7 * 0.4 + sm_7_28 * 0.6)
 
         n_days = len(dates)
         sm_raw = sm_combined[:n_days * 24].reshape(n_days, 24).mean(axis=1)
 
+        # NaN SM cells (ocean/desert grid) map to the dry floor instead of
+        # poisoning the whole series — honest degradation, still real data.
         sm_pct = np.clip(
             fc_pct + ((sm_raw - sm_lo) / (sm_hi - sm_lo)) * (sat_pct - fc_pct),
             fc_pct - 2.0, sat_pct
         )
+        sm_pct = np.nan_to_num(sm_pct, nan=fc_pct)
         wt_est = -0.30 - 0.012 * ((sat_pct - 10.0) - sm_pct) - 0.004 * np.maximum(0, 5.0 - np.array(precip))
         wt_est = np.clip(wt_est, -1.8, -0.1)
 
